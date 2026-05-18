@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edson JPG — Base de Dados de Clientes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root {
+  --bg:#0f0f0f; --surface:#171717; --surface2:#1e1e1e; --surface3:#252525;
+  --border:#2a2a2a; --border2:#333; --accent:#9b8cff; --accent2:#7c6fff;
+  --gold:#f0b429; --wa:#25D366; --fb:#1877F2;
+  --text:#e8e8e8; --text2:#999; --text3:#555;
+  --done:#4ade9a; --sched:#4fc3f7; --pend:#fbbf24; --canc:#f87171;
+  --radius:10px; --radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+.brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.brand-avatar-wrap{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.brand-photo{width:48px;height:48px;border-radius:10px;object-fit:cover;display:block;border:2px solid var(--accent)}
+.brand-photo-placeholder{width:48px;height:48px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px;cursor:pointer;border:2px dashed rgba(255,255,255,.3);flex-shrink:0;position:relative;overflow:hidden}
+.brand-photo-placeholder:hover .bp-hover{opacity:1}
+.bp-hover{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;font-size:18px}
+.brand-photo-input{display:none}
+.brand-text .brand-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.brand-text .brand-sub{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+
+.nav-section{padding:10px 12px 5px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;margin:1px 6px;border-radius:var(--radius-sm);font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;border:none;background:transparent;width:calc(100% - 12px);font-family:inherit;text-align:left}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(155,140,255,.12);color:var(--accent)}
+.ni-icon{font-size:17px;width:20px;flex-shrink:0}
+.ni-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(155,140,255,.15);color:var(--accent)}
+
+.years-section{padding:6px}
+.year-tab{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border:none;background:transparent;width:100%;font-family:inherit}
+.year-tab:hover{background:var(--surface2);color:var(--text)}
+.year-tab.active{background:rgba(155,140,255,.12);color:var(--accent);font-weight:500}
+.ycount{font-size:10px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--text3);font-family:'DM Mono',monospace}
+.year-tab.active .ycount{background:rgba(155,140,255,.2);color:var(--accent)}
+.add-year-btn{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text3);border:1px dashed var(--border2);background:transparent;width:100%;font-family:inherit;margin-top:4px;transition:all .15s}
+.add-year-btn:hover{color:var(--done);border-color:rgba(74,222,154,.3)}
+
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.save-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px}
+.save-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:.3s}
+.save-dot.saved{background:var(--done)}
+
+/* MAIN */
+.main{margin-left:230px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;flex-direction:column;gap:2px}
+.page-title{font-size:18px;font-weight:600}
+.page-sub{font-size:12px;color:var(--text3)}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-success{background:rgba(74,222,154,.12);color:var(--done);border:1px solid rgba(74,222,154,.25)}
+.btn-success:hover{background:rgba(74,222,154,.2)}
+.btn-danger{background:rgba(248,113,113,.1);color:var(--canc);border:1px solid rgba(248,113,113,.2)}
+.btn-danger:hover{background:rgba(248,113,113,.18)}
+.btn-wa{background:rgba(37,211,102,.1);color:var(--wa);border:1px solid rgba(37,211,102,.25)}
+.btn-wa:hover{background:rgba(37,211,102,.2)}
+.btn-fb{background:rgba(24,119,242,.1);color:var(--fb);border:1px solid rgba(24,119,242,.25)}
+.btn-fb:hover{background:rgba(24,119,242,.2)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.stat-card{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.stat-n{font-size:24px;font-weight:600;font-family:'DM Mono',monospace;line-height:1}
+.stat-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+
+/* ALERTS */
+.alert{display:none;align-items:center;gap:8px;padding:10px 20px;font-size:13px;border-bottom:1px solid}
+.alert.bday{background:rgba(240,180,41,.06);border-color:rgba(240,180,41,.15);color:var(--gold)}
+.alert.renov{background:rgba(74,222,154,.05);border-color:rgba(74,222,154,.12);color:var(--done)}
+.alert-btn{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font-family:inherit;white-space:nowrap}
+
+/* TOOLBAR */
+.toolbar{padding:10px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border)}
+.filter-btn{font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s}
+.filter-btn:hover{color:var(--text);border-color:#444}
+.filter-btn.on{background:rgba(155,140,255,.15);color:var(--accent);border-color:rgba(155,140,255,.4)}
+.filter-btn.renov-f{color:var(--done);border-color:rgba(74,222,154,.2)}
+.filter-btn.renov-f.on{background:rgba(74,222,154,.12)}
+select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:12px;border-radius:5px;padding:5px 10px;font-family:inherit;cursor:pointer}
+.search-wrap{margin-left:auto;position:relative}
+.search-wrap input{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:13px;padding:6px 12px 6px 34px;font-family:inherit;width:200px}
+.search-wrap input:focus{outline:none;border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--text3)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+
+/* CLIENT LIST */
+.client-list{flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:8px}
+
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s}
+.client-card:hover{border-color:var(--border2)}
+.client-card.renov-hl{border-left:3px solid var(--done)}
+.client-card.editing{border-color:var(--accent)}
+
+.card-main{display:flex;align-items:flex-start;gap:14px;padding:14px 16px}
+
+/* CLIENT AVATAR */
+.c-avatar-wrap{position:relative;flex-shrink:0}
+.c-avatar{width:50px;height:50px;border-radius:50%;object-fit:cover;display:block;border:2px solid var(--border2)}
+.c-avatar-placeholder{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;border:2px dashed rgba(255,255,255,.15);cursor:pointer;position:relative;overflow:hidden;flex-shrink:0}
+.c-avatar-placeholder:hover .ca-hover{opacity:1}
+.ca-hover{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s;font-size:16px;color:#fff}
+.c-avatar-input{display:none}
+
+.card-info{flex:1;min-width:0}
+.card-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-contact{font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.card-contact a{color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:4px;transition:.15s}
+.card-contact a:hover{color:var(--text)}
+.card-contact a.fb-link{color:var(--fb)}
+.card-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center}
+
+.tag{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.t-prem{background:rgba(240,180,41,.12);color:var(--gold)}
+.t-std{background:rgba(100,100,100,.15);color:#666}
+.t-done{background:rgba(74,222,154,.1);color:var(--done)}
+.t-sched{background:rgba(79,195,247,.1);color:var(--sched)}
+.t-pend{background:rgba(251,191,36,.1);color:var(--pend)}
+.t-canc{background:rgba(248,113,113,.1);color:var(--canc)}
+.t-meta{background:rgba(100,100,100,.1);color:var(--text2)}
+
+.card-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start}
+
+/* NOTES PREVIEW */
+.notes-preview{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic;border-left:2px solid var(--border2);padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px}
+
+/* EDIT PANEL */
+.edit-panel{display:none;background:var(--surface2);border-top:1px solid var(--border)}
+.edit-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
+.edit-tab{padding:10px 16px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:transparent;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.15s}
+.edit-tab:hover{color:var(--text)}
+.edit-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.edit-tab-content{display:none;padding:16px}
+.edit-tab-content.on{display:block}
+
+.edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.fg.half{grid-column:span 2}
+.flabel{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:500}
+.finput,.fsel,.ftextarea{background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:8px 10px;font-family:'DM Sans',sans-serif;width:100%;transition:border-color .15s}
+.finput:focus,.fsel:focus,.ftextarea:focus{outline:none;border-color:var(--accent)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--text3)}
+.ftextarea{resize:vertical;min-height:80px;line-height:1.5}
+.hint{font-size:11px;color:var(--text3);margin-top:3px}
+
+.edit-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.edit-foot-left{margin-right:auto}
+
+/* GALLERY SECTION */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:14px}
+.gallery-img-wrap{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--surface3);border:1px solid var(--border2)}
+.gallery-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-img-wrap .del-img{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border:none;color:#fff;width:20px;height:20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:.15s}
+.gallery-img-wrap:hover .del-img{opacity:1}
+.gallery-add{aspect-ratio:1;border-radius:6px;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:11px;gap:4px;transition:.15s;background:transparent}
+.gallery-add:hover{border-color:var(--accent);color:var(--accent)}
+.gallery-add i{font-size:22px}
+.gallery-input{display:none}
+
+/* EMPTY */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;color:var(--text3);margin-bottom:16px}
+.empty-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text3)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-head h2{font-size:15px;font-weight:600}
+.modal-close{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:18px}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 20px}
+.modal-tab{padding:10px 14px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;border:none;background:transparent;font-family:inherit;display:flex;align-items:center;gap:5px}
+.modal-tab.on{color:var(--accent);border-bottom:2px solid var(--accent)}
+.modal-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.modal-body.single{grid-template-columns:1fr}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface)}
+
+/* FOOTER */
+.page-footer{background:var(--surface);border-top:1px solid var(--border);padding:10px 20px;font-size:12px;color:var(--text3);display:flex;align-items:center;justify-content:space-between}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateY(0);opacity:1}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:3px}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-avatar-wrap">
+      <!-- Photographer profile photo -->
+      <div id="brand-photo-wrap">
+        <div class="brand-photo-placeholder" onclick="document.getElementById('brand-photo-input').click()" title="Clica para adicionar a tua foto">
+          <span id="brand-initials">EJ</span>
+          <div class="bp-hover"><i class="ti ti-camera" aria-hidden="true"></i></div>
+        </div>
+      </div>
+      <input type="file" id="brand-photo-input" class="brand-photo-input" accept="image/*" onchange="loadBrandPhoto(this)">
+      <div class="brand-text">
+        <div class="brand-title">Base de Dados<br>de Clientes</div>
+        <div class="brand-sub">Edson JPG</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-section">Menu</div>
+  <button class="nav-item active" onclick="showView('clientes',this)">
+    <i class="ti ti-users ni-icon" aria-hidden="true"></i><span>Clientes</span>
+    <span class="ni-badge" id="nav-total">0</span>
+  </button>
+  <button class="nav-item" onclick="showView('premium',this)">
+    <i class="ti ti-star ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Premium</span>
+    <span class="ni-badge" id="nav-prem">0</span>
+  </button>
+  <button class="nav-item" onclick="showView('aniversarios',this)">
+    <i class="ti ti-gift ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Aniversários</span>
+  </button>
+  <button class="nav-item" onclick="showView('renovar',this)">
+    <i class="ti ti-refresh ni-icon" style="color:var(--done)" aria-hidden="true"></i><span>A Renovar</span>
+    <span class="ni-badge" id="nav-renov" style="background:rgba(74,222,154,.15);color:var(--done)">0</span>
+  </button>
+
+  <div class="nav-section" style="margin-top:8px">Anos</div>
+  <div class="years-section" id="years-nav"></div>
+  <div style="padding:6px">
+    <button class="add-year-btn" onclick="openYrModal()">
+      <i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>Novo ano
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="save-status">
+      <div class="save-dot saved" id="save-dot"></div>
+      <span id="save-txt">Guardado automaticamente</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="page-title">Clientes</div>
+      <div class="page-sub" id="page-sub">Todos os clientes do ano</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-success btn-sm" id="renov-all-btn" onclick="renovAll()" style="display:none">
+        <i class="ti ti-refresh" aria-hidden="true"></i><span id="renov-all-lbl">Renovar todos</span>
+      </button>
+      <button class="btn btn-primary" onclick="openNewModal()">
+        <i class="ti ti-plus" aria-hidden="true"></i>Novo cliente
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-n" style="color:var(--accent)" id="s-tot">0</div><div class="stat-l">Total no ano</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--gold)" id="s-prem">0</div><div class="stat-l">Premium ≥10</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--done)" id="s-done">0</div><div class="stat-l">Concluídos</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--sched)" id="s-sched">0</div><div class="stat-l">Agendados</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--done)" id="s-renov">0</div><div class="stat-l">A Renovar</div></div>
+  </div>
+
+  <div class="alert bday" id="bday-alert">
+    <i class="ti ti-gift" style="font-size:16px;flex-shrink:0" aria-hidden="true"></i>
+    <span id="bday-txt"></span>
+  </div>
+  <div class="alert renov" id="renov-alert">
+    <i class="ti ti-refresh" style="font-size:16px;flex-shrink:0" aria-hidden="true"></i>
+    <span id="renov-txt"></span>
+    <button class="alert-btn" onclick="renovAll()" id="renov-alert-btn">Renovar todos</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="filter-btn on" onclick="fSt('all',this)">Todos</button>
+    <button class="filter-btn" onclick="fSt('done',this)">Concluído</button>
+    <button class="filter-btn" onclick="fSt('sched',this)">Agendado</button>
+    <button class="filter-btn" onclick="fSt('pend',this)">Pendente</button>
+    <button class="filter-btn renov-f" onclick="fSt('renov',this)">A renovar</button>
+    <select class="tsel" id="month-sel" onchange="render()">
+      <option value="">Todos os meses</option>
+      <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+      <option value="03">Março</option><option value="04">Abril</option>
+      <option value="05">Maio</option><option value="06">Junho</option>
+      <option value="07">Julho</option><option value="08">Agosto</option>
+      <option value="09">Setembro</option><option value="10">Outubro</option>
+      <option value="11">Novembro</option><option value="12">Dezembro</option>
+    </select>
+    <div class="search-wrap">
+      <i class="ti ti-search search-icon" aria-hidden="true"></i>
+      <input type="text" id="srch" placeholder="Pesquisar..." oninput="render()">
+    </div>
+  </div>
+
+  <div class="client-list" id="client-list"></div>
+  <div class="page-footer">
+    <span id="footer-txt">0 clientes</span>
+    <span style="font-size:11px;color:var(--text3)">Edson JPG · dados guardados localmente no browser</span>
+  </div>
+</main>
+
+<!-- NEW CLIENT MODAL -->
+<div class="overlay" id="new-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Novo cliente</h2>
+      <button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab on" onclick="switchModalTab('info',this)"><i class="ti ti-user" aria-hidden="true"></i>Dados</button>
+      <button class="modal-tab" onclick="switchModalTab('extras',this)"><i class="ti ti-heart" aria-hidden="true"></i>Gostos e pedidos</button>
+    </div>
+    <!-- TAB: DADOS -->
+    <div class="modal-body" id="modal-tab-info">
+      <!-- Avatar upload -->
+      <div class="fg full" style="display:flex;align-items:center;gap:16px">
+        <div style="flex-shrink:0">
+          <div id="new-avatar-preview" style="width:64px;height:64px;border-radius:50%;background:var(--surface3);border:2px dashed var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative" onclick="document.getElementById('new-avatar-input').click()" title="Clica para adicionar foto do cliente">
+            <i class="ti ti-user-plus" style="font-size:24px;color:var(--text3)" aria-hidden="true"></i>
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center" id="new-avatar-hover"><i class="ti ti-camera" style="color:#fff;font-size:18px" aria-hidden="true"></i></div>
+          </div>
+          <input type="file" id="new-avatar-input" accept="image/*" style="display:none" onchange="previewNewAvatar(this)">
+        </div>
+        <div style="flex:1;font-size:12px;color:var(--text3)">
+          <div style="font-weight:500;color:var(--text2);margin-bottom:3px">Foto do cliente</div>
+          Clica no círculo para adicionar uma foto de perfil do cliente
+        </div>
+      </div>
+      <div class="fg full"><span class="flabel">Nome completo *</span><input class="finput" id="n-name" type="text" placeholder="Ana Silva"></div>
+      <div class="fg"><span class="flabel">Email</span><input class="finput" id="n-email" type="email" placeholder="ana@email.com"></div>
+      <div class="fg"><span class="flabel">Telemóvel WhatsApp</span><input class="finput" id="n-phone" type="tel" placeholder="+238 991 234 567"><div class="hint">+238 CV · +351 PT · +55 BR</div></div>
+      <div class="fg full"><span class="flabel">Perfil Facebook</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <i class="ti ti-brand-facebook" style="color:var(--fb);font-size:18px;flex-shrink:0" aria-hidden="true"></i>
+          <input class="finput" id="n-facebook" type="url" placeholder="https://facebook.com/nome">
+        </div>
+        <div class="hint">Colar o link do perfil de Facebook do cliente</div>
+      </div>
+      <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="n-bday" type="date"></div>
+      <div class="fg"><span class="flabel">Data da sessão</span><input class="finput" id="n-sess" type="date"></div>
+      <div class="fg"><span class="flabel">Fotos entregues</span><input class="finput" id="n-photos" type="number" min="0" placeholder="0"><div class="hint">Premium ≥ 10 fotos</div></div>
+      <div class="fg"><span class="flabel">Estado</span>
+        <select class="fsel" id="n-status">
+          <option value="sched">Agendado</option><option value="done">Concluído</option>
+          <option value="pend">Pendente</option><option value="canc">Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <!-- TAB: GOSTOS -->
+    <div class="modal-body single" id="modal-tab-extras" style="display:none">
+      <div class="fg"><span class="flabel">Tipo de fotografia preferida</span>
+        <input class="finput" id="n-style" placeholder="ex: retratos, casamento, paisagem...">
+      </div>
+      <div class="fg"><span class="flabel">Pedidos especiais / notas</span>
+        <textarea class="ftextarea" id="n-notes" placeholder="ex: prefere fotos a preto e branco, gosta de poses naturais, quer entregar no prazo de 2 semanas..."></textarea>
+      </div>
+      <div class="fg"><span class="flabel">Referências / inspirações</span>
+        <textarea class="ftextarea" id="n-refs" placeholder="ex: estilo vintage, filtros suaves, referências de outros fotógrafos..."></textarea>
+      </div>
+      <div class="fg"><span class="flabel">Valor acordado</span>
+        <input class="finput" id="n-price" type="text" placeholder="ex: 150 CVE, 200€...">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeNewModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNew()"><i class="ti ti-check" aria-hidden="true"></i>Criar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD YEAR MODAL -->
+<div class="overlay" id="yr-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head">
+      <h2>Criar novo ano</h2>
+      <button class="modal-close" onclick="closeYrModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body single" style="padding:18px">
+      <div class="fg">
+        <span class="flabel">Ano</span>
+        <input class="finput" id="new-yr" type="number" min="2020" max="2040" placeholder="ex: 2028">
+        <div class="hint">Cria uma nova aba de ano na barra lateral</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeYrModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmYear()"><i class="ti ti-calendar-plus" aria-hidden="true"></i>Criar ano</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✓</span><span id="toast-msg">Guardado</span>
+</div>
+
+<script>
+const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24'],['rgba(212,83,126,.28)','#D4537E'],['rgba(251,146,60,.28)','#fb923c'],['rgba(167,243,208,.28)','#6ee7b7']];
+const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
+const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CY=new Date().getFullYear();
+let clients=[],years=[],activeYear=CY,fStatus='all',uid=1,currentView='clientes',openEditId=null,activeEditTab={},newAvatarData=null;
+
+const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+const avC=id=>AVS[id%AVS.length];
+const isPrem=p=>parseInt(p||0)>=10;
+const fmtD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};
+const fmtBFull=d=>{if(!d)return'—';const p=d.split('-');return p.length>=3?`${p[2]} ${MONTHS[parseInt(p[1])-1]}`:'—';};
+const waN=p=>p?p.replace(/[\s\-()]/g,''):'';
+const sYear=c=>c.session?parseInt(c.session.split('-')[0]):null;
+const needsR=c=>c.status==='done'&&sYear(c)!==null&&sYear(c)===activeYear;
+
+function bdaySoon(d){
+  if(!d)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const p=d.split('-');if(p.length<3)return null;
+  let nx=new Date(today.getFullYear(),parseInt(p[1])-1,parseInt(p[2]));
+  if(nx<today)nx=new Date(today.getFullYear()+1,parseInt(p[1])-1,parseInt(p[2]));
+  return Math.round((nx-today)/(1000*60*60*24));
+}
+function renewD(s){if(!s)return'';const[y,m,d]=s.split('-');return`${parseInt(y)+1}-${m}-${d}`;}
+
+function loadBrandPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    settings.brandPhoto=e.target.result;
+    saveSett();
+    renderBrandPhoto();
+    toast('Foto de perfil actualizada','✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderBrandPhoto(){
+  const wrap=document.getElementById('brand-photo-wrap');
+  if(settings.brandPhoto){
+    wrap.innerHTML=`<img src="${settings.brandPhoto}" class="brand-photo" onclick="document.getElementById('brand-photo-input').click()" title="Clica para mudar a foto" style="cursor:pointer">`;
+  } else {
+    wrap.innerHTML=`<div class="brand-photo-placeholder" onclick="document.getElementById('brand-photo-input').click()" title="Clica para adicionar a tua foto"><span id="brand-initials">EJ</span><div class="bp-hover"><i class="ti ti-camera" aria-hidden="true"></i></div></div>`;
+  }
+}
+
+function previewNewAvatar(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    newAvatarData=e.target.result;
+    const wrap=document.getElementById('new-avatar-preview');
+    wrap.innerHTML=`<img src="${newAvatarData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadClientAvatar(id,input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const c=clients.find(x=>x.id===id);
+    if(c){c.avatar=e.target.result;save();toast('Foto do cliente actualizada','✓');}
+  };
+  reader.readAsDataURL(file);
+}
+
+function addClientGalleryPhoto(id,input){
+  const files=Array.from(input.files);if(!files.length)return;
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(!c.gallery)c.gallery=[];
+  let loaded=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      c.gallery.push(e.target.result);
+      loaded++;
+      if(loaded===files.length){save();toast(`${loaded} foto${loaded>1?'s':''} adicionada${loaded>1?'s':''}!`,'✓');}
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function delGalleryPhoto(clientId,idx){
+  const c=clients.find(x=>x.id===clientId);
+  if(!c||!c.gallery)return;
+  c.gallery.splice(idx,1);
+  save();
+}
+
+function renovOne(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const ny=sYear(c)+1;
+  c.session=renewD(c.session);c.status='sched';c.photos=0;
+  if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
+  openEditId=null;save();toast('Cliente movido para '+ny,'✓');
+}
+
+function renovAll(){
+  const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;
+  list.forEach(c=>{c.session=renewD(c.session);c.status='sched';c.photos=0;});
+  if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
+  activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');
+}
+
+function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')},'_blank'`);}
+function waCall(phone){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}`,'_blank');}
+function openFB(url){if(!url){toast('Sem link de Facebook','!');return;}window.open(url,'_blank');}
+
+let settings={brandPhoto:null};
+function saveSett(){try{localStorage.setItem('edjpg_settings',JSON.stringify(settings));}catch(e){}}
+function loadSett(){try{const d=JSON.parse(localStorage.getItem('edjpg_settings')||'{}');settings.brandPhoto=d.brandPhoto||null;}catch(e){}}
+
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('edjpg_v3')||'{}');
+    clients=d.clients||defClients();years=d.years||defYears();
+    uid=Math.max(...clients.map(c=>c.id),0)+1;
+    const ay=clients.map(c=>sYear(c)).filter(Boolean);
+    ay.forEach(y=>{if(!years.includes(y))years.push(y);});
+    years.sort((a,b)=>a-b);
+    if(!years.includes(activeYear)&&years.length)activeYear=years[years.length-1];
+  }catch(e){clients=defClients();years=defYears();}
+}
+
+function defYears(){return[...new Set([CY-1,CY,CY+1])].sort((a,b)=>a-b);}
+function defClients(){
+  return[
+    {id:1,name:'Maria Fernandes',email:'maria.f@gmail.com',phone:'+238912345678',facebook:'',bday:'1990-03-22',session:'2026-03-10',photos:24,status:'done',style:'Retratos e família',notes:'Gosta de tons quentes e poses naturais',refs:'Estilo editorial suave',price:'8000 CVE',gallery:[],avatar:null},
+    {id:2,name:'João Pires',email:'joao.pires@outlook.com',phone:'+238933456789',facebook:'',bday:'1985-07-04',session:'2026-07-20',photos:8,status:'sched',style:'',notes:'',refs:'',price:'',gallery:[],avatar:null},
+    {id:3,name:'Ana Costa',email:'anacosta@mail.com',phone:'+238991234567',facebook:'https://facebook.com/anacosta',bday:'1995-05-19',session:'2026-05-28',photos:15,status:'done',style:'Casamento',notes:'Quer entrega em 2 semanas, prefere preto e branco',refs:'',price:'15000 CVE',gallery:[],avatar:null},
+    {id:4,name:'Carlos Mendes',email:'carlos.m@gmail.com',phone:'+238966789012',facebook:'',bday:'1988-11-30',session:'2026-08-05',photos:5,status:'sched',style:'',notes:'',refs:'',price:'',gallery:[],avatar:null},
+    {id:5,name:'Sofia Lopes',email:'sofia.lopes@icloud.com',phone:'+238971234567',facebook:'',bday:'1992-05-19',session:'2025-04-15',photos:12,status:'done',style:'Moda e lifestyle',notes:'Fotos para Instagram',refs:'Estilo minimalista com luz natural',price:'12000 CVE',gallery:[],avatar:null},
+    {id:6,name:'Rui Baptista',email:'rui.b@gmail.com',phone:'',facebook:'',bday:'1980-09-08',session:'2025-09-12',photos:0,status:'pend',style:'',notes:'',refs:'',price:'',gallery:[],avatar:null},
+    {id:7,name:'Inês Varela',email:'ines.v@gmail.com',phone:'+238951234567',facebook:'',bday:'1993-08-03',session:'2027-02-14',photos:0,status:'sched',style:'',notes:'',refs:'',price:'',gallery:[],avatar:null},
+  ];
+}
+
+let saveTimer=null;
+function save(){
+  try{localStorage.setItem('edjpg_v3',JSON.stringify({clients,years}));}catch(e){}
+  const dot=document.getElementById('save-dot');const txt=document.getElementById('save-txt');
+  dot.classList.remove('saved');txt.textContent='A guardar...';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{dot.classList.add('saved');txt.textContent='Guardado automaticamente';},800);
+  buildSidebar();render();
+}
+
+function buildSidebar(){
+  const allY=[...new Set([...years,...clients.map(c=>sYear(c)).filter(Boolean)])].sort((a,b)=>a-b);
+  years=[...allY];
+  document.getElementById('years-nav').innerHTML=allY.map(y=>{
+    const cnt=clients.filter(c=>sYear(c)===y).length;
+    return`<button class="year-tab${y===activeYear?' active':''}" onclick="setYear(${y})">${y}<span class="ycount">${cnt}</span></button>`;
+  }).join('');
+  const prem=clients.filter(c=>isPrem(c.photos)).length;
+  const renov=clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY).length;
+  document.getElementById('nav-total').textContent=clients.length;
+  document.getElementById('nav-prem').textContent=prem;
+  document.getElementById('nav-renov').textContent=renov;
+}
+
+function setYear(y){activeYear=y;fStatus='all';openEditId=null;currentView='clientes';document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));document.querySelector('.filter-btn').classList.add('on');document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));document.querySelector('.nav-item').classList.add('active');buildSidebar();render();}
+
+function showView(v,el){currentView=v;openEditId=null;fStatus='all';document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));document.querySelector('.filter-btn').classList.add('on');buildSidebar();render();}
+
+function getViewClients(){
+  switch(currentView){
+    case'premium':return clients.filter(c=>isPrem(c.photos));
+    case'aniversarios':return clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=30;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));
+    case'renovar':return clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY);
+    default:return clients.filter(c=>sYear(c)===activeYear);
+  }
+}
+
+function visible(){
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const mo=document.getElementById('month-sel').value;
+  return getViewClients().filter(c=>{
+    const stOk=fStatus==='all'||(fStatus==='renov'?needsR(c):c.status===fStatus);
+    const qOk=c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.notes||'').toLowerCase().includes(q);
+    const moOk=!mo||!c.session||c.session.split('-')[1]===mo;
+    return stOk&&qOk&&moOk;
+  }).sort((a,b)=>(a.session||'').localeCompare(b.session||''));
+}
+
+function editTabFor(id){return activeEditTab[id]||'dados';}
+
+function render(){
+  const list=visible();
+  checkAlerts();updateStats();
+  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários próximos','Próximos 30 dias'],renovar:['A Renovar','Sessões concluídas para renovar']};
+  const[title,sub]=titles[currentView]||titles.clientes;
+  document.getElementById('page-title').textContent=title;
+  document.getElementById('page-sub').textContent=sub;
+  const el=document.getElementById('client-list');
+  if(!list.length){
+    const msgs={clientes:[`Sem clientes em ${activeYear}`,'Clica em "Novo cliente" para adicionar.'],premium:['Sem clientes premium','Clientes com ≥10 fotos aparecem aqui.'],aniversarios:['Sem aniversários nos próximos 30 dias','Que sossego!'],renovar:['Nenhum cliente a renovar','Todos actualizados.']};
+    const[t,s]=msgs[currentView]||msgs.clientes;
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-users" aria-hidden="true"></i></div><div class="empty-title">${t}</div><div class="empty-sub">${s}</div></div>`;
+    document.getElementById('footer-txt').textContent='0 clientes';return;
+  }
+
+  el.innerHTML=list.map(c=>{
+    const[bg,fg]=avC(c.id);
+    const prem=isPrem(c.photos);
+    const st=ST[c.status]||ST.pend;
+    const bd=bdaySoon(c.bday);
+    const bdIcon=bd!==null&&bd<=7?`<i class="ti ti-gift" style="color:var(--gold);font-size:14px" aria-hidden="true" title="Aniversário em ${bd===0?'hoje':bd+' dias'}"></i>`:'';
+    const rn=needsR(c);
+    const hp=!!(c.phone&&c.phone.trim());
+    const hfb=!!(c.facebook&&c.facebook.trim());
+    const isOpen=openEditId===c.id;
+    const etab=editTabFor(c.id);
+    const gallery=c.gallery||[];
+
+    const avatarHtml=c.avatar
+      ?`<div class="c-avatar-wrap"><img src="${c.avatar}" class="c-avatar" alt="${c.name}"><input type="file" id="av-input-${c.id}" class="c-avatar-input" accept="image/*" onchange="loadClientAvatar(${c.id},this)"></div>`
+      :`<div class="c-avatar-wrap"><div class="c-avatar-placeholder" style="background:${bg};color:${fg}" onclick="document.getElementById('av-input-${c.id}').click()" title="Adicionar foto"><span>${ini(c.name)}</span><div class="ca-hover"><i class="ti ti-camera" aria-hidden="true"></i></div></div><input type="file" id="av-input-${c.id}" class="c-avatar-input" accept="image/*" onchange="loadClientAvatar(${c.id},this)"></div>`;
+
+    const gallerySection=`
+      <div>
+        <div class="flabel" style="margin-bottom:8px">Galeria de fotos do cliente</div>
+        <div class="gallery-grid" id="gallery-${c.id}">
+          ${gallery.map((img,i)=>`<div class="gallery-img-wrap"><img src="${img}" alt="foto ${i+1}"><button class="del-img" onclick="delGalleryPhoto(${c.id},${i})" aria-label="Apagar foto"><i class="ti ti-x" aria-hidden="true"></i></button></div>`).join('')}
+          <label class="gallery-add" title="Adicionar fotos">
+            <i class="ti ti-photo-plus" aria-hidden="true"></i>
+            <span>Adicionar fotos</span>
+            <input type="file" class="gallery-input" accept="image/*" multiple onchange="addClientGalleryPhoto(${c.id},this)">
+          </label>
+        </div>
+        <div class="hint">${gallery.length} foto${gallery.length!==1?'s':''} na galeria · clica nas fotos para apagar</div>
+      </div>`;
+
+    return`<div class="client-card${rn?' renov-hl':''}${isOpen?' editing':''}" id="card-${c.id}">
+      <div class="card-main">
+        ${avatarHtml}
+        <div class="card-info">
+          <div class="card-name">${c.name} ${bdIcon}${prem?`<span class="tag t-prem"><i class="ti ti-star" style="font-size:10px" aria-hidden="true"></i>Premium</span>`:''}</div>
+          <div class="card-contact">
+            ${c.email?`<a href="mailto:${c.email}"><i class="ti ti-mail" style="font-size:13px" aria-hidden="true"></i>${c.email}</a>`:''}
+            ${hp?`<a href="https://wa.me/${waN(c.phone)}" target="_blank" style="color:var(--wa)"><i class="ti ti-brand-whatsapp" style="font-size:13px" aria-hidden="true"></i>${c.phone}</a>`:''}
+            ${hfb?`<a href="${c.facebook}" target="_blank" class="fb-link"><i class="ti ti-brand-facebook" style="font-size:13px" aria-hidden="true"></i>Facebook</a>`:''}
+          </div>
+          <div class="card-tags">
+            <span class="tag ${st.tc}">${st.l}</span>
+            <span class="tag t-meta"><i class="ti ti-calendar" style="font-size:10px" aria-hidden="true"></i>${fmtD(c.session)}</span>
+            <span class="tag t-meta" style="color:${prem?'var(--gold)':'var(--text2)'}"><i class="ti ti-camera" style="font-size:10px" aria-hidden="true"></i>${c.photos||0} fotos</span>
+            ${c.bday?`<span class="tag t-meta"><i class="ti ti-cake" style="font-size:10px" aria-hidden="true"></i>${fmtBFull(c.bday)}</span>`:''}
+            ${c.price?`<span class="tag" style="background:rgba(74,222,154,.08);color:var(--done)"><i class="ti ti-coin" style="font-size:10px" aria-hidden="true"></i>${c.price}</span>`:''}
+            ${gallery.length?`<span class="tag t-meta"><i class="ti ti-photo" style="font-size:10px" aria-hidden="true"></i>${gallery.length} fotos</span>`:''}
+          </div>
+          ${c.notes?`<div class="notes-preview"><i class="ti ti-notes" style="font-size:11px;vertical-align:-1px;margin-right:4px" aria-hidden="true"></i>${c.notes}</div>`:''}
+        </div>
+        <div class="card-actions">
+          ${hp?`<button class="btn btn-wa btn-xs" onclick="waMsg('${c.phone}','${c.name}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WA</button>`:''}
+          ${hfb?`<button class="btn btn-fb btn-xs" onclick="openFB('${c.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i>FB</button>`:''}
+          <button class="btn btn-ghost btn-xs" onclick="toggleEdit(${c.id})" style="${isOpen?'color:var(--accent);border-color:rgba(155,140,255,.4)':''}">
+            <i class="ti ti-${isOpen?'chevron-up':'edit'}" aria-hidden="true"></i>${isOpen?'Fechar':'Editar'}
+          </button>
+          <button class="btn btn-danger btn-xs" onclick="delClient(${c.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
+        </div>
+      </div>
+
+      <div class="edit-panel" style="display:${isOpen?'block':'none'}">
+        <div class="edit-tabs">
+          <button class="edit-tab${etab==='dados'?' on':''}" onclick="switchEditTab(${c.id},'dados',this)"><i class="ti ti-user" aria-hidden="true"></i>Dados</button>
+          <button class="edit-tab${etab==='gostos'?' on':''}" onclick="switchEditTab(${c.id},'gostos',this)"><i class="ti ti-heart" aria-hidden="true"></i>Gostos e pedidos</button>
+          <button class="edit-tab${etab==='galeria'?' on':''}" onclick="switchEditTab(${c.id},'galeria',this)"><i class="ti ti-photo" aria-hidden="true"></i>Galeria ${gallery.length?`(${gallery.length})`:''}</button>
+        </div>
+
+        <!-- TAB DADOS -->
+        <div class="edit-tab-content${etab==='dados'?' on':''}" id="et-dados-${c.id}">
+          <div class="edit-grid">
+            <div class="fg half"><span class="flabel">Nome completo *</span><input class="finput" id="e-name-${c.id}" value="${c.name.replace(/"/g,'&quot;')}"></div>
+            <div class="fg"><span class="flabel">Estado</span><select class="fsel" id="e-status-${c.id}"><option value="sched"${c.status==='sched'?' selected':''}>Agendado</option><option value="done"${c.status==='done'?' selected':''}>Concluído</option><option value="pend"${c.status==='pend'?' selected':''}>Pendente</option><option value="canc"${c.status==='canc'?' selected':''}>Cancelado</option></select></div>
+            <div class="fg"><span class="flabel">Email</span><input class="finput" id="e-email-${c.id}" type="email" value="${c.email||''}"></div>
+            <div class="fg"><span class="flabel">Telemóvel WhatsApp</span><input class="finput" id="e-phone-${c.id}" type="tel" value="${c.phone||''}" placeholder="+238 ..."></div>
+            <div class="fg"><span class="flabel">Fotos entregues</span><input class="finput" id="e-photos-${c.id}" type="number" min="0" value="${c.photos||0}"></div>
+            <div class="fg full"><span class="flabel">Perfil Facebook</span><div style="display:flex;align-items:center;gap:6px"><i class="ti ti-brand-facebook" style="color:var(--fb);font-size:18px;flex-shrink:0" aria-hidden="true"></i><input class="finput" id="e-facebook-${c.id}" type="url" value="${c.facebook||''}" placeholder="https://facebook.com/nome"></div></div>
+            <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="e-bday-${c.id}" type="date" value="${c.bday||''}"></div>
+            <div class="fg"><span class="flabel">Data da sessão</span><input class="finput" id="e-sess-${c.id}" type="date" value="${c.session||''}"></div>
+            <div class="fg"><span class="flabel">Valor acordado</span><input class="finput" id="e-price-${c.id}" value="${c.price||''}" placeholder="ex: 8000 CVE"></div>
+          </div>
+          <div class="edit-foot">
+            <div class="edit-foot-left">${rn?`<button class="btn btn-success btn-sm" onclick="renovOne(${c.id})"><i class="ti ti-refresh" aria-hidden="true"></i>Mover para ${activeYear+1}</button>`:''}</div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${c.id})">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="saveEdit(${c.id})"><i class="ti ti-check" aria-hidden="true"></i>Guardar</button>
+          </div>
+        </div>
+
+        <!-- TAB GOSTOS -->
+        <div class="edit-tab-content${etab==='gostos'?' on':''}" id="et-gostos-${c.id}">
+          <div class="edit-grid">
+            <div class="fg full"><span class="flabel">Tipo de fotografia preferida</span><input class="finput" id="e-style-${c.id}" value="${(c.style||'').replace(/"/g,'&quot;')}" placeholder="ex: retratos, casamento, lifestyle..."></div>
+            <div class="fg full"><span class="flabel">Pedidos especiais / notas</span><textarea class="ftextarea" id="e-notes-${c.id}" placeholder="ex: prefere fotos a preto e branco, gosta de poses naturais...">${c.notes||''}</textarea></div>
+            <div class="fg full"><span class="flabel">Referências / inspirações</span><textarea class="ftextarea" id="e-refs-${c.id}" placeholder="ex: estilo vintage, filtros suaves...">${c.refs||''}</textarea></div>
+          </div>
+          <div class="edit-foot">
+            <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${c.id})">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="saveEdit(${c.id})"><i class="ti ti-check" aria-hidden="true"></i>Guardar</button>
+          </div>
+        </div>
+
+        <!-- TAB GALERIA -->
+        <div class="edit-tab-content${etab==='galeria'?' on':''}" id="et-galeria-${c.id}">
+          ${gallerySection}
+          <div class="edit-foot">
+            <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${c.id})">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('footer-txt').textContent=`${list.length} cliente${list.length!==1?'s':''} visíveis · ${clients.length} total`;
+}
+
+function switchEditTab(id,tab,el){
+  activeEditTab[id]=tab;
+  const card=document.getElementById(`card-${id}`);
+  card.querySelectorAll('.edit-tab').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  card.querySelectorAll('.edit-tab-content').forEach(e=>e.classList.remove('on'));
+  const tc=card.querySelector(`#et-${tab}-${id}`);
+  if(tc)tc.classList.add('on');
+}
+
+function toggleEdit(id){
+  openEditId=openEditId===id?null:id;
+  if(!activeEditTab[id])activeEditTab[id]='dados';
+  render();
+  if(openEditId){setTimeout(()=>{const ep=document.getElementById(`card-${id}`);if(ep){ep.scrollIntoView({behavior:'smooth',block:'nearest'});const ni=document.getElementById(`e-name-${id}`);if(ni)ni.focus();}},60);}
+}
+
+function saveEdit(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const n=document.getElementById(`e-name-${id}`).value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  c.name=n;
+  c.email=document.getElementById(`e-email-${id}`).value.trim();
+  c.phone=document.getElementById(`e-phone-${id}`).value.trim();
+  c.facebook=document.getElementById(`e-facebook-${id}`).value.trim();
+  c.bday=document.getElementById(`e-bday-${id}`).value;
+  c.session=document.getElementById(`e-sess-${id}`).value;
+  c.photos=parseInt(document.getElementById(`e-photos-${id}`).value)||0;
+  c.status=document.getElementById(`e-status-${id}`).value;
+  c.price=document.getElementById(`e-price-${id}`).value.trim();
+  if(document.getElementById(`e-style-${id}`))c.style=document.getElementById(`e-style-${id}`).value.trim();
+  if(document.getElementById(`e-notes-${id}`))c.notes=document.getElementById(`e-notes-${id}`).value.trim();
+  if(document.getElementById(`e-refs-${id}`))c.refs=document.getElementById(`e-refs-${id}`).value.trim();
+  const ny=c.session?parseInt(c.session.split('-')[0]):null;
+  if(ny&&!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
+  openEditId=null;save();toast('Alterações guardadas','✓');
+}
+
+function delClient(id){
+  const c=clients.find(x=>x.id===id);
+  if(!confirm(`Apagar "${c?c.name:'cliente'}" permanentemente?`))return;
+  clients=clients.filter(c=>c.id!==id);
+  if(openEditId===id)openEditId=null;
+  save();toast('Cliente apagado','✓');
+}
+
+function fSt(s,el){fStatus=s;document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));el.classList.add('on');render();}
+
+let modalTab='info';
+function switchModalTab(tab,el){
+  modalTab=tab;
+  document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('modal-tab-info').style.display=tab==='info'?'grid':'none';
+  document.getElementById('modal-tab-extras').style.display=tab==='extras'?'block':'none';
+}
+
+function openNewModal(){
+  newAvatarData=null;modalTab='info';
+  document.getElementById('n-name').value='';document.getElementById('n-email').value='';document.getElementById('n-phone').value='';
+  document.getElementById('n-facebook').value='';document.getElementById('n-bday').value='';
+  document.getElementById('n-sess').value=`${activeYear}-01-01`;
+  document.getElementById('n-photos').value='';document.getElementById('n-status').value='sched';
+  document.getElementById('n-style').value='';document.getElementById('n-notes').value='';
+  document.getElementById('n-refs').value='';document.getElementById('n-price').value='';
+  document.getElementById('new-avatar-preview').innerHTML='<i class="ti ti-user-plus" style="font-size:24px;color:var(--text3)" aria-hidden="true"></i>';
+  document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));
+  document.querySelector('.modal-tab').classList.add('on');
+  document.getElementById('modal-tab-info').style.display='grid';
+  document.getElementById('modal-tab-extras').style.display='none';
+  document.getElementById('new-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('n-name').focus(),100);
+}
+function closeNewModal(){document.getElementById('new-modal').classList.remove('open');newAvatarData=null;}
+
+function saveNew(){
+  const n=document.getElementById('n-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  const data={id:uid++,name:n,email:document.getElementById('n-email').value.trim(),phone:document.getElementById('n-phone').value.trim(),facebook:document.getElementById('n-facebook').value.trim(),bday:document.getElementById('n-bday').value,session:document.getElementById('n-sess').value,photos:parseInt(document.getElementById('n-photos').value)||0,status:document.getElementById('n-status').value,style:document.getElementById('n-style').value.trim(),notes:document.getElementById('n-notes').value.trim(),refs:document.getElementById('n-refs').value.trim(),price:document.getElementById('n-price').value.trim(),gallery:[],avatar:newAvatarData};
+  clients.push(data);
+  const ny=data.session?parseInt(data.session.split('-')[0]):null;
+  if(ny&&!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
+  if(ny)activeYear=ny;
+  closeNewModal();save();toast('Cliente criado com sucesso','✓');
+}
+
+function checkAlerts(){
+  const bs=clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=7;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));
+  const ba=document.getElementById('bday-alert');
+  if(bs.length){ba.style.display='flex';document.getElementById('bday-txt').textContent=bs.map(c=>{const d=bdaySoon(c.bday);return d===0?`🎉 Hoje: aniversário de ${c.name.split(' ')[0]}!`:`${c.name.split(' ')[0]} faz anos em ${d} dia${d>1?'s':''}`;}).join(' · ');}
+  else ba.style.display='none';
+  const rv=clients.filter(needsR);
+  document.getElementById('s-renov').textContent=rv.length;
+  const ra=document.getElementById('renov-alert');const rab=document.getElementById('renov-all-btn');
+  if(rv.length){ra.style.display='flex';document.getElementById('renov-txt').textContent=`${rv.length} cliente${rv.length>1?'s':''} prontos para renovar para ${activeYear+1}`;document.getElementById('renov-alert-btn').textContent=`Renovar todos para ${activeYear+1}`;rab.style.display='flex';document.getElementById('renov-all-lbl').textContent=`Renovar todos para ${activeYear+1}`;}
+  else{ra.style.display='none';rab.style.display='none';}
+}
+
+function updateStats(){
+  const yc=clients.filter(c=>sYear(c)===activeYear);
+  document.getElementById('s-tot').textContent=yc.length;
+  document.getElementById('s-prem').textContent=yc.filter(c=>isPrem(c.photos)).length;
+  document.getElementById('s-done').textContent=yc.filter(c=>c.status==='done').length;
+  document.getElementById('s-sched').textContent=yc.filter(c=>c.status==='sched').length;
+}
+
+function openYrModal(){document.getElementById('new-yr').value='';document.getElementById('yr-modal').classList.add('open');setTimeout(()=>document.getElementById('new-yr').focus(),80);}
+function closeYrModal(){document.getElementById('yr-modal').classList.remove('open');}
+function confirmYear(){const y=parseInt(document.getElementById('new-yr').value);if(!y||y<2000||y>2040){toast('Ano inválido','!');return;}if(years.includes(y)){toast(`O ano ${y} já existe`,'!');return;}years.push(y);years.sort((a,b)=>a-b);activeYear=y;closeYrModal();save();toast(`Ano ${y} criado`,'✓');}
+
+document.querySelectorAll('.overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));openEditId=null;render();}if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();openNewModal();}});
+
+let toastTimer;
+function toast(msg,icon='✓'){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;document.getElementById('toast-icon').textContent=icon;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+
+loadSett();load();renderBrandPhoto();buildSidebar();render();
+</script>
+</body>
+</html>
