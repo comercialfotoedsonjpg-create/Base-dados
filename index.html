@@ -591,7 +591,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .apikey-note{font-size:11px;color:var(--text3);background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px;line-height:1.5}
 
 </style>
-<link rel="stylesheet" href="./Edson JPG — Base de Dados de Clientes_files/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 </head>
 <body>
 
@@ -609,10 +609,15 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
     </div>
   </div>
 
-  <div class="nav-section">Aniversários 2026</div>
+  <div class="nav-section">Menu</div>
   <button class="nav-item active" onclick="showView('clientes',this)">
     <i class="ti ti-users ni-icon" aria-hidden="true"></i><span>Clientes</span>
     <span class="ni-badge" id="nav-total">41</span>
+  </button>
+  <button class="nav-item" onclick="showView('bebes',this)" style="background:rgba(249,168,212,.06);border-left:3px solid #f9a8d4;border-radius:0 var(--radius-sm) var(--radius-sm) 0">
+    <i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i>
+    <span style="color:#f9a8d4;font-weight:500;font-size:12px">Campanhas Bebés 📸</span>
+    <span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span>
   </button>
   <button class="nav-item" onclick="showView('premium',this)">
     <i class="ti ti-star ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Premium</span>
@@ -635,13 +640,6 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
   <button class="nav-item" onclick="showView(&#39;agente&#39;,this)">
     <i class="ti ti-robot ni-icon" style="color:#4fc3f7" aria-hidden="true"></i><span>Agente IA</span>
     <span class="ni-badge" id="nav-agent" style="background:rgba(79,195,247,.15);color:var(--sched)">Chat</span>
-  </button>
-
-  <div class="nav-section" style="margin-top:4px">Campanhas</div>
-  <button class="nav-item" onclick="showView('bebes',this)">
-    <i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i>
-    <span>Bebés — Mensiversários</span>
-    <span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span>
   </button>
   <div class="nav-section" style="margin-top:4px">Anos</div>
   <div class="years-section" id="years-nav"><button class="year-tab" onclick="setYear(2025)">2025<span class="ycount">1</span></button><button class="year-tab active" onclick="setYear(2026)">2026<span class="ycount">38</span></button><button class="year-tab" onclick="setYear(2027)">2027<span class="ycount">2</span></button><button class="year-tab" onclick="setYear(2028)">2028<span class="ycount">0</span></button></div>
@@ -1392,10 +1390,16 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
   <div class="baby-section" id="baby-section">
     <div class="baby-header">
       <div>
-        <div style="font-size:14px;font-weight:600">👶 Bebés — Mensiversários</div>
+        <div style="font-size:14px;font-weight:600">👶 Campanhas de Bebés — FotoEdsonJPG</div>
         <div style="font-size:11px;color:var(--text3)" id="baby-sub">Regista os bebés para acompanhar cada mês</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openBabyModal(null)"><i class="ti ti-plus"></i>Novo bebé</button>
+    </div>
+    <!-- Anos de bebés -->
+    <div style="padding:8px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--surface2)">
+      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-right:4px">Ano</span>
+      <div id="baby-year-tabs" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+      <button onclick="addBabyYear()" style="background:none;border:1px dashed var(--border2);color:var(--text3);border-radius:5px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit">+ Ano</button>
     </div>
     <div class="baby-grid" id="baby-grid"></div>
   </div>
@@ -2910,7 +2914,8 @@ function gFindFile(cb){if(gFileId){cb(gFileId);return;}fetch('https://www.google
 function gdriveSave(){if(!gConnected||!gToken)return;gUI('busy','A guardar...');var payload=JSON.stringify({v:3,ts:Date.now(),clients:clients,years:years,agenda:{events:typeof agEvents!=='undefined'?agEvents:[]},agent:typeof agentSettings!=='undefined'?agentSettings:{},babies:typeof babies!=='undefined'?babies:[]});gFindFile(function(fid){var b='edjpg_b',meta=JSON.stringify({name:'edjpg_crm.json',mimeType:'application/json'}),body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+payload+'\r\n--'+b+'--';fetch(fid?'https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=multipart':'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:fid?'PATCH':'POST',headers:{Authorization:'Bearer '+gToken,'Content-Type':'multipart/related; boundary='+b},body:body}).then(function(r){return r.json();}).then(function(d){if(!fid&&d.id){gFileId=d.id;localStorage.setItem('edjpg_gdrive_fid',d.id);}gLastSync=new Date().toISOString();localStorage.setItem('edjpg_gdrive_sync',gLastSync);gUI('ok','Guardado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));}).catch(function(){gUI('err','Erro ao guardar');});});}
 function gdriveLoad(){if(!gConnected||!gToken)return;gFindFile(function(fid){if(!fid){gUI('ok','Novo ficheiro...');gdriveSave();return;}fetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media',{headers:{Authorization:'Bearer '+gToken}}).then(function(r){if(r.status===404){gFileId=null;localStorage.removeItem('edjpg_gdrive_fid');gdriveSave();return;}return r.json();}).then(function(d){if(!d)return;if(d.clients){clients=d.clients;uid=Math.max.apply(null,clients.map(function(c){return c.id||0;}).concat([0]))+1;}if(d.years)years=d.years;if(d.agenda&&d.agenda.events&&typeof agEvents!=='undefined')agEvents=d.agenda.events;if(d.agent&&typeof agentSettings!=='undefined')Object.assign(agentSettings,d.agent);if(d.babies&&typeof babies!=='undefined'){babies=d.babies;babyUid=Math.max.apply(null,babies.map(function(b){return b.id||0;}).concat([0]))+1;}localStorage.setItem('edjpg_v3',JSON.stringify({clients:clients,years:years}));buildSidebar();render();if(typeof agUpdateBadge==='function')agUpdateBadge();if(typeof renderBabyGrid==='function')renderBabyGrid();gUI('ok','Carregado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));toast('Dados do Drive carregados','');}).catch(function(){gUI('err','Erro ao ler');});});}
 function gScheduleSave(){if(!gConnected)return;clearTimeout(gSaveTimer);gSaveTimer=setTimeout(gdriveSave,2500);}
-var _origSaveDrive=save;save=function(){_origSaveDrive();gScheduleSave();};
+if(typeof save==='function'){var _origSaveDrive=save;save=function(){_origSaveDrive();gScheduleSave();};}
+
 function openSetupModal(){document.getElementById('setup-modal').classList.add('open');}
 function closeSetupModal(){document.getElementById('setup-modal').classList.remove('open');}
 function saveSetupConfig(){var cid=(document.getElementById('setup-cid').value||'').trim();if(!cid){toast('Insere o Client ID','!');return;}gCid=cid;localStorage.setItem('edjpg_gdrive_cid',cid);closeSetupModal();gdriveSignIn();}
@@ -3018,22 +3023,78 @@ openApiKeyModal=function(){
 var babies=JSON.parse(localStorage.getItem('edjpg_babies')||'[]');
 var babyUid=Math.max.apply(null,babies.map(function(b){return b.id||0;}).concat([0]))+1;
 var editingBaby=null;
+var activeBabyYear=new Date().getFullYear();
+var babyYears=JSON.parse(localStorage.getItem('edjpg_baby_years')||'[2025,2026,2027,2028]');
+
+function saveBabyYears(){localStorage.setItem('edjpg_baby_years',JSON.stringify(babyYears));}
+
+function renderBabyYearTabs(){
+  var container=document.getElementById('baby-year-tabs');if(!container)return;
+  container.innerHTML=['Todos'].concat(babyYears).map(function(y){
+    var isActive=y==='Todos'?activeBabyYear===0:activeBabyYear===y;
+    var count=y==='Todos'?babies.length:babies.filter(function(b){return(b.year||2026)===y;}).length;
+    return'<button onclick="setBabyYear('+(y==='Todos'?0:y)+')" style="padding:4px 12px;border-radius:5px;font-size:12px;font-family:inherit;cursor:pointer;border:1px solid '+(isActive?'var(--accent)':'var(--border2)')+';background:'+(isActive?'rgba(155,140,255,.15)':'transparent')+';color:'+(isActive?'var(--accent)':'var(--text2)')+';font-weight:'+(isActive?'600':'400')+'">'+y+'<span style="margin-left:5px;font-size:10px;opacity:.7">'+count+'</span></button>';
+  }).join('');
+}
+
+function setBabyYear(y){
+  activeBabyYear=y;
+  renderBabyYearTabs();
+  renderBabyGrid();
+}
+
+function addBabyYear(){
+  var maxY=Math.max.apply(null,babyYears);
+  var newY=maxY+1;
+  babyYears.push(newY);
+  saveBabyYears();
+  // Add to modal select
+  var sel=document.getElementById('bm-year');
+  if(sel){var opt=document.createElement('option');opt.value=newY;opt.textContent=newY;sel.appendChild(opt);}
+  renderBabyYearTabs();
+  toast('Ano '+newY+' adicionado','✓');
+}
+
+// Init year select in modal with saved years
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    var sel=document.getElementById('bm-year');
+    if(sel){
+      sel.innerHTML='';
+      babyYears.forEach(function(y){
+        var opt=document.createElement('option');
+        opt.value=y;opt.textContent=y;
+        if(y===new Date().getFullYear())opt.selected=true;
+        sel.appendChild(opt);
+      });
+    }
+    renderBabyYearTabs();
+  },600);
+});
 var BMLBLS=['1m','2m','3m','4m','5m','6m','7m','8m','9m','10m','11m','12m+'];
 
-function saveBabies(){localStorage.setItem('edjpg_babies',JSON.stringify(babies));gScheduleSave();renderBabyGrid();var nb=document.getElementById('nav-bebes');if(nb)nb.textContent=babies.length;}
+function saveBabies(){localStorage.setItem('edjpg_babies',JSON.stringify(babies));gScheduleSave();renderBabyGrid();renderBabyYearTabs();var nb=document.getElementById('nav-bebes');if(nb)nb.textContent=babies.length;}
 
 function renderBabyGrid(){
   var el=document.getElementById('baby-grid');if(!el)return;
+  var filtered=typeof activeBabyYear!=='undefined'&&activeBabyYear!==0
+    ?babies.filter(function(b){return(b.year||2026)===activeBabyYear;})
+    :babies;
   var sub=document.getElementById('baby-sub');
-  var total=babies.reduce(function(s,b){return s+(b.sessions||[]).filter(function(s){return s.done;}).length;},0);
-  if(sub)sub.textContent=babies.length+' bebes | '+total+' sessoes realizadas';
-  if(!babies.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3)"><div style="font-size:52px">👶</div><div style="font-size:15px;color:var(--text2);margin-top:14px;font-weight:500">Nenhum bebe registado</div><div style="font-size:12px;margin-top:6px">Clica em Novo bebe para comecar</div></div>';return;}
-  el.innerHTML=babies.map(function(b){
+  var total=filtered.reduce(function(s,b){return s+(b.sessions||[]).filter(function(s){return s.done;}).length;},0);
+  var yearLabel=typeof activeBabyYear!=='undefined'&&activeBabyYear!==0?' em '+activeBabyYear:'';
+  if(sub)sub.textContent=filtered.length+' bebés'+yearLabel+' | '+total+' sessões realizadas';
+  renderBabyYearTabs();
+  if(!filtered.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3)"><div style="font-size:52px">👶</div><div style="font-size:15px;color:var(--text2);margin-top:14px;font-weight:500">Nenhum bebé'+(yearLabel?' em '+activeBabyYear:'')+'</div><div style="font-size:12px;margin-top:6px">Clica em Novo bebé para começar</div></div>';return;}
+  el.innerHTML=filtered.map(function(b){
     var ms=b.birthdate?Math.floor((Date.now()-new Date(b.birthdate+'T12:00:00').getTime())/(1000*60*60*24*30.44)):0;
     var sess=b.sessions||[],done=sess.filter(function(s){return s.done;}).length;
     var over1=ms>=12;
     var mhtml=BMLBLS.map(function(lbl,i){var m=i+1,s=sess.find(function(s){return s.month===m;})||{},isM=(m===6||m===12);return'<div class="bm-btn'+(s.done?(isM?' milestone':' done'):'')+'" title="Mes '+m+(isM?' Marco':'')+'" onclick="toggleBabyMonth('+b.id+','+m+')">'+lbl+(isM?'<span style="position:absolute;top:1px;right:2px;font-size:7px">&#11088;</span>':'')+'</div>';}).join('');
-    var gifts=[b.gift6?'🎁 6m: '+b.gift6:'',b.gift12?'🎁 12m: '+b.gift12:''].filter(Boolean).join(' | ');
+    var gifts=[
+      b.prize6?'🏆 6m: '+(b.prize6desc||'Prémio atribuído'):'',
+      b.prize12?'🏆 12m: '+(b.prize12desc||'Prémio atribuído'):''
+    ].filter(Boolean).join(' | ');
     return'<div class="baby-card"><div class="baby-card-head"><div class="baby-av">👶</div><div><div class="baby-name">'+b.name+'</div><div class="baby-meta">'+ms+' meses | '+done+'/12 sessoes'+(over1?' | <span style="color:var(--gold)">+1 ano</span>':'')+'</div>'+(b.mae?'<div class="baby-meta" style="color:var(--text2)">Mae: '+b.mae+(b.parent?' | Pai: '+b.parent:'')+'</div>':'')+
     '</div></div><div class="baby-months-grid">'+mhtml+'</div>'+(gifts?'<div style="padding:6px 14px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border)">'+gifts+'</div>':'')+
     '<div class="baby-card-foot"><button class="btn btn-ghost btn-xs" onclick="openBabyModal('+b.id+')"><i class="ti ti-edit"></i>Editar</button><button class="btn btn-danger btn-xs" onclick="deleteBaby('+b.id+')"><i class="ti ti-trash"></i></button></div></div>';
@@ -3050,9 +3111,32 @@ function openBabyModal(id){
   document.getElementById('bm-parent').value=(b&&b.parent)||'';
   document.getElementById('bm-birthdate').value=(b&&b.birthdate)||'';
   document.getElementById('bm-phone').value=(b&&b.phone)||'';
+  var fb=document.getElementById('bm-facebook');if(fb)fb.value=(b&&b.facebook)||'';
   var sm=document.getElementById('bm-startmonth');if(sm)sm.value=(b&&b.startmonth)||1;
-  document.getElementById('bm-gift6').value=(b&&b.gift6)||'';
-  document.getElementById('bm-gift12').value=(b&&b.gift12)||'';
+  var mo=document.getElementById('bm-months');if(mo)mo.value=(b&&b.months)||1;
+  var yr=document.getElementById('bm-year');if(yr)yr.value=(b&&b.year)||new Date().getFullYear();
+  // Prémio 3 meses
+  var p3y=document.getElementById('bm-prize3-yes'),p3n=document.getElementById('bm-prize3-no');
+  var p3w=document.getElementById('bm-prize3-wrap');
+  if(p3y&&p3n){if(b&&b.prize3){p3y.checked=true;if(p3w)p3w.style.display='block';}else{if(p3n)p3n.checked=true;if(p3w)p3w.style.display='none';}}
+  var p3d=document.getElementById('bm-prize3-desc');if(p3d)p3d.value=(b&&b.prize3desc)||'';
+  var p3s=document.getElementById('bm-prize3-status');if(p3s)p3s.value=(b&&b.prize3status)||'pendente';
+  // Prémio 6 meses
+  var p6y=document.getElementById('bm-prize6-yes'),p6n=document.getElementById('bm-prize6-no');
+  var p6w=document.getElementById('bm-prize6-wrap');
+  if(p6y&&p6n){if(b&&b.prize6){p6y.checked=true;if(p6w)p6w.style.display='block';}else{if(p6n)p6n.checked=true;if(p6w)p6w.style.display='none';}}
+  var p6d=document.getElementById('bm-prize6-desc');if(p6d)p6d.value=(b&&b.prize6desc)||'';
+  var p6s=document.getElementById('bm-prize6-status');if(p6s)p6s.value=(b&&b.prize6status)||'pendente';
+  var p12y=document.getElementById('bm-prize12-yes'),p12n=document.getElementById('bm-prize12-no');
+  var p12w=document.getElementById('bm-prize12-wrap');
+  if(p12y&&p12n){if(b&&b.prize12){p12y.checked=true;if(p12w)p12w.style.display='block';}else{if(p12n)p12n.checked=true;if(p12w)p12w.style.display='none';}}
+  var p12d=document.getElementById('bm-prize12-desc');if(p12d)p12d.value=(b&&b.prize12desc)||'';
+  var p12s=document.getElementById('bm-prize12-status');if(p12s)p12s.value=(b&&b.prize12status)||'pendente';
+  var bmt=document.getElementById('bm-testimonial');if(bmt)bmt.value=(b&&b.testimonial)||'';
+  var bty=document.getElementById('bm-test-yes'),btn2=document.getElementById('bm-test-no');
+  if(bty&&btn2){if(b&&b.testimonialAuth)bty.checked=true;else btn2.checked=true;}
+  var bay=document.getElementById('bm-anniv-yes'),ban=document.getElementById('bm-anniv-no');
+  if(bay&&ban){if(b&&b.addToAnniv===false)ban.checked=true;else bay.checked=true;}
   document.getElementById('bm-notes').value=(b&&b.notes)||'';
   document.getElementById('baby-modal-title').textContent=b?'Editar '+b.name:'Novo Bebe';
   renderBabySessionsModal(b);
@@ -3064,7 +3148,18 @@ function renderBabySessionsModal(b){
   var c=document.getElementById('bm-sessions');if(!c)return;
   c.innerHTML=BMLBLS.map(function(_,i){
     var m=i+1,s=(b&&b.sessions)?b.sessions.find(function(s){return s.month===m;})||{}:{},isM=(m===6||m===12);
-    return'<div class="sess-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;font-weight:600">Mes '+m+(isM?' ⭐':'')+'</span><span id="bms-badge-'+m+'" style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;'+(s.done?'background:rgba(74,222,154,.12);color:var(--done)':'background:rgba(100,100,100,.1);color:var(--text3)')+'">'+( s.done?'Feito':'Pendente')+'</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><span class="flabel">Fotos tiradas</span><input class="finput" id="bms-photos-'+m+'" type="number" min="0" value="'+(s.photos||0)+'"></div><div class="fg"><span class="flabel">Brinde</span><input class="finput" id="bms-gift-'+m+'" type="text" value="'+(s.gift||'')+'" placeholder="ex: album..."></div></div><div style="margin-top:8px"><button class="btn '+(s.done?'btn-danger':'btn-success')+' btn-xs" onclick="toggleBSM('+(b?b.id:0)+','+m+')">'+(s.done?'Marcar pendente':'Marcar como feito')+'</button></div></div>';
+    return'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:8px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+    '<span style="font-size:13px;font-weight:600">Mês '+m+(isM?' ⭐':'')+'</span>'+
+    '<span id="bms-badge-'+m+'" style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:'+(s.done?'rgba(74,222,154,.12)':'rgba(100,100,100,.1)')+';color:'+(s.done?'var(--done)':'var(--text3)')+'">'+( s.done?'✓ Feito':'Pendente')+'</span>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+    '<div class="fg"><span class="flabel">📱 Fotos digitais</span><input class="finput" id="bms-photos-'+m+'" type="number" min="0" value="'+(s.photos||0)+'"></div>'+
+    '<div class="fg"><span class="flabel">🖨️ Fotos impressas</span><input class="finput" id="bms-printed-'+m+'" type="number" min="0" value="'+(s.printed||0)+'"></div>'+
+    '<div class="fg"><span class="flabel">🎁 Brinde</span><input class="finput" id="bms-gift-'+m+'" value="'+(s.gift||'')+'" placeholder="ex: álbum..."></div>'+
+    '</div>'+
+    '<div style="margin-top:8px"><button class="btn '+(s.done?'btn-danger':'btn-success')+' btn-xs" onclick="toggleBSM('+(b?b.id:0)+','+m+')">'+( s.done?'Marcar pendente':'✓ Marcar feito')+'</button></div>'+
+    '</div>';
   }).join('');
 }
 
@@ -3080,79 +3175,89 @@ function saveBabyModal(){
   b.parent=(document.getElementById('bm-parent').value||'').trim();
   b.birthdate=document.getElementById('bm-birthdate').value;
   b.phone=(document.getElementById('bm-phone').value||'').trim();
+  b.facebook=((document.getElementById('bm-facebook')||{}).value||'').trim();
   b.startmonth=parseInt((document.getElementById('bm-startmonth')||{value:'1'}).value)||1;
-  b.gift6=(document.getElementById('bm-gift6').value||'').trim();
-  b.gift12=(document.getElementById('bm-gift12').value||'').trim();
+  b.months=parseInt((document.getElementById('bm-months')||{value:'1'}).value)||1;
+  b.year=parseInt((document.getElementById('bm-year')||{value:new Date().getFullYear()}).value)||new Date().getFullYear();
+  b.prize3=!!(document.getElementById('bm-prize3-yes')&&document.getElementById('bm-prize3-yes').checked);
+  b.prize3desc=((document.getElementById('bm-prize3-desc')||{}).value||'').trim();
+  b.prize3status=((document.getElementById('bm-prize3-status')||{}).value)||'pendente';
+  b.prize6=!!(document.getElementById('bm-prize6-yes')&&document.getElementById('bm-prize6-yes').checked);
+  b.prize6desc=((document.getElementById('bm-prize6-desc')||{}).value||'').trim();
+  b.prize6status=((document.getElementById('bm-prize6-status')||{}).value)||'pendente';
+  b.prize12=!!(document.getElementById('bm-prize12-yes')&&document.getElementById('bm-prize12-yes').checked);
+  b.prize12desc=((document.getElementById('bm-prize12-desc')||{}).value||'').trim();
+  b.prize12status=((document.getElementById('bm-prize12-status')||{}).value)||'pendente';
+  b.testimonial=((document.getElementById('bm-testimonial')||{}).value||'').trim();
+  b.testimonialAuth=!!(document.getElementById('bm-test-yes')&&document.getElementById('bm-test-yes').checked);
+  b.addToAnniv=!(document.getElementById('bm-anniv-no')&&document.getElementById('bm-anniv-no').checked);
   b.notes=(document.getElementById('bm-notes').value||'').trim();
-  BMLBLS.forEach(function(_,i){var m=i+1,s=b.sessions.find(function(s){return s.month===m;});var photos=parseInt((document.getElementById('bms-photos-'+m)||{}).value)||0,gift=((document.getElementById('bms-gift-'+m)||{}).value)||'';if(!s){s={month:m,done:false};b.sessions.push(s);}s.photos=photos;s.gift=gift;});
+  BMLBLS.forEach(function(_,i){var m=i+1,s=b.sessions.find(function(s){return s.month===m;});var photos=parseInt((document.getElementById('bms-photos-'+m)||{}).value)||0,printed=parseInt((document.getElementById('bms-printed-'+m)||{}).value)||0,gift=((document.getElementById('bms-gift-'+m)||{}).value)||'';if(!s){s={month:m,done:false};b.sessions.push(s);}s.photos=photos;s.printed=printed;s.gift=gift;});
   saveBabies();closeBabyModal();
   toast(editingBaby?'Bebe actualizado':'Bebe adicionado!','');
 }
 
 function deleteBaby(id){var b=babies.find(function(x){return x.id===id;});if(!confirm('Apagar "'+( b?b.name:'')+'"?'))return;babies=babies.filter(function(x){return x.id!==id;});saveBabies();toast('Apagado','');}
 
-// showView patch for bebes
-var _svBaby=showView;
+// showView patch — bebes + agente
+var _svBase2=showView;
 showView=function(v,el){
   var bSec=document.getElementById('baby-section');
+  var agSec=document.getElementById('agent-section');
+
+  // ── BEBÉS ──
   if(v==='bebes'){
     ['client-list','agenda-section','metrics-section','agent-section'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
     ['.toolbar','.stats-row','.page-footer'].forEach(function(sel){var e=document.querySelector(sel);if(e)e.style.display='none';});
     document.querySelectorAll('.alert').forEach(function(a){a.style.display='none';});
-    document.querySelectorAll('.topbar-actions .btn-primary,.topbar-actions #renov-all-btn').forEach(function(b){b.style.display='none';});
+    document.querySelectorAll('.topbar-actions .btn-primary,.topbar-actions #renov-all-btn,.topbar-actions .btn-ghost').forEach(function(b){b.style.display='none';});
+    document.getElementById('renov-bday-banner').style.display='none';
     if(bSec){bSec.style.display='flex';bSec.style.flexDirection='column';}
-    document.getElementById('page-title').textContent='Bebes — Mensiversarios';
-    document.getElementById('page-sub').textContent=(typeof babies!=='undefined'?babies.length:0)+' bebes registados';
+    if(agSec)agSec.style.display='none';
+    document.getElementById('page-title').textContent='Bebés — Mensiversários';
+    document.getElementById('page-sub').textContent=(typeof babies!=='undefined'?babies.length:0)+' bebés registados';
     document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
     if(el)el.classList.add('active');
-    renderBabyGrid();return;
+    renderBabyGrid();
+    return;
   }
+
+  // ── esconde bebés ──
   if(bSec)bSec.style.display='none';
-  _svBaby(v,el);
-};
 
-renderBabyGrid();
-var _nb=document.getElementById('nav-bebes');if(_nb)_nb.textContent=babies.length;
-window.addEventListener('load',function(){setTimeout(function(){var btn=document.getElementById('agent-ai-btn');if(btn)btn.innerHTML=(agentSettings&&agentSettings.aiProvider==='gemini')?'<i class="ti ti-robot" style="color:#4285f4"></i>Gemini':'<i class="ti ti-sparkles"></i>IA';},500);});
-
-
-// Patch showView to handle 'agente'
-const _showViewBase = showView;
-showView = function(v, el) {
-  const agSec2 = document.getElementById('agent-section');
-  if (v === 'agente') {
-    const cl   = document.getElementById('client-list');
-    const tb   = document.querySelector('.toolbar');
-    const sr   = document.querySelector('.stats-row');
-    const pf   = document.querySelector('.page-footer');
-    const agS  = document.getElementById('agenda-section');
-    const mS   = document.getElementById('metrics-section');
-    const alerts= document.querySelectorAll('.alert');
-    if(cl) cl.style.display='none';
-    if(tb) tb.style.display='none';
-    if(sr) sr.style.display='none';
-    if(pf) pf.style.display='none';
-    if(agS) agS.style.display='none';
-    if(mS) mS.style.display='none';
-    alerts.forEach(a=>a.style.display='none');
-    // Hide new client button
-    document.querySelectorAll('.topbar-actions .btn-primary').forEach(b=>b.style.display='none');
-    document.querySelectorAll('.topbar-actions #renov-all-btn').forEach(b=>b.style.display='none');
-    // Show agent
-    if(agSec2){ agSec2.style.display='flex'; agSec2.style.flexDirection='column'; }
-    document.getElementById('page-title').textContent = 'Agente IA de Atendimento';
-    document.getElementById('page-sub').textContent = 'Chat automático com clientes via WhatsApp e Facebook';
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    if (el) el.classList.add('active');
-    const banner = document.getElementById('agent-api-banner');
-    if (banner) banner.style.display = agentSettings.apiKey ? 'none' : 'flex';
+  // ── AGENTE ──
+  if(v==='agente'){
+    var cl=document.getElementById('client-list');
+    var tb=document.querySelector('.toolbar');
+    var sr=document.querySelector('.stats-row');
+    var pf=document.querySelector('.page-footer');
+    var agS=document.getElementById('agenda-section');
+    var mS=document.getElementById('metrics-section');
+    document.querySelectorAll('.alert').forEach(function(a){a.style.display='none';});
+    if(cl)cl.style.display='none';
+    if(tb)tb.style.display='none';
+    if(sr)sr.style.display='none';
+    if(pf)pf.style.display='none';
+    if(agS)agS.style.display='none';
+    if(mS)mS.style.display='none';
+    document.querySelectorAll('.topbar-actions .btn-primary').forEach(function(b){b.style.display='none';});
+    document.querySelectorAll('.topbar-actions #renov-all-btn').forEach(function(b){b.style.display='none';});
+    if(agSec){agSec.style.display='flex';agSec.style.flexDirection='column';}
+    document.getElementById('page-title').textContent='Agente IA de Atendimento';
+    document.getElementById('page-sub').textContent='Chat automático com clientes via WhatsApp e Facebook';
+    document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+    if(el)el.classList.add('active');
+    var banner=document.getElementById('agent-api-banner');
+    if(banner)banner.style.display=agentSettings.apiKey?'none':'flex';
     renderAgentClientList();
     return;
   }
-  // Restore new client button when leaving agent view
-  if(agSec2) agSec2.style.display='none';
-  document.querySelectorAll('.topbar-actions .btn-primary').forEach(b=>b.style.display='');
-  _showViewBase(v, el);
+
+  // ── esconde agente ──
+  if(agSec)agSec.style.display='none';
+  document.querySelectorAll('.topbar-actions .btn-primary').forEach(function(b){b.style.display='';});
+
+  _svBase2(v,el);
 };
 
 </script>
@@ -3342,5 +3447,168 @@ showView = function(v, el) {
 </div>
 
 
+
+<!-- ══ BABY MODAL ══ -->
+<div class="baby-modal-bg" id="baby-modal">
+  <div class="baby-modal" style="max-width:640px">
+    <div class="baby-mhead">
+      <h2><i class="ti ti-baby-carriage" style="color:#f9a8d4"></i><span id="baby-modal-title">Novo Bebé</span></h2>
+      <button class="modal-close" onclick="closeBabyModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="baby-mbody">
+
+      <!-- ── DADOS DO BEBÉ ── -->
+      <div style="background:rgba(249,168,212,.06);border:1px solid rgba(249,168,212,.25);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#f9a8d4;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">👶 Dados do Bebé</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg" style="grid-column:1/-1">
+            <span class="flabel">Nome do bebé *</span>
+            <input class="finput" id="bm-name" placeholder="ex: Sofia">
+          </div>
+          <div class="fg">
+            <span class="flabel">Data de nascimento</span>
+            <input class="finput" id="bm-birthdate" type="date">
+          </div>
+          <div class="fg">
+            <span class="flabel">Ano da campanha</span>
+            <select class="fsel" id="bm-year">
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+          <div class="fg">
+            <span class="flabel">Nº de meses na campanha</span>
+            <select class="fsel" id="bm-months">
+              <option value="1">1 mês</option><option value="2">2 meses</option>
+              <option value="3">3 meses</option><option value="4">4 meses</option>
+              <option value="5">5 meses</option><option value="6">6 meses</option>
+              <option value="7">7 meses</option><option value="8">8 meses</option>
+              <option value="9">9 meses</option><option value="10">10 meses</option>
+              <option value="11">11 meses</option><option value="12">12 meses</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DADOS DA MÃE ── -->
+      <div style="background:rgba(155,140,255,.06);border:1px solid rgba(155,140,255,.2);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">👩 Dados da Mãe</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg">
+            <span class="flabel">Nome da mãe</span>
+            <input class="finput" id="bm-mae" placeholder="ex: Maria Silva">
+          </div>
+          <div class="fg">
+            <span class="flabel">Nome do pai</span>
+            <input class="finput" id="bm-parent" placeholder="ex: João Silva">
+          </div>
+          <div class="fg">
+            <span class="flabel">📱 WhatsApp da mãe</span>
+            <input class="finput" id="bm-phone" type="tel" placeholder="+238...">
+          </div>
+          <div class="fg">
+            <span class="flabel">Facebook da mãe</span>
+            <input class="finput" id="bm-facebook" placeholder="https://facebook.com/...">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRÉMIOS ── -->
+      <div style="background:rgba(240,180,41,.06);border:1px solid rgba(240,180,41,.25);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🏆 Prémios Atribuídos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+
+          <!-- Prémio 3 meses -->
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border2)">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">🎁 3 meses</div>
+            <div style="display:flex;gap:12px;margin-bottom:8px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize3" id="bm-prize3-yes" value="1" onchange="togglePrize('3',1)"><span style="color:var(--done);font-weight:500">✓ Sim</span></label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize3" id="bm-prize3-no" value="0" checked onchange="togglePrize('3',0)"><span style="color:var(--text3)">✗ Não</span></label>
+            </div>
+            <div id="bm-prize3-wrap" style="display:none">
+              <input class="finput" id="bm-prize3-desc" placeholder="Descreve o prémio..." style="margin-bottom:6px">
+              <select class="fsel" id="bm-prize3-status"><option value="pendente">⏳ Por entregar</option><option value="entregue">✅ Entregue</option></select>
+            </div>
+          </div>
+
+          <!-- Prémio 6 meses -->
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border2)">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">🎁 6 meses</div>
+            <div style="display:flex;gap:12px;margin-bottom:8px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize6" id="bm-prize6-yes" value="1" onchange="togglePrize('6',1)"><span style="color:var(--done);font-weight:500">✓ Sim</span></label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize6" id="bm-prize6-no" value="0" checked onchange="togglePrize('6',0)"><span style="color:var(--text3)">✗ Não</span></label>
+            </div>
+            <div id="bm-prize6-wrap" style="display:none">
+              <input class="finput" id="bm-prize6-desc" placeholder="Descreve o prémio..." style="margin-bottom:6px">
+              <select class="fsel" id="bm-prize6-status"><option value="pendente">⏳ Por entregar</option><option value="entregue">✅ Entregue</option></select>
+            </div>
+          </div>
+
+          <!-- Prémio 12 meses / 1 ano -->
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border2)">
+            <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">🏅 1 ano (12m)</div>
+            <div style="display:flex;gap:12px;margin-bottom:8px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize12" id="bm-prize12-yes" value="1" onchange="togglePrize('12',1)"><span style="color:var(--done);font-weight:500">✓ Sim</span></label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="prize12" id="bm-prize12-no" value="0" checked onchange="togglePrize('12',0)"><span style="color:var(--text3)">✗ Não</span></label>
+            </div>
+            <div id="bm-prize12-wrap" style="display:none">
+              <input class="finput" id="bm-prize12-desc" placeholder="Descreve o prémio..." style="margin-bottom:6px">
+              <select class="fsel" id="bm-prize12-status"><option value="pendente">⏳ Por entregar</option><option value="entregue">✅ Entregue</option></select>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── DEPOIMENTO DA MÃE ── -->
+      <div style="background:rgba(74,222,154,.05);border:1px solid rgba(74,222,154,.2);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--done);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">💬 Depoimento da Mãe (6 meses)</div>
+        <textarea class="ftextarea" id="bm-testimonial" rows="3" placeholder="ex: Foi uma experiência incrível acompanhar o crescimento da Sofia mês a mês..."></textarea>
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center">
+          <span class="flabel">Autoriza publicar nas redes?</span>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="testauth" id="bm-test-yes" value="1"><span style="color:var(--done)">✓ Sim</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="testauth" id="bm-test-no" value="0" checked><span style="color:var(--text3)">✗ Não</span></label>
+        </div>
+      </div>
+
+      <!-- ── ANIVERSÁRIO (após 1 ano) ── -->
+      <div style="background:rgba(155,140,255,.05);border:1px solid rgba(155,140,255,.2);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🎂 Após 1 Ano — Lista de Aniversários</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Quando o bebé completar 1 ano, passa automaticamente para a lista de aniversários.</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <span class="flabel">Adicionar aos aniversários?</span>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="addanniv" id="bm-anniv-yes" value="1" checked><span style="color:var(--done)">✓ Sim</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="radio" name="addanniv" id="bm-anniv-no" value="0"><span style="color:var(--text3)">✗ Não</span></label>
+        </div>
+      </div>
+
+      <!-- ── FOTOS POR MÊS ── -->
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📸 Fotos por Sessão Mensal</div>
+        <div id="bm-sessions"></div>
+      </div>
+
+      <!-- ── NOTAS ── -->
+      <div class="fg">
+        <span class="flabel">📝 Notas adicionais</span>
+        <textarea class="ftextarea" id="bm-notes" rows="2" placeholder="ex: prefere manhã, tem gémeo, observações..."></textarea>
+      </div>
+
+    </div>
+    <div class="baby-mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeBabyModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveBabyModal()"><i class="ti ti-check"></i>Guardar bebé</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePrize(m,v){
+  var w=document.getElementById('bm-prize'+m+'-wrap');
+  if(w) w.style.display=v?'block':'none';
+}
+</script>
 
 </body></html>
