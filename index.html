@@ -7,17 +7,18 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Cinzel:wght@500;600;700&display=swap');
 :root {
-  --bg:#0f0f0f; --surface:#171717; --surface2:#1e1e1e; --surface3:#252525;
-  --border:#2a2a2a; --border2:#333; --accent:#9b8cff; --accent2:#7c6fff;
-  --gold:#f0b429; --wa:#25D366; --fb:#1877F2;
-  --text:#e8e8e8; --text2:#999; --text3:#555;
+  --bg:#0e0b0c; --surface:#181113; --surface2:#201619; --surface3:#2a1d21;
+  --border:#2f2126; --border2:#3d2b31; --accent:#C8992F; --accent2:#E7C364;
+  --gold:#E7C364; --burgundy:#5C0F2A; --wa:#25D366; --fb:#1877F2;
+  --text:#efe7dd; --text2:#a09591; --text3:#6f615d;
   --done:#4ade9a; --sched:#4fc3f7; --pend:#fbbf24; --canc:#f87171;
   --radius:10px; --radius-sm:6px;˙
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.brand-title,.page-title,.met-section h3{font-family:'Cinzel',serif;letter-spacing:.3px}
 
 
 /* DRIVE */
@@ -1665,7 +1666,7 @@ const fmtD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${
 const fmtBFull=d=>{if(!d)return'—';const p=d.split('-');return p.length>=3?`${p[2]} ${MONTHS[parseInt(p[1])-1]}`:'—';};
 const waN=p=>p?p.replace(/[\s\-()]/g,''):'';
 const sYear=c=>c.session?parseInt(c.session.split('-')[0]):null;
-const needsR=c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY;
+const needsR=c=>{if(!c.bday)return false;var p=c.bday.split('-');if(p.length<3)return false;var t=new Date();t.setHours(0,0,0,0);return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]))<t;};
 
 function bdaySoon(d){
   if(!d)return null;
@@ -1677,16 +1678,37 @@ function bdaySoon(d){
 }
 function renewD(s){if(!s)return'';const[y,m,d]=s.split('-');return`${parseInt(y)+1}-${m}-${d}`;}
 
+// Comprime/redimensiona imagens antes de guardar (evita encher a memória do browser)
+function compressImage(file, maxDim, quality){
+  return new Promise(function(resolve){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const img=new Image();
+      img.onload=function(){
+        let w=img.width,h=img.height;
+        if(w>h){ if(w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; } }
+        else   { if(h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; } }
+        try{
+          const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+          cv.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(cv.toDataURL('image/jpeg',quality));
+        }catch(err){ resolve(e.target.result); }
+      };
+      img.onerror=function(){ resolve(e.target.result); };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function loadBrandPhoto(input){
   const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    settings.brandPhoto=e.target.result;
+  compressImage(file,400,0.85).then(function(data){
+    settings.brandPhoto=data;
     saveSett();
     renderBrandPhoto();
     toast('Foto de perfil actualizada','✓');
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 function renderBrandPhoto(){
@@ -1700,38 +1722,30 @@ function renderBrandPhoto(){
 
 function previewNewAvatar(input){
   const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    newAvatarData=e.target.result;
+  compressImage(file,400,0.85).then(function(data){
+    newAvatarData=data;
     const wrap=document.getElementById('new-avatar-preview');
     wrap.innerHTML=`<img src="${newAvatarData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 function loadClientAvatar(id,input){
   const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
+  compressImage(file,400,0.85).then(function(data){
     const c=clients.find(x=>x.id===id);
-    if(c){c.avatar=e.target.result;save();toast('Foto do cliente actualizada','✓');}
-  };
-  reader.readAsDataURL(file);
+    if(c){c.avatar=data;save();toast('Foto do cliente actualizada','✓');}
+  });
 }
 
 function addClientGalleryPhoto(id,input){
   const files=Array.from(input.files);if(!files.length)return;
   const c=clients.find(x=>x.id===id);if(!c)return;
   if(!c.gallery)c.gallery=[];
-  let loaded=0;
-  files.forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      c.gallery.push(e.target.result);
-      loaded++;
-      if(loaded===files.length){save();toast(`${loaded} foto${loaded>1?'s':''} adicionada${loaded>1?'s':''}!`,'✓');}
-    };
-    reader.readAsDataURL(file);
+  toast('A processar fotos...','');
+  Promise.all(files.map(f=>compressImage(f,1280,0.8))).then(function(datas){
+    datas.forEach(d=>c.gallery.push(d));
+    save();
+    toast(`${datas.length} foto${datas.length>1?'s':''} adicionada${datas.length>1?'s':''}!`,'✓');
   });
 }
 
@@ -1744,20 +1758,20 @@ function delGalleryPhoto(clientId,idx){
 
 function renovOne(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
-  const ny=sYear(c)+1;
-  c.session=renewD(c.session);c.status='sched';c.photos=0;
-  if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
-  openEditId=null;save();toast('Cliente movido para '+ny,'✓');
+  if(!c.bday){toast('Este cliente não tem data de aniversário','!');return;}
+  const p=c.bday.split('-');const ny=parseInt(p[0])+1;
+  c.bday=ny+'-'+p[1]+'-'+p[2];if(c.year)c.year=ny;
+  openEditId=null;buildSidebar();save();render();toast((c.name||'').split(' ')[0]+' renovado para '+ny,'✓');
 }
 
 function renovAll(){
-  const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;
-  list.forEach(c=>{c.session=renewD(c.session);c.status='sched';c.photos=0;});
-  if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
-  activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');
+  const list=clients.filter(needsR);if(!list.length){toast('Nenhum aniversário passado para renovar','!');return;}
+  if(!confirm('Renovar '+list.length+' aniversário'+(list.length>1?'s já passados':' já passado')+' para o próximo ano?'))return;
+  list.forEach(c=>{const p=c.bday.split('-');const ny=parseInt(p[0])+1;c.bday=ny+'-'+p[1]+'-'+p[2];if(c.year)c.year=ny;});
+  openEditId=null;buildSidebar();save();render();toast(list.length+' aniversários renovados','✓');
 }
 
-function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')},'_blank'`);}
+function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')}`,'_blank');}
 function waCall(phone){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}`,'_blank');}
 function openFB(url){if(!url){toast('Sem link de Facebook','!');return;}window.open(url,'_blank');}
 
@@ -1768,7 +1782,7 @@ function loadSett(){try{const d=JSON.parse(localStorage.getItem('edjpg_settings'
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_v3')||'{}');
-    clients=d.clients||defClients();years=d.years||defYears();
+    clients=(Array.isArray(d.clients)&&d.clients.length)?d.clients:defClients();years=d.years||defYears();
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     const ay=clients.map(c=>sYear(c)).filter(Boolean);
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
@@ -1781,14 +1795,15 @@ function defYears(){return[...new Set([CY-1,CY,CY+1])].sort((a,b)=>a-b);}
 function defClients(){return [{"id":200,"name":"Luna","email":"","phone":"","facebook":"","bday":"2026-01-18","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Lucy Fernandes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":201,"name":"Diego","email":"","phone":"","facebook":"","bday":"2026-01-18","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Sih Alves","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":202,"name":"Djonathan","email":"","phone":"","facebook":"","bday":"2026-01-12","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Junior Gomes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":203,"name":"Livia","email":"","phone":"","facebook":"","bday":"2026-01-08","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Livia Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":204,"name":"Cristiana","email":"","phone":"","facebook":"","bday":"2026-01-10","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Nilda Cardoso","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":205,"name":"Eliany","email":"","phone":"","facebook":"","bday":"2026-01-08","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Edivania Nersi","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":206,"name":"Ronaldo","email":"","phone":"","facebook":"","bday":"2026-01-04","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Ana Pina GonçAlves","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":207,"name":"Leoh","email":"","phone":"","facebook":"","bday":"2026-01-13","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":208,"name":"Ladija","email":"","phone":"","facebook":"","bday":"2026-01-16","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Washington Teixeira","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":209,"name":"Dany","email":"","phone":"","facebook":"","bday":"2026-01-25","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Zezinha Fontes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":210,"name":"Cailany","email":"","phone":"","facebook":"","bday":"2026-01-23","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Cleicy Barbosa","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":211,"name":"Clara","email":"","phone":"","facebook":"","bday":"2026-01-28","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Carla Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":212,"name":"Brittany","email":"","phone":"","facebook":"","bday":"2026-01-22","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Katia Helena Fonseca","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":213,"name":"Djeila","email":"","phone":"","facebook":"","bday":"2026-01-25","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Vera Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":214,"name":"Enzo","email":"","phone":"","facebook":"","bday":"2026-01-26","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":215,"name":"Juliana","email":"","phone":"+238 958 7617","facebook":"","bday":"2026-01-22","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Contato","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":216,"name":"Simone","email":"","phone":"","facebook":"","bday":"2026-01-22","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":217,"name":"Ashley","email":"","phone":"+238 591 2587","facebook":"","bday":"2026-01-24","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":218,"name":"Nildo","email":"","phone":"","facebook":"","bday":"2026-01-27","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Nildo Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":219,"name":"Linda","email":"","phone":"","facebook":"","bday":"2026-01-28","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Linda Gonçalves Gonçalves","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":220,"name":"Lorena","email":"","phone":"","facebook":"","bday":"2026-01-28","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Francisca Gomes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":221,"name":"Neina","email":"","phone":"","facebook":"","bday":"2026-01-29","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Janice Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":222,"name":"Agnes","email":"","phone":"+238 978 7183","facebook":"","bday":"2026-01-29","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":223,"name":"Lineceaux","email":"","phone":"","facebook":"","bday":"2026-01-29","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Lineceaux Monteiro","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":224,"name":"Kenira","email":"","phone":"","facebook":"","bday":"2026-01-31","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Heloisa Elena","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":225,"name":"Kayra","email":"","phone":"","facebook":"","bday":"2026-01-20","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Heloisa Elena","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":226,"name":"Mae","email":"","phone":"+238 587 7151","facebook":"","bday":"2026-01-31","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":227,"name":"Denilson E Elcio","email":"","phone":"","facebook":"","bday":"2026-02-22","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Favebook","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":228,"name":"Elisa","email":"","phone":"","facebook":"","bday":"2026-02-02","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":229,"name":"Yara","email":"","phone":"","facebook":"","bday":"2026-02-03","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Liliany Fernandes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":230,"name":"Kaio","email":"","phone":"","facebook":"","bday":"2026-02-06","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Agusta Monteiro","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":231,"name":"Karina","email":"","phone":"","facebook":"","bday":"2026-02-06","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Kathya Barros","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":232,"name":"Elisangelo","email":"","phone":"","facebook":"","bday":"2026-02-15","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":233,"name":"Eviline","email":"","phone":"","facebook":"","bday":"2026-02-16","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Veronica Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":234,"name":"Maria","email":"","phone":"","facebook":"","bday":"2026-02-13","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":235,"name":"Mia","email":"","phone":"","facebook":"","bday":"2026-02-10","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":236,"name":"Miguelin","email":"","phone":"","facebook":"","bday":"2026-02-19","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Miguelin Barross Barross","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":237,"name":"Jaylane","email":"","phone":"","facebook":"","bday":"2026-02-17","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Zeza Fernnades","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":238,"name":"Jade","email":"","phone":"","facebook":"","bday":"2026-02-18","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Jessica Tamarah","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":239,"name":"Ivanice","email":"","phone":"","facebook":"","bday":"2026-02-19","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Ivanice Rodrigues","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":240,"name":"Aricia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Baby Aricya Pires","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":241,"name":"Geovanna","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":242,"name":"Edmila","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":243,"name":"Carla","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":244,"name":"Emilia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":245,"name":"Eliana","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Natalia Eliany","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":246,"name":"Patricia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":247,"name":"Lya","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":248,"name":"Nayla","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Nilda Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":249,"name":"Selma","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Lih Fernandes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":250,"name":"Jessica","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":251,"name":"Justimiano","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Elisabete Dimatilia Pires","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":252,"name":"Marcelo","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Evanise Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":253,"name":"Tamara","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":254,"name":"Rayane","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Ro Xavier","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":255,"name":"Sufia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Nelson Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":256,"name":"Maira","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Tatiana Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":257,"name":"Aziel","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Janice Alves Alves","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":258,"name":"Jayla","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Code De Andreza Batista","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":259,"name":"Briana","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":260,"name":"Mateus","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":261,"name":"Luana","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Deise Lukas","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":262,"name":"Maira","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Tatiana Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":263,"name":"Idalina","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Idalina Carvalho","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":264,"name":"Deise","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Deise Lukas","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":265,"name":"Mikeila","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":266,"name":"Patricia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Whtas","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":267,"name":"Joel 02","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Dalila Fontes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":268,"name":"Ayla","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Carla Gomes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":269,"name":"Audilia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: +1 (774) 381","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":270,"name":"Joceline","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Bernaldina Alves","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":271,"name":"Kiandra","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Kiandra Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":272,"name":"Maira","email":"","phone":"+238 599 5993","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":273,"name":"Brainy","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Alina Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":274,"name":"Soriana","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Carla Sofia Amado","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":275,"name":"Jade","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Jade Biatriz Pina","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":276,"name":"Vanusa","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":277,"name":"Elisandra","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":278,"name":"Hayden","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Vanda Gomes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":279,"name":"Neidy","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":280,"name":"Bia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":281,"name":"Rayane","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":282,"name":"Jessica","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Jessica Pina","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":283,"name":"James","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":284,"name":"Marcio","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Keula Silva","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":285,"name":"Bia","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":286,"name":"Maura 7 De Maio","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Fcb","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":287,"name":"Ronildo","email":"","phone":"","facebook":"","bday":"2026-05-01","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Ronilda","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":288,"name":"Suely","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Vera Lopes","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":289,"name":"Nerickson","email":"","phone":"+238 957 5320","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":290,"name":"Zeyden","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":291,"name":"Sandra","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":292,"name":"Titino","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Lih Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":293,"name":"Fabricio","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Juceila Barbosa","refs":"","price":"","gallery":[],"avatar":null,"year":2026},{"id":294,"name":"Anilton","email":"","phone":"","facebook":"","bday":"","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Fatuca Andrade","refs":"","price":"","gallery":[],"avatar":null,"year":2026}];}
 
 function buildSidebar(){
-  const allY=[...new Set([...years,...clients.map(c=>sYear(c)).filter(Boolean)])].sort((a,b)=>a-b);
+  const eYear=c=>c.session?parseInt(c.session.split('-')[0]):(c.year||null);
+  const allY=[...new Set([...years,...clients.map(eYear).filter(Boolean)])].sort((a,b)=>a-b);
   years=[...allY];
   document.getElementById('years-nav').innerHTML=allY.map(y=>{
-    const cnt=clients.filter(c=>sYear(c)===y).length;
+    const cnt=clients.filter(c=>eYear(c)===y).length;
     return`<button class="year-tab${y===activeYear?' active':''}" onclick="setYear(${y})">${y}<span class="ycount">${cnt}</span></button>`;
   }).join('');
   const prem=clients.filter(c=>isPrem(c.photos)).length;
-  const renov=clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY).length;
+  const renov=clients.filter(needsR).length;
   document.getElementById('nav-total').textContent=clients.length;
   document.getElementById('nav-prem').textContent=prem;
   document.getElementById('nav-renov').textContent=renov;
@@ -1801,8 +1816,8 @@ function setYear(y){activeYear=y;fStatus='all';openEditId=null;currentView='clie
 function getViewClients(){
   switch(currentView){
     case'premium':return clients.filter(c=>isPrem(c.photos));
-    case'aniversarios':return clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=30;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));
-    case'renovar':return clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY);
+    case'aniversarios':return clients.filter(c=>c.bday&&c.bday.length>=10).sort((a,b)=>a.bday.substring(5).localeCompare(b.bday.substring(5)));
+    case'renovar':return clients.filter(needsR);
     default:return clients.filter(c=>sYear(c)===activeYear||(!c.session&&(c.year===activeYear||!c.year)));
   }
 }
@@ -1823,7 +1838,7 @@ function editTabFor(id){return activeEditTab[id]||'dados';}
 function render(){
   const list=visible();
   checkAlerts();updateStats();
-  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear||(!c.session&&(c.year===activeYear||!c.year))).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários próximos','Próximos 30 dias'],renovar:['A Renovar','Sessões concluídas para renovar']};
+  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear||(!c.session&&(c.year===activeYear||!c.year))).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários','Todos por data, de Janeiro a Dezembro'],renovar:['A Renovar','Sessões concluídas para renovar']};
   const[title,sub]=titles[currentView]||titles.clientes;
   document.getElementById('page-title').textContent=title;
   document.getElementById('page-sub').textContent=sub;
@@ -1920,7 +1935,7 @@ function render(){
             <div class="fg"><span class="flabel">Valor acordado</span><input class="finput" id="e-price-${c.id}" value="${c.price||''}" placeholder="ex: 8000 CVE"></div>
           </div>
           <div class="edit-foot">
-            <div class="edit-foot-left">${rn?`<button class="btn btn-success btn-sm" onclick="renovOne(${c.id})"><i class="ti ti-refresh" aria-hidden="true"></i>Mover para ${activeYear+1}</button>`:''}</div>
+            <div class="edit-foot-left">${c.bday?`<button class="btn btn-success btn-sm" onclick="renovOne(${c.id})"><i class="ti ti-refresh" aria-hidden="true"></i>Renovar aniversário p/ ${parseInt(c.bday.split('-')[0])+1}</button>`:''}</div>
             <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${c.id})">Cancelar</button>
             <button class="btn btn-primary btn-sm" onclick="saveEdit(${c.id})"><i class="ti ti-check" aria-hidden="true"></i>Guardar</button>
           </div>
@@ -2044,7 +2059,7 @@ function checkAlerts(){
   const rv=clients.filter(needsR);
   document.getElementById('s-renov').textContent=rv.length;
   const ra=document.getElementById('renov-alert');const rab=document.getElementById('renov-all-btn');
-  if(rv.length){ra.style.display='flex';document.getElementById('renov-txt').textContent=`${rv.length} cliente${rv.length>1?'s':''} prontos para renovar para ${activeYear+1}`;document.getElementById('renov-alert-btn').textContent=`Renovar todos para ${activeYear+1}`;rab.style.display='flex';document.getElementById('renov-all-lbl').textContent=`Renovar todos para ${activeYear+1}`;}
+  if(rv.length){ra.style.display='flex';document.getElementById('renov-txt').textContent=`${rv.length} cliente${rv.length>1?'s com aniversário já passado':' com aniversário já passado'}`;document.getElementById('renov-alert-btn').textContent='Renovar todos';rab.style.display='flex';document.getElementById('renov-all-lbl').textContent='Renovar todos';}
   else{ra.style.display='none';rab.style.display='none';}
 }
 
@@ -2308,7 +2323,7 @@ function showView(v, el) {
     const titles = {
       clientes:     ['Clientes — ' + activeYear, clients.filter(c => sYear(c) === activeYear).length + ' clientes neste ano'],
       premium:      ['Clientes Premium', 'Com 10 ou mais fotos entregues'],
-      aniversarios: ['Aniversários próximos', 'Próximos 30 dias'],
+      aniversarios: ['Aniversários','Todos por data, de Janeiro a Dezembro'],
       renovar:      ['A Renovar', 'Sessões concluídas para renovar'],
     };
     const[title, sub] = titles[v] || titles.clientes;
@@ -2911,10 +2926,23 @@ function gdriveHandleClick(){if(!gCid){openSetupModal();return;}if(gConnected){v
 function gdriveSignIn(){if(typeof google==='undefined'||!google.accounts){setTimeout(gdriveSignIn,800);return;}gUI('busy','A ligar...');google.accounts.oauth2.initTokenClient({client_id:gCid,scope:'https://www.googleapis.com/auth/drive',callback:function(r){if(r&&r.access_token){gToken=r.access_token;gConnected=true;document.getElementById('gdrive-lbl').textContent='Drive ✓';gUI('busy','A carregar...');gdriveLoad();}else{gUI('err','Erro de auth');}},error_callback:function(e){gUI('err','Erro: '+(e.type||''));}}).requestAccessToken({prompt:'consent'});}
 function gdriveAutoConnect(){if(!gCid){gUI('','Clica para configurar');return;}if(typeof google==='undefined'||!google.accounts){setTimeout(gdriveAutoConnect,800);return;}gUI('busy','A ligar...');google.accounts.oauth2.initTokenClient({client_id:gCid,scope:'https://www.googleapis.com/auth/drive',prompt:'',callback:function(r){if(r&&r.access_token){gToken=r.access_token;gConnected=true;document.getElementById('gdrive-lbl').textContent='Drive ✓';gUI('busy','A carregar...');gdriveLoad();}else{gUI('','Clica para ligar');}},error_callback:function(){gUI('','Clica para ligar');}}).requestAccessToken({prompt:''});}
 function gFindFile(cb){if(gFileId){cb(gFileId);return;}fetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent("name='edjpg_crm.json' and trashed=false")+'&fields=files(id)',{headers:{Authorization:'Bearer '+gToken}}).then(function(r){return r.json();}).then(function(d){var f=(d.files||[]);if(f.length){gFileId=f[0].id;localStorage.setItem('edjpg_gdrive_fid',gFileId);}cb(gFileId||null);}).catch(function(){cb(null);});}
-function gdriveSave(){if(!gConnected||!gToken)return;gUI('busy','A guardar...');var payload=JSON.stringify({v:3,ts:Date.now(),clients:clients,years:years,agenda:{events:typeof agEvents!=='undefined'?agEvents:[]},agent:typeof agentSettings!=='undefined'?agentSettings:{},babies:typeof babies!=='undefined'?babies:[]});gFindFile(function(fid){var b='edjpg_b',meta=JSON.stringify({name:'edjpg_crm.json',mimeType:'application/json'}),body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+payload+'\r\n--'+b+'--';fetch(fid?'https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=multipart':'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:fid?'PATCH':'POST',headers:{Authorization:'Bearer '+gToken,'Content-Type':'multipart/related; boundary='+b},body:body}).then(function(r){return r.json();}).then(function(d){if(!fid&&d.id){gFileId=d.id;localStorage.setItem('edjpg_gdrive_fid',d.id);}gLastSync=new Date().toISOString();localStorage.setItem('edjpg_gdrive_sync',gLastSync);gUI('ok','Guardado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));}).catch(function(){gUI('err','Erro ao guardar');});});}
-function gdriveLoad(){if(!gConnected||!gToken)return;gFindFile(function(fid){if(!fid){gUI('ok','Novo ficheiro...');gdriveSave();return;}fetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media',{headers:{Authorization:'Bearer '+gToken}}).then(function(r){if(r.status===404){gFileId=null;localStorage.removeItem('edjpg_gdrive_fid');gdriveSave();return;}return r.json();}).then(function(d){if(!d)return;if(d.clients){clients=d.clients;uid=Math.max.apply(null,clients.map(function(c){return c.id||0;}).concat([0]))+1;}if(d.years)years=d.years;if(d.agenda&&d.agenda.events&&typeof agEvents!=='undefined')agEvents=d.agenda.events;if(d.agent&&typeof agentSettings!=='undefined')Object.assign(agentSettings,d.agent);if(d.brandPhoto){settings.brandPhoto=d.brandPhoto;saveSett();renderBrandPhoto();}localStorage.setItem('edjpg_v3',JSON.stringify({clients:clients,years:years}));buildSidebar();render();if(typeof agUpdateBadge==='function')agUpdateBadge();if(typeof renderBabyGrid==='function')renderBabyGrid();gUI('ok','Carregado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));toast('Dados do Drive carregados','');}).catch(function(){gUI('err','Erro ao ler');});});}
+function gdriveSave(){if(!gConnected||!gToken)return;if(!Array.isArray(clients)||!clients.length){gUI('','Sem dados para guardar');return;}gUI('busy','A guardar...');var payload=JSON.stringify({v:3,ts:Date.now(),clients:clients,years:years,agenda:{events:typeof agEvents!=='undefined'?agEvents:[]},agent:typeof agentSettings!=='undefined'?agentSettings:{},babies:typeof babies!=='undefined'?babies:[]});gFindFile(function(fid){var b='edjpg_b',meta=JSON.stringify({name:'edjpg_crm.json',mimeType:'application/json'}),body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+payload+'\r\n--'+b+'--';fetch(fid?'https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=multipart':'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:fid?'PATCH':'POST',headers:{Authorization:'Bearer '+gToken,'Content-Type':'multipart/related; boundary='+b},body:body}).then(function(r){return r.json();}).then(function(d){if(!fid&&d.id){gFileId=d.id;localStorage.setItem('edjpg_gdrive_fid',d.id);}gLastSync=new Date().toISOString();localStorage.setItem('edjpg_gdrive_sync',gLastSync);gUI('ok','Guardado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));}).catch(function(){gUI('err','Erro ao guardar');});});}
+function gdriveLoad(){if(!gConnected||!gToken)return;gFindFile(function(fid){if(!fid){gUI('ok','Novo ficheiro...');gdriveSave();return;}fetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media',{headers:{Authorization:'Bearer '+gToken}}).then(function(r){if(r.status===404){gFileId=null;localStorage.removeItem('edjpg_gdrive_fid');gdriveSave();return;}return r.json();}).then(function(d){if(!d)return;if(d.clients){clients=d.clients;uid=Math.max.apply(null,clients.map(function(c){return c.id||0;}).concat([0]))+1;}if(d.years)years=d.years;if(d.agenda&&d.agenda.events&&typeof agEvents!=='undefined')agEvents=d.agenda.events;if(d.agent&&typeof agentSettings!=='undefined')Object.assign(agentSettings,d.agent);if(d.brandPhoto){settings.brandPhoto=d.brandPhoto;saveSett();renderBrandPhoto();}if(d.babies&&typeof babies!=='undefined'){babies=d.babies;try{localStorage.setItem('edjpg_babies',JSON.stringify(babies));}catch(e){}var _nb=document.getElementById('nav-bebes');if(_nb)_nb.textContent=babies.length;}localStorage.setItem('edjpg_v3',JSON.stringify({clients:clients,years:years}));buildSidebar();render();if(typeof agUpdateBadge==='function')agUpdateBadge();if(typeof renderBabyGrid==='function')renderBabyGrid();gUI('ok','Carregado '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));toast('Dados do Drive carregados','');}).catch(function(){gUI('err','Erro ao ler');});});}
 function gScheduleSave(){if(!gConnected)return;clearTimeout(gSaveTimer);gSaveTimer=setTimeout(gdriveSave,2500);}
-if(typeof save==='function'){var _origSaveDrive=save;save=function(){_origSaveDrive();gScheduleSave();};}
+// Função central de gravação (estava em falta — causava perda de registos e fotos)
+function save(){
+  try{
+    localStorage.setItem('edjpg_v3',JSON.stringify({clients:clients,years:years}));
+  }catch(err){
+    if(err&&(err.name==='QuotaExceededError'||err.code===22||err.code===1014)){
+      toast('Memória cheia — liga o Google Drive para guardar tudo','!');
+    }else{
+      toast('Erro ao guardar localmente','!');
+    }
+  }
+  if(typeof gScheduleSave==='function')gScheduleSave();
+}
+window.save=save;
 
 function openSetupModal(){document.getElementById('setup-modal').classList.add('open');}
 function closeSetupModal(){document.getElementById('setup-modal').classList.remove('open');}
@@ -2935,7 +2963,72 @@ function rRenderExtras(){var c=document.getElementById('r-extras-body');if(!c)re
 function generatePDF(){if(typeof window.jspdf==='undefined'){toast('A carregar PDF...','');return;}var c=clients.find(function(x){return x.id===rClientId;});if(!c)return;var jsPDF=window.jspdf.jsPDF,doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,mg=18;var dQty=rGetVal('r-digital-qty'),dUnit=rGetVal('r-digital-unit'),iQty=rGetVal('r-impresso-qty'),iUnit=rGetVal('r-impresso-unit'),disc=rGetVal('r-discount'),urg=rGetVal('r-urgency');var num=document.getElementById('r-num').value,date=document.getElementById('r-date').value,pay=document.getElementById('r-payment').value,notes=document.getElementById('r-notes').value,fmtDate=date?new Date(date+'T12:00:00').toLocaleDateString('pt-PT'):'';var items=[];if(rMode==='fotos'){if(dQty>0)items.push({desc:'Fotos digitais editadas',qty:dQty,unit:dUnit});if(iQty>0)items.push({desc:'Fotos impressas',qty:iQty,unit:iUnit});rExtraItems.forEach(function(it){if(it.qty>0||it.unit>0)items.push(it);});}else{items.push({desc:(document.getElementById('r-fix-desc')||{value:'Sessao fotografica'}).value,qty:1,unit:rGetVal('r-fix-val')});}var sub=items.reduce(function(s,it){return s+(it.qty||0)*(it.unit||0);},0),total=Math.max(0,sub-disc+urg);doc.setFillColor(15,15,15);doc.rect(0,0,W,54,'F');doc.setTextColor(155,140,255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('EDSON JPG',mg,21);doc.setTextColor(153,153,153);doc.setFontSize(8);doc.setFont('helvetica','normal');doc.text('FOTOGRAFIA PROFISSIONAL - Praia, Cabo Verde',mg,28);doc.text('comercialfotoedsonjpg@gmail.com',mg,34);doc.setTextColor(255,255,255);doc.setFontSize(13);doc.setFont('helvetica','bold');doc.text('RECIBO',W-mg,21,{align:'right'});doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,180,180);doc.text('No '+num,W-mg,28,{align:'right'});doc.text(fmtDate,W-mg,34,{align:'right'});doc.setDrawColor(42,42,42);doc.setLineWidth(0.3);doc.line(mg,58,W-mg,58);var y=66;doc.setFontSize(7);doc.setTextColor(130,130,130);doc.setFont('helvetica','normal');doc.text('CLIENTE',mg,y);y+=5;doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);doc.text(c.name,mg,y);y+=5;doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);if(c.email){doc.text(c.email,mg,y);y+=4;}if(c.phone){doc.text(c.phone,mg,y);y+=4;}y+=10;doc.setFillColor(240,240,248);doc.rect(mg,y,W-mg*2,8,'F');doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(80,80,80);doc.text('DESCRICAO',mg+2,y+5.5);doc.text('QTD',mg+102,y+5.5,{align:'right'});doc.text('P.UNIT',mg+135,y+5.5,{align:'right'});doc.text('TOTAL',W-mg-2,y+5.5,{align:'right'});y+=9;items.forEach(function(it,i){var bg=i%2===0?[252,252,255]:[248,248,252];doc.setFillColor(bg[0],bg[1],bg[2]);doc.rect(mg,y,W-mg*2,9,'F');doc.setDrawColor(225,225,235);doc.rect(mg,y,W-mg*2,9);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);doc.text(String(it.desc||''),mg+2,y+6);doc.text(String(it.qty||0),mg+102,y+6,{align:'right'});doc.text(rFmt(it.unit||0),mg+135,y+6,{align:'right'});doc.setFont('helvetica','bold');doc.setTextColor(100,80,200);doc.text(rFmt((it.qty||0)*(it.unit||0)),W-mg-2,y+6,{align:'right'});y+=9;});y+=4;if(disc||urg){doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);doc.text('Subtotal',mg+2,y+5);doc.text(rFmt(sub),W-mg-2,y+5,{align:'right'});y+=7;if(disc){doc.setTextColor(74,180,120);doc.text('Desconto',mg+2,y+5);doc.text('- '+rFmt(disc),W-mg-2,y+5,{align:'right'});y+=7;}if(urg){doc.setTextColor(180,150,40);doc.text('Urgencia',mg+2,y+5);doc.text('+ '+rFmt(urg),W-mg-2,y+5,{align:'right'});y+=7;}y+=2;}doc.setFillColor(15,15,15);doc.rect(mg,y,W-mg*2,13,'F');doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.text('TOTAL',mg+2,y+9);doc.setTextColor(155,140,255);doc.setFontSize(13);doc.text(rFmt(total),W-mg-2,y+9,{align:'right'});y+=20;doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(130,130,130);doc.text('PAGAMENTO',mg,y);y+=5;doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(20,20,20);doc.text(pay,mg,y);y+=8;if(notes){doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(130,130,130);doc.text('NOTAS',mg,y);y+=5;doc.setFontSize(9);doc.setTextColor(60,60,60);doc.text(doc.splitTextToSize(notes,W-mg*2),mg,y);}doc.setFillColor(248,248,252);doc.rect(0,H-26,W,26,'F');doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(160,160,160);doc.text('Obrigado pela confianca!',W/2,H-15,{align:'center'});doc.text('EDSON JPG Fotografia - Praia, Cabo Verde',W/2,H-9,{align:'center'});doc.save('Recibo_'+num+'_'+c.name.replace(/\s+/g,'_')+'.pdf');var rn=parseInt(localStorage.getItem('edjpg_rnum')||'1')+1;localStorage.setItem('edjpg_rnum',String(rn));toast('PDF gerado!','');closeReceiptModal();}
 
 // ════════ MÉTRICAS ════════
-function renderMetrics(){var el=document.getElementById('metrics-body');if(!el)return;var now=new Date(),cy=now.getFullYear(),cm=now.getMonth();var done=clients.filter(function(c){return c.status==='done';});var thisY=clients.filter(function(c){var y=c.session?parseInt(c.session.split('-')[0]):null;return y===cy;});var byMonth=Array(12).fill(0);thisY.forEach(function(c){if(c.session){var m=parseInt(c.session.split('-')[1])-1;if(m>=0&&m<12)byMonth[m]++;}});var maxM=Math.max.apply(null,byMonth.concat([1]));var MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];var revenueY=thisY.reduce(function(s,c){return s+(parseFloat((c.price||'').replace(/[^\d.]/g,''))||0);},0);var totalPhotos=clients.reduce(function(s,c){return s+(c.photos||0);},0);var prem=clients.filter(function(c){return(c.photos||0)>=10;});var thisM=clients.filter(function(c){if(!c.session)return false;var p=c.session.split('-');return parseInt(p[0])===cy&&parseInt(p[1])-1===cm;});var total=clients.length||1;el.innerHTML='<div class="met-grid"><div class="met-card"><div class="met-n" style="color:var(--accent)">'+clients.length+'</div><div class="met-l">Total clientes</div></div><div class="met-card"><div class="met-n" style="color:var(--done)">'+done.length+'</div><div class="met-l">Concluidos</div></div><div class="met-card"><div class="met-n" style="color:var(--gold)">'+prem.length+'</div><div class="met-l">Premium (+10 fotos)</div></div><div class="met-card"><div class="met-n" style="color:#f9a8d4">'+totalPhotos+'</div><div class="met-l">Fotos entregues</div></div><div class="met-card"><div class="met-n" style="color:var(--done)">'+revenueY.toLocaleString('pt-PT')+'<span style="font-size:14px">$</span></div><div class="met-l">Faturado em '+cy+'</div></div><div class="met-card"><div class="met-n" style="color:var(--accent)">'+thisM.length+'</div><div class="met-l">Sessoes este mes</div></div></div><div class="met-section"><h3><i class="ti ti-chart-bar"></i>Sessoes por mes '+cy+'</h3><div style="display:flex;align-items:flex-end;gap:5px;height:80px">'+byMonth.map(function(n,i){var h=maxM>0?Math.round(n/maxM*70):0;return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:9px;color:var(--text3)">'+n+'</div><div style="width:100%;height:'+h+'px;background:var(--accent);border-radius:3px 3px 0 0;min-height:'+(n>0?3:0)+'px"></div><div style="font-size:9px;color:var(--text3)">'+MN[i]+'</div></div>';}).join('')+'</div></div><div class="met-section"><h3><i class="ti ti-star"></i>Top clientes por fotos</h3><table class="met-table"><thead><tr><th>Cliente</th><th>Fotos</th><th>Estado</th><th>Valor</th></tr></thead><tbody>'+clients.slice().sort(function(a,b){return(b.photos||0)-(a.photos||0);}).slice(0,8).map(function(c){var stM={done:'var(--done)',sched:'var(--sched)',pend:'var(--pend)',canc:'var(--canc)'};var stL={done:'Concluido',sched:'Agendado',pend:'Pendente',canc:'Cancelado'};return'<tr><td style="color:var(--text);font-weight:500">'+c.name+'</td><td><span class="met-pill" style="background:rgba(155,140,255,.1);color:var(--accent)">'+(c.photos||0)+' fotos</span></td><td><span class="met-pill" style="color:'+(stM[c.status]||'var(--text3)')+'">'+( stL[c.status]||c.status)+'</span></td><td style="color:var(--done)">'+(c.price||'--')+'</td></tr>';}).join('')+'</tbody></table></div>';}
+function renderMetrics(){
+  var el=document.getElementById('metrics-body');if(!el)return;
+  var now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
+  var MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var MNF=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  function priceOf(c){return parseFloat((c.price||'').replace(/[^\d.]/g,''))||0;}
+  function card(n,l,col){return '<div class="met-card"><div class="met-n" style="color:'+col+'">'+n+'</div><div class="met-l">'+l+'</div></div>';}
+  function fmtMoney(n){return n.toLocaleString('pt-PT')+'$';}
+  var done=clients.filter(function(c){return c.status==='done';});
+  var sched=clients.filter(function(c){return c.status==='sched';});
+  var prem=clients.filter(function(c){return (c.photos||0)>=10;});
+  var totalPhotos=clients.reduce(function(s,c){return s+(c.photos||0);},0);
+  var thisY=clients.filter(function(c){var y=c.session?parseInt(c.session.split('-')[0]):null;return y===cy;});
+  var revenueY=thisY.reduce(function(s,c){return s+priceOf(c);},0);
+  var withPrice=clients.map(priceOf).filter(function(p){return p>0;});
+  var avgPrice=withPrice.length?Math.round(withPrice.reduce(function(a,b){return a+b;},0)/withPrice.length):9500;
+  var toRenew=clients.filter(function(c){var y=c.session?parseInt(c.session.split('-')[0]):(c.year||null);return c.status==='done'&&y!==null&&y<=cy;});
+  var renewPotential=toRenew.length*avgPrice;
+  var convBase=sched.length+done.length;
+  var convRate=convBase?Math.round(done.length/convBase*100):0;
+  var thisM=thisY.filter(function(c){return c.session&&parseInt(c.session.split('-')[1])-1===cm;});
+  var bdayM=clients.filter(function(c){return c.bday&&c.bday.length>=7&&parseInt(c.bday.split('-')[1])-1===cm;}).sort(function(a,b){return (a.bday.split('-')[2]||'').localeCompare(b.bday.split('-')[2]||'');});
+  var byMonth=Array(12).fill(0);thisY.forEach(function(c){if(c.session){var m=parseInt(c.session.split('-')[1])-1;if(m>=0&&m<12)byMonth[m]++;}});
+  var maxM=Math.max.apply(null,byMonth.concat([1]));
+
+  var html='';
+  html+='<div style="background:linear-gradient(135deg,var(--burgundy),#7d1838);border-radius:14px;padding:20px 22px;margin-bottom:14px;border:1px solid rgba(231,195,100,.3)">'
+    +'<div style="font-family:Cinzel,serif;font-size:11px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase">Receita potencial a espera</div>'
+    +'<div style="font-size:34px;font-weight:800;color:#fff;margin:5px 0;font-family:DM Mono,monospace">'+fmtMoney(renewPotential)+'</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.7)">'+toRenew.length+' clientes prontos a renovar &times; '+fmtMoney(avgPrice)+' (preco medio'+(withPrice.length?'':' estimado')+')</div>'
+    +'</div>';
+
+  html+='<div class="met-grid">'
+    +card(clients.length,'Total clientes','var(--accent)')
+    +card(done.length,'Concluidos','var(--done)')
+    +card(convRate+'%','Taxa de conclusao','var(--gold)')
+    +card(prem.length,'Premium (+10 fotos)','var(--gold)')
+    +card(fmtMoney(revenueY),'Faturado em '+cy,'var(--done)')
+    +card(thisM.length,'Sessoes este mes','var(--accent)')
+    +'</div>';
+
+  html+='<div class="met-section"><h3><i class="ti ti-cake"></i> Aniversariantes de '+MNF[cm]+' &mdash; contacta hoje</h3>';
+  if(bdayM.length){
+    html+='<div style="display:flex;flex-direction:column;gap:6px">';
+    bdayM.forEach(function(c){
+      var day=c.bday.split('-')[2]||'';
+      var hasWa=!!waN(c.phone);
+      var safeName=(c.name||'').replace(/'/g,'').replace(/"/g,'');
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:8px;padding:9px 12px">'
+        +'<div><span style="color:var(--text);font-weight:600">'+c.name+'</span> <span style="color:var(--text3);font-size:11px">dia '+day+'</span></div>'
+        +(hasWa?'<button onclick="waMsg(\''+c.phone+'\',\''+safeName+'\')" class="met-pill" style="background:rgba(37,211,102,.12);color:var(--wa);border:none;cursor:pointer">WhatsApp</button>':'<span style="color:var(--text3);font-size:11px">sem numero</span>')
+        +'</div>';
+    });
+    html+='</div>';
+  }else{ html+='<div style="color:var(--text3);font-size:13px;padding:6px 0">Ninguem com aniversario registado este mes.</div>'; }
+  html+='</div>';
+
+  html+='<div class="met-section"><h3><i class="ti ti-chart-bar"></i> Sessoes por mes '+cy+'</h3><div style="display:flex;align-items:flex-end;gap:5px;height:90px">'
+    +byMonth.map(function(n,i){var h=maxM>0?Math.round(n/maxM*72):0;var isCur=i===cm;return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:var(--text3)">'+n+'</div><div style="width:100%;height:'+h+'px;background:'+(isCur?'var(--gold)':'var(--accent)')+';border-radius:3px 3px 0 0;min-height:'+(n>0?3:0)+'px"></div><div style="font-size:9px;color:'+(isCur?'var(--gold)':'var(--text3)')+'">'+MN[i]+'</div></div>';}).join('')
+    +'</div></div>';
+
+  html+='<div class="met-section"><h3><i class="ti ti-star"></i> Top clientes por fotos</h3><table class="met-table"><thead><tr><th>Cliente</th><th>Fotos</th><th>Estado</th><th>Valor</th></tr></thead><tbody>'
+    +clients.slice().sort(function(a,b){return(b.photos||0)-(a.photos||0);}).slice(0,8).map(function(c){var stM={done:'var(--done)',sched:'var(--sched)',pend:'var(--pend)',canc:'var(--canc)'};var stL={done:'Concluido',sched:'Agendado',pend:'Pendente',canc:'Cancelado'};return '<tr><td style="color:var(--text);font-weight:500">'+c.name+'</td><td><span class="met-pill" style="background:rgba(200,153,47,.12);color:var(--gold)">'+(c.photos||0)+' fotos</span></td><td><span class="met-pill" style="color:'+(stM[c.status]||'var(--text3)')+'">'+(stL[c.status]||c.status)+'</span></td><td style="color:var(--done)">'+(c.price||'--')+'</td></tr>';}).join('')
+    +'</tbody></table></div>';
+  el.innerHTML=html;
+}
 
 // ════════ GEMINI ════════
 async function agentGenerateAI(autoSend=false){
