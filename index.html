@@ -370,7 +370,61 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 
 <div class="toast" id="toast"><span id="toast-icon">✓</span><span id="toast-msg">Guardado</span></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
+/* ===== SINCRONIZAÇÃO NA NUVEM (Firebase Realtime Database) ===== */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyAtnI-G6-B2OF7suIM_YDRhjC7DXpzm_Yg",
+  authDomain:"foto-edson-jpg-crm.firebaseapp.com",
+  databaseURL:"https://foto-edson-jpg-crm-default-rtdb.firebaseio.com",
+  projectId:"foto-edson-jpg-crm",
+  storageBucket:"foto-edson-jpg-crm.firebasestorage.app",
+  messagingSenderId:"849247885489",
+  appId:"1:849247885489:web:bb44ac4d0806e8074e2a90"
+};
+let fbRef=null,fbReady=false;
+function setSyncStatus(mode){
+  const dot=document.getElementById('save-dot');const txt=document.getElementById('save-txt');
+  if(!dot||!txt)return;
+  if(mode==='syncing'){dot.classList.remove('saved');txt.textContent='A sincronizar...';}
+  else if(mode==='synced'){dot.classList.add('saved');txt.textContent='Sincronizado em todos os dispositivos';}
+  else if(mode==='offline'){dot.classList.remove('saved');txt.textContent='Sem ligação — guardado só neste aparelho';}
+  else if(mode==='local'){dot.classList.add('saved');txt.textContent='Guardado automaticamente';}
+}
+function pushToFirebase(){
+  if(!fbRef)return;
+  setSyncStatus('syncing');
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda}).then(()=>{
+    setSyncStatus('synced');
+  }).catch(()=>{setSyncStatus('offline');});
+}
+function initFirebaseSync(){
+  try{
+    if(typeof firebase==='undefined'){setSyncStatus('offline');return;}
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbRef=firebase.database().ref('edjpg_crm');
+    fbRef.on('value',snap=>{
+      const remote=snap.val();
+      if(remote&&remote.clients&&remote.clients.length){
+        clients=remote.clients;
+        years=remote.years||SEED_YEARS.slice();
+        babies=remote.babies||[];
+        agenda=remote.agenda||{events:[]};
+        uid=Math.max(...clients.map(c=>c.id),0)+1;
+        babyUid=Math.max(...babies.map(b=>b.id),0)+1;
+        eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda}));}catch(e){}
+        buildSidebar();renderCurrent();
+        setSyncStatus('synced');
+        fbReady=true;
+      }else if(!fbReady){
+        fbReady=true;
+        pushToFirebase();
+      }
+    },()=>{setSyncStatus('offline');});
+  }catch(e){setSyncStatus('offline');}
+}
 /* ===== DADOS RECUPERADOS (Google Drive edjpg_crm.json, 06/07/2026 + página publicada) ===== */
 const SEED_CLIENTS = [
 {"id":200,"name":"Luna","email":"","phone":"","facebook":"","bday":"2027-01-18","session":"","photos":0,"status":"pend","style":"Aniversario","notes":"Pais/Contacto: Lucy Fernandes","refs":"","price":"","gallery":[],"avatar":null,"year":2027},
@@ -815,11 +869,9 @@ function migrateSeedImport(){
 let saveTimer=null;
 function save(){
   try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda}));}catch(e){}
-  const dot=document.getElementById('save-dot');const txt=document.getElementById('save-txt');
-  dot.classList.remove('saved');txt.textContent='A guardar...';
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{dot.classList.add('saved');txt.textContent='Guardado automaticamente';},800);
   buildSidebar();renderCurrent();
+  if(fbRef){pushToFirebase();}
+  else{setSyncStatus('local');}
 }
 
 function buildSidebar(){
@@ -1272,7 +1324,7 @@ function toast(msg,icon='✓'){const t=document.getElementById('toast');document
 document.querySelectorAll('.overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));}});
 
-load();migrateSeedImport();buildSidebar();render();
+load();migrateSeedImport();buildSidebar();render();initFirebaseSync();
 </script>
 </body>
 </html>
