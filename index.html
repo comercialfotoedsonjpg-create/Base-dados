@@ -181,6 +181,15 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip.sess:hover{background:rgba(79,195,247,.28)}
 .cal-more{font-size:10px;color:var(--text3);padding:1px 6px;cursor:pointer}
 .cal-more:hover{color:var(--text2)}
+.ev-title-wrap{position:relative}
+.ev-dd{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);margin-top:4px;max-height:240px;overflow-y:auto;z-index:80;display:none;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.ev-dd.open{display:block}
+.ev-dd-year{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);padding:7px 10px 3px;position:sticky;top:0;background:var(--surface2)}
+.ev-dd-group{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:5px 10px 2px 14px}
+.ev-dd-item{padding:7px 10px 7px 14px;font-size:13px;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ev-dd-item:hover{background:var(--surface3)}
+.ev-dd-sub{color:var(--text3);font-size:11px;font-family:'DM Mono',monospace;flex-shrink:0}
+.ev-dd-empty{padding:14px 10px;font-size:12px;color:var(--text3);text-align:center}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:3px}
 </style>
@@ -327,7 +336,12 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 <div class="overlay" id="event-modal"><div class="modal" style="max-width:460px">
   <div class="modal-head"><h2 id="event-modal-title">Nova sessão</h2><button class="modal-close" onclick="closeNewEventModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body single">
-    <div class="fg full"><span class="flabel">Cliente / Título *</span><input class="finput" id="ev-title"></div>
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Cliente / Título *</span>
+      <input class="finput" id="ev-title" autocomplete="off" placeholder="Escreve para procurar um cliente..." oninput="evTitleSearch()" onfocus="evTitleSearch()" onblur="evTitleBlur()">
+      <input type="hidden" id="ev-client-id">
+      <div class="ev-dd" id="ev-title-dropdown"></div>
+    </div>
     <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
@@ -1123,7 +1137,7 @@ function renderAgenda(){
 
 function openNewEventModal(prefillDate){
   editingEventId=null;
-  ['ev-title','ev-date','ev-time','ev-local','ev-notes'].forEach(id=>document.getElementById(id).value='');
+  ['ev-title','ev-date','ev-time','ev-local','ev-notes','ev-client-id'].forEach(id=>document.getElementById(id).value='');
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
   document.getElementById('event-modal-title').textContent='Nova sessão';
   document.getElementById('ev-delete-btn').style.display='none';
@@ -1137,16 +1151,18 @@ function editEvent(id){
   document.getElementById('ev-time').value=e.time||'';
   document.getElementById('ev-local').value=e.local||'';
   document.getElementById('ev-notes').value=e.notes||'';
+  document.getElementById('ev-client-id').value=e.clientId||'';
   document.getElementById('event-modal-title').textContent='Editar sessão';
   document.getElementById('ev-delete-btn').style.display='';
   document.getElementById('event-modal').classList.add('open');
 }
-function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;}
+function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
 function saveNewEvent(){
   const t=document.getElementById('ev-title').value.trim();const d=document.getElementById('ev-date').value;
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
   if(!agenda.events)agenda.events=[];
-  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim()};
+  const cid=document.getElementById('ev-client-id').value;
+  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid?parseInt(cid):null};
   if(editingEventId!=null){
     const e=agenda.events.find(x=>x.id===editingEventId);
     if(e)Object.assign(e,data);
@@ -1155,6 +1171,50 @@ function saveNewEvent(){
     agenda.events.push({id:eventUid++,...data});
     closeNewEventModal();save();toast('Sessão agendada','✓');
   }
+}
+function evTitleBlur(){setTimeout(()=>{const dd=document.getElementById('ev-title-dropdown');if(dd)dd.classList.remove('open');},150);}
+function evTitleSearch(){
+  const q=document.getElementById('ev-title').value.trim().toLowerCase();
+  const dd=document.getElementById('ev-title-dropdown');
+  document.getElementById('ev-client-id').value='';
+  let pool=clients.filter(c=>c.name);
+  if(q)pool=pool.filter(c=>c.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem clientes encontrados</div>';dd.classList.add('open');return;}
+  const keyDate=c=>c.session||c.bday||'';
+  pool.sort((a,b)=>{const da=keyDate(a)||'9999-99',db=keyDate(b)||'9999-99';return da.localeCompare(db)||a.name.localeCompare(b.name);});
+  pool=pool.slice(0,200);
+  const yearGroups={};
+  pool.forEach(c=>{
+    const dte=keyDate(c);
+    const y=dte?dte.split('-')[0]:'Sem data';
+    const m=dte?parseInt(dte.split('-')[1]):0;
+    if(!yearGroups[y])yearGroups[y]={};
+    const mk=String(m).padStart(2,'0');
+    if(!yearGroups[y][mk])yearGroups[y][mk]=[];
+    yearGroups[y][mk].push(c);
+  });
+  const years=Object.keys(yearGroups).sort();
+  let html='';
+  years.forEach(y=>{
+    html+=`<div class="ev-dd-year">${escH(y)}</div>`;
+    Object.keys(yearGroups[y]).sort().forEach(mk=>{
+      const label=mk==='00'?'':CAL_MONTHNAMES[parseInt(mk)-1];
+      if(label)html+=`<div class="ev-dd-group">${label}</div>`;
+      yearGroups[y][mk].forEach(c=>{
+        html+=`<div class="ev-dd-item" onmousedown="selectEvClient(${c.id})"><span>${escH(c.name)}</span>${c.phone?`<span class="ev-dd-sub">${escH(c.phone)}</span>`:''}</div>`;
+      });
+    });
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+function selectEvClient(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('ev-title').value=c.name;
+  document.getElementById('ev-client-id').value=c.id;
+  const dateEl=document.getElementById('ev-date');
+  if(!dateEl.value&&c.session)dateEl.value=c.session;
+  document.getElementById('ev-title-dropdown').classList.remove('open');
 }
 function deleteEditingEvent(){if(editingEventId!=null)delEvent(editingEventId);closeNewEventModal();}
 function delEvent(id){agenda.events=(agenda.events||[]).filter(e=>e.id!==id);save();toast('Sessão removida','✓');}
