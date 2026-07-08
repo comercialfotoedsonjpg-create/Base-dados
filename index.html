@@ -588,7 +588,7 @@ function visible(){
   return getViewClients().filter(c=>{
     const stOk=fStatus==='all'||(fStatus==='renov'?needsR(c):c.status===fStatus);
     const qOk=c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.notes||'').toLowerCase().includes(q);
-    const moOk=!mo||!c.session||c.session.split('-')[1]===mo;
+    const moOk=!mo||(c.session&&c.session.split('-')[1]===mo)||(!c.session&&c.bday&&c.bday.split('-')[1]===mo);
     return stOk&&qOk&&moOk;
   }).sort((a,b)=>(a.session||'').localeCompare(b.session||''));
 }
