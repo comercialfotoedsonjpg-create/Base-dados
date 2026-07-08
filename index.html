@@ -148,14 +148,19 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .bar-val{width:30px;font-size:11px;color:var(--text3);text-align:right;font-family:'DM Mono',monospace}
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin:0 20px 20px}
 .chart-title{font-size:13px;font-weight:600;margin-bottom:14px}
-.baby-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px}
-.baby-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.baby-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px 20px}
+.baby-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.baby-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.baby-av{width:42px;height:42px;border-radius:50%;background:rgba(249,168,212,.12);border:2px solid rgba(249,168,212,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .baby-name{font-size:14px;font-weight:600}
 .baby-meta{font-size:11px;color:var(--text3);margin-top:2px}
-.month-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:12px}
-.month-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border2);background:var(--surface3);color:var(--text3)}
-.month-cell.done{background:rgba(74,222,154,.15);color:var(--done);border-color:rgba(74,222,154,.3)}
-.prize-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.baby-months-grid{display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.bm-btn{width:37px;height:37px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;transition:.15s;position:relative;line-height:1.2}
+.bm-btn:hover{border-color:var(--accent);color:var(--accent)}
+.bm-btn.done{background:rgba(74,222,154,.12);color:var(--done);border-color:rgba(74,222,154,.3)}
+.bm-btn.milestone{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.3)}
+.baby-card-foot{padding:8px 14px;display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.prize-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 0}
 .prize-tag{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--surface3);color:var(--text3)}
 .prize-tag.on{background:rgba(240,180,41,.15);color:var(--gold)}
 .agenda-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
@@ -211,7 +216,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
   <button class="nav-item" onclick="showView('premium',this)"><i class="ti ti-star ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Premium</span><span class="ni-badge" id="nav-prem">0</span></button>
   <button class="nav-item" onclick="showView('aniversarios',this)"><i class="ti ti-gift ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Aniversários</span></button>
   <button class="nav-item" onclick="showView('renovar',this)"><i class="ti ti-refresh ni-icon" style="color:var(--done)" aria-hidden="true"></i><span>A Renovar</span><span class="ni-badge" id="nav-renov" style="background:rgba(74,222,154,.15);color:var(--done)">0</span></button>
-  <button class="nav-item" onclick="showView('bebes',this)"><i class="ti ti-baby-carriage ni-icon" style="color:#f472b6" aria-hidden="true"></i><span>Campanhas Bebés</span><span class="ni-badge" id="nav-bebes">0</span></button>
+  <button class="nav-item" onclick="showView('bebes',this)" style="background:rgba(249,168,212,.06);border-left:3px solid #f9a8d4;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i><span style="color:#f9a8d4;font-weight:500;font-size:12px">Campanhas Bebés 📸</span><span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span></button>
   <button class="nav-item" onclick="showView('agenda',this)"><i class="ti ti-calendar ni-icon" aria-hidden="true"></i><span>Agenda</span></button>
   <button class="nav-item" onclick="showView('metricas',this)"><i class="ti ti-chart-bar ni-icon" aria-hidden="true"></i><span>Métricas</span></button>
   <div class="nav-section" style="margin-top:8px">Anos</div>
@@ -262,7 +267,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
     <div class="topbar"><div><div class="page-title">👶 Campanhas de Bebés</div><div class="page-sub">Acompanha a sessão mensal de cada bebé até 1 ano</div></div>
       <div class="topbar-actions"><button class="btn btn-primary" onclick="openNewBabyModal()"><i class="ti ti-plus" aria-hidden="true"></i>Novo bebé</button></div>
     </div>
-    <div id="baby-list" style="padding:16px 20px"></div>
+    <div id="baby-list" class="baby-grid"></div>
   </div>
 
   <!-- AGENDA -->
@@ -1105,21 +1110,24 @@ function renderBebes(){
   el.innerHTML=babies.map(b=>{
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
     const done=sessions.filter(s=>s.done).length;
+    const milestones=[3,6,12];
     return`<div class="baby-card">
-      <div class="baby-head">
-        <div><div class="baby-name">👶 ${b.name}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Contacto: ${b.parent||'—'} · ${b.phone||'sem WhatsApp'} · Nasceu ${fmtD(b.birthdate)}</div></div>
-        <div style="display:flex;gap:6px">
-          ${b.phone?`<button class="btn btn-wa btn-xs" onclick="waMsg('${b.phone}','${(b.mae||b.name).replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
-          ${b.facebook&&b.facebook.startsWith('http')?`<button class="btn btn-fb btn-xs" onclick="openFB('${b.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
-          <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
-        </div>
+      <div class="baby-card-head">
+        <div class="baby-av">👶</div>
+        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="month-grid">${sessions.map(s=>`<div class="month-cell${s.done?' done':''}" title="Mês ${s.month}${s.done?' — concluído':''}" onclick="toggleBabyMonth(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
+      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" title="Mês ${s.month}${s.done?' — concluído':''}" onclick="toggleBabyMonth(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
         <span class="prize-tag${done>=12?' on':''}">🏅 1 ano</span>
-        <span class="hint" style="margin-left:auto">${done}/12 sessões concluídas</span>
+        <span class="hint" style="margin-left:auto;align-self:center">${done}/12</span>
+      </div>
+      <div class="baby-card-foot">
+        <span class="hint" style="margin-right:auto">Contacto: ${b.parent||'—'} · ${b.phone||'sem WhatsApp'}</span>
+        ${b.phone?`<button class="btn btn-wa btn-xs" onclick="waMsg('${b.phone}','${(b.mae||b.name).replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
+        ${b.facebook&&b.facebook.startsWith('http')?`<button class="btn btn-fb btn-xs" onclick="openFB('${b.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
+        <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
     </div>`;
   }).join('');
