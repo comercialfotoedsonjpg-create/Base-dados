@@ -266,7 +266,10 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
   <!-- CAMPANHAS BEBES -->
   <div class="panel" id="panel-bebes">
     <div class="topbar"><div><div class="page-title">👶 Campanhas de Bebés</div><div class="page-sub">Acompanha a sessão mensal de cada bebé até 1 ano</div></div>
-      <div class="topbar-actions"><button class="btn btn-primary" onclick="openNewBabyModal()"><i class="ti ti-plus" aria-hidden="true"></i>Novo bebé</button></div>
+      <div class="topbar-actions">
+        <div class="search-wrap" style="margin-left:0"><i class="ti ti-search search-icon" aria-hidden="true"></i><input type="text" id="baby-srch" placeholder="Procurar bebé..." oninput="renderBebes()"></div>
+        <button class="btn btn-primary" onclick="openNewBabyModal()"><i class="ti ti-plus" aria-hidden="true"></i>Novo bebé</button>
+      </div>
     </div>
     <div id="baby-list" class="baby-grid"></div>
   </div>
@@ -1114,7 +1117,11 @@ function confirmYear(){const y=parseInt(document.getElementById('new-yr').value)
 function renderBebes(){
   const el=document.getElementById('baby-list');
   if(!babies.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
-  el.innerHTML=babies.map(b=>{
+  const srchEl=document.getElementById('baby-srch');
+  const q=(srchEl?srchEl.value:'').trim().toLowerCase();
+  const list=q?babies.filter(b=>[b.name,b.mae,b.parent,b.phone].some(v=>(v||'').toLowerCase().includes(q))):babies;
+  if(!list.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">Nenhum bebé encontrado para "${escH(q)}"</div></div>`;return;}
+  el.innerHTML=list.map(b=>{
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
     const done=sessions.filter(s=>s.done).length;
     const milestones=[3,6,12];
