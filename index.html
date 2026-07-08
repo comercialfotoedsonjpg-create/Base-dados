@@ -160,6 +160,27 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .prize-tag.on{background:rgba(240,180,41,.15);color:var(--gold)}
 .agenda-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
 .agenda-date{font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);width:90px;flex-shrink:0}
+.cal-header{display:flex;align-items:center;justify-content:center;gap:18px;padding:0 20px 16px;position:relative}
+.cal-title{font-family:'Cinzel',serif;font-size:19px;letter-spacing:.3px;text-transform:capitalize;min-width:220px;text-align:center}
+.cal-nav{display:flex;align-items:center;gap:6px}
+.cal-nav-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;font-family:inherit}
+.cal-nav-btn:hover{background:var(--surface2);color:var(--text)}
+.cal-today-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit}
+.cal-today-btn:hover{background:var(--surface2);color:var(--text)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);border-left:1px solid var(--border);margin:0 20px 20px;border-radius:var(--radius);overflow:hidden}
+.cal-weekday{padding:8px 6px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cal-day{min-height:104px;padding:6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:3px}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.outside{background:rgba(0,0,0,.18)}
+.cal-day.outside .cal-daynum{color:var(--text3);opacity:.45}
+.cal-daynum{font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+.cal-day.today .cal-daynum{background:var(--accent);color:#1a1210;font-weight:700}
+.cal-chip{font-size:10.5px;padding:2px 6px;border-radius:5px;background:rgba(200,153,47,.16);color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5}
+.cal-chip:hover{background:rgba(200,153,47,.3)}
+.cal-chip.sess{background:rgba(79,195,247,.14);color:var(--sched)}
+.cal-chip.sess:hover{background:rgba(79,195,247,.28)}
+.cal-more{font-size:10px;color:var(--text3);padding:1px 6px;cursor:pointer}
+.cal-more:hover{color:var(--text2)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:3px}
 </style>
@@ -240,7 +261,12 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
     <div class="topbar"><div><div class="page-title">Agenda</div><div class="page-sub">Sessões e compromissos</div></div>
       <div class="topbar-actions"><button class="btn btn-primary" onclick="openNewEventModal()"><i class="ti ti-plus" aria-hidden="true"></i>Nova sessão</button></div>
     </div>
-    <div id="agenda-list" style="padding:16px 20px"></div>
+    <div class="cal-header">
+      <div class="cal-nav"><button class="cal-nav-btn" onclick="calPrevMonth()" aria-label="Mês anterior"><i class="ti ti-chevron-left" aria-hidden="true"></i></button><button class="cal-today-btn" onclick="calGoToday()">Hoje</button></div>
+      <div class="cal-title" id="cal-title"></div>
+      <div class="cal-nav"><button class="cal-nav-btn" onclick="calNextMonth()" aria-label="Mês seguinte"><i class="ti ti-chevron-right" aria-hidden="true"></i></button></div>
+    </div>
+    <div class="cal-grid" id="agenda-list"></div>
   </div>
 
   <!-- METRICAS -->
@@ -299,7 +325,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 
 <!-- NEW EVENT MODAL -->
 <div class="overlay" id="event-modal"><div class="modal" style="max-width:460px">
-  <div class="modal-head"><h2>Nova sessão</h2><button class="modal-close" onclick="closeNewEventModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-head"><h2 id="event-modal-title">Nova sessão</h2><button class="modal-close" onclick="closeNewEventModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body single">
     <div class="fg full"><span class="flabel">Cliente / Título *</span><input class="finput" id="ev-title"></div>
     <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
@@ -307,7 +333,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
+  <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
 </div></div>
 
 <!-- SYNC MODAL -->
@@ -1048,23 +1074,102 @@ function saveNewBaby(){
   closeNewBabyModal();save();toast('Bebé criado com sucesso','✓');
 }
 
-/* ===== AGENDA ===== */
+/* ===== AGENDA (calendário estilo Apple Calendar) ===== */
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),editingEventId=null,calPrefillDate=null;
+const CAL_WEEKDAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const CAL_MONTHNAMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function calISO(dt){return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function calPrevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderAgenda();}
+function calNextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderAgenda();}
+function calGoToday(){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();renderAgenda();}
+function calDayClick(iso){calPrefillDate=iso;openNewEventModal(iso);}
+
 function renderAgenda(){
   const el=document.getElementById('agenda-list');
-  const evs=(agenda.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  if(!evs.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-calendar" aria-hidden="true"></i></div><div class="empty-title">Sem sessões agendadas</div><div class="empty-sub">Clica em "Nova sessão" para adicionar.</div></div>`;return;}
-  el.innerHTML=evs.map(e=>`<div class="agenda-item"><div class="agenda-date">${fmtD(e.date)}${e.time?' '+e.time:''}</div><div style="flex:1"><strong>${e.title}</strong>${e.local?` · ${e.local}`:''}${e.notes?`<div class="hint">${e.notes}</div>`:''}</div><button class="btn btn-danger btn-xs" onclick="delEvent(${e.id})"><i class="ti ti-trash" aria-hidden="true"></i></button></div>`).join('');
+  const titleEl=document.getElementById('cal-title');
+  if(titleEl)titleEl.textContent=`${CAL_MONTHNAMES[calMonth]} ${calYear}`;
+  const first=new Date(calYear,calMonth,1);
+  const startOffset=first.getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
+  const todayISO=calISO(new Date());
+  const evByDate={};
+  (agenda.events||[]).forEach(e=>{if(!e.date)return;(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time});});
+  clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name});}});
+  Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
+  let html='';
+  CAL_WEEKDAYS.forEach(w=>html+=`<div class="cal-weekday">${w}</div>`);
+  const totalCells=Math.ceil((startOffset+daysInMonth)/7)*7;
+  for(let i=0;i<totalCells;i++){
+    const dayNum=i-startOffset+1;
+    let cellDate,outside=false,dnum;
+    if(dayNum<1){dnum=daysInPrevMonth+dayNum;const pm=calMonth===0?11:calMonth-1,py=calMonth===0?calYear-1:calYear;cellDate=new Date(py,pm,dnum);outside=true;}
+    else if(dayNum>daysInMonth){dnum=dayNum-daysInMonth;const nm=calMonth===11?0:calMonth+1,ny=calMonth===11?calYear+1:calYear;cellDate=new Date(ny,nm,dnum);outside=true;}
+    else{dnum=dayNum;cellDate=new Date(calYear,calMonth,dayNum);}
+    const iso=calISO(cellDate);
+    const isToday=iso===todayISO;
+    const dayEvents=evByDate[iso]||[];
+    const shown=dayEvents.slice(0,3);
+    const more=dayEvents.length-shown.length;
+    html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="calDayClick('${iso}')">
+      <div class="cal-daynum">${dnum}</div>
+      ${shown.map(ev=>`<div class="cal-chip${ev.type==='sess'?' sess':''}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</div>`).join('')}
+      ${more>0?`<div class="cal-more" onclick="event.stopPropagation();calDayClick('${iso}')">+${more} mais</div>`:''}
+    </div>`;
+  }
+  el.innerHTML=html;
 }
-function openNewEventModal(){['ev-title','ev-date','ev-time','ev-local','ev-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('event-modal').classList.add('open');}
-function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');}
+
+function openNewEventModal(prefillDate){
+  editingEventId=null;
+  ['ev-title','ev-date','ev-time','ev-local','ev-notes'].forEach(id=>document.getElementById(id).value='');
+  if(prefillDate)document.getElementById('ev-date').value=prefillDate;
+  document.getElementById('event-modal-title').textContent='Nova sessão';
+  document.getElementById('ev-delete-btn').style.display='none';
+  document.getElementById('event-modal').classList.add('open');
+}
+function editEvent(id){
+  const e=(agenda.events||[]).find(x=>x.id===id);if(!e)return;
+  editingEventId=id;
+  document.getElementById('ev-title').value=e.title||'';
+  document.getElementById('ev-date').value=e.date||'';
+  document.getElementById('ev-time').value=e.time||'';
+  document.getElementById('ev-local').value=e.local||'';
+  document.getElementById('ev-notes').value=e.notes||'';
+  document.getElementById('event-modal-title').textContent='Editar sessão';
+  document.getElementById('ev-delete-btn').style.display='';
+  document.getElementById('event-modal').classList.add('open');
+}
+function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;}
 function saveNewEvent(){
   const t=document.getElementById('ev-title').value.trim();const d=document.getElementById('ev-date').value;
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
   if(!agenda.events)agenda.events=[];
-  agenda.events.push({id:eventUid++,title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim()});
-  closeNewEventModal();save();toast('Sessão agendada','✓');
+  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim()};
+  if(editingEventId!=null){
+    const e=agenda.events.find(x=>x.id===editingEventId);
+    if(e)Object.assign(e,data);
+    closeNewEventModal();save();toast('Sessão atualizada','✓');
+  }else{
+    agenda.events.push({id:eventUid++,...data});
+    closeNewEventModal();save();toast('Sessão agendada','✓');
+  }
 }
+function deleteEditingEvent(){if(editingEventId!=null)delEvent(editingEventId);closeNewEventModal();}
 function delEvent(id){agenda.events=(agenda.events||[]).filter(e=>e.id!==id);save();toast('Sessão removida','✓');}
+function openClientFromCal(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  currentView='clientes';activeYear=sYear(c)||activeYear;fStatus='all';
+  showPanel('panel-clientlist');
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  const clientesNav=document.querySelector('.nav-item');if(clientesNav)clientesNav.classList.add('active');
+  buildSidebar();
+  const srch=document.getElementById('srch');if(srch)srch.value=c.name;
+  openEditId=c.id;activeEditTab[c.id]='dados';
+  render();
+  setTimeout(()=>{const card=document.getElementById('card-'+c.id);if(card)card.scrollIntoView({behavior:'smooth',block:'center'});},60);
+}
 
 /* ===== METRICAS ===== */
 function renderMetricas(){
