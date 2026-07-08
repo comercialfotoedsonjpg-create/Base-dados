@@ -137,7 +137,8 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .toast.show{transform:translateY(0);opacity:1}
 .panel{display:none}
 .panel.on{display:block}
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:20px}
+.kpi-row+.kpi-row{padding-top:0}
 .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
 .kpi-n{font-size:26px;font-weight:700;font-family:'DM Mono',monospace}
 .kpi-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
@@ -285,10 +286,15 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 
   <!-- METRICAS -->
   <div class="panel" id="panel-metricas">
-    <div class="topbar"><div><div class="page-title">Métricas</div><div class="page-sub">Visão geral do negócio</div></div></div>
+    <div class="topbar"><div><div class="page-title">Métricas</div><div class="page-sub">Visão geral do negócio</div></div>
+      <div class="topbar-actions"><button class="btn btn-primary" onclick="exportMetricsPDF()"><i class="ti ti-download" aria-hidden="true"></i>Exportar PDF</button></div>
+    </div>
     <div class="kpi-row" id="kpi-row"></div>
+    <div class="hint" id="metrics-coverage" style="padding:0 20px 14px"></div>
+    <div class="kpi-row" id="kpi-row-neg"></div>
     <div class="chart-card"><div class="chart-title">Clientes por mês (ano activo)</div><div id="chart-months"></div></div>
-    <div class="chart-card"><div class="chart-title">Estado das sessões</div><div id="chart-status"></div></div>
+    <div class="chart-card"><div class="chart-title">Estado das sessões (ano activo)</div><div id="chart-status"></div></div>
+    <div class="chart-card"><div class="chart-title">Clientes por ano (crescimento)</div><div id="chart-years"></div></div>
   </div>
 </main>
 
@@ -377,6 +383,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ===== SINCRONIZAÇÃO NA NUVEM (Firebase Realtime Database) ===== */
 const FIREBASE_CONFIG={
@@ -1292,22 +1299,91 @@ function openClientFromCal(id){
 }
 
 /* ===== METRICAS ===== */
-function renderMetricas(){
+function priceNum(c){return parseFloat((c.price||'0').replace(/[^\d.]/g,''))||0;}
+function metricsData(){
   const yc=clients.filter(c=>sYear(c)===activeYear);
   const done=yc.filter(c=>c.status==='done');
-  const revenue=done.reduce((s,c)=>s+(parseFloat((c.price||'0').replace(/[^\d.]/g,''))||0),0);
-  document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--accent)">${yc.length}</div><div class="kpi-l">Clientes ${activeYear}</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--done)">${done.length}</div><div class="kpi-l">Sessões concluídas</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${yc.filter(c=>isPrem(c.photos)).length}</div><div class="kpi-l">Clientes premium</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${revenue?revenue.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Receita registada (CVE)</div></div>`;
+  const sched=yc.filter(c=>c.status==='sched');
+  const pend=yc.filter(c=>c.status==='pend');
+  const canc=yc.filter(c=>c.status==='canc');
+  const doneWithPrice=done.filter(c=>priceNum(c)>0);
+  const revenue=done.reduce((s,c)=>s+priceNum(c),0);
+  const coverage=done.length?Math.round(doneWithPrice.length/done.length*100):0;
+  const avgTicket=doneWithPrice.length?Math.round(revenue/doneWithPrice.length):0;
+  const conv=yc.length?Math.round(done.length/yc.length*100):0;
+  const babySessions=babies.reduce((s,b)=>{const ss=b.sessions||[];return s+ss.filter(x=>x.done).length;},0);
+  const babiesFull=babies.filter(b=>{const ss=b.sessions||[];return ss.filter(x=>x.done).length>=12;}).length;
   const byMonth=Array(12).fill(0);
   yc.forEach(c=>{if(c.session){const m=parseInt(c.session.split('-')[1])-1;if(m>=0&&m<12)byMonth[m]++;}});
-  const maxM=Math.max(...byMonth,1);
-  document.getElementById('chart-months').innerHTML=MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${byMonth[i]/maxM*100}%"></div></div><div class="bar-val">${byMonth[i]}</div></div>`).join('');
+  const byYear=years.map(y=>({y,n:clients.filter(c=>sYear(c)===y).length}));
+  return{yc,done,sched,pend,canc,doneWithPrice,revenue,coverage,avgTicket,conv,babySessions,babiesFull,byMonth,byYear};
+}
+function renderMetricas(){
+  const d=metricsData();
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--accent)">${d.yc.length}</div><div class="kpi-l">Clientes ${activeYear}</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--done)">${d.done.length}</div><div class="kpi-l">Concluídas</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${d.sched.length}</div><div class="kpi-l">Agendadas</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--pend)">${d.pend.length}</div><div class="kpi-l">Pendentes</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--canc)">${d.canc.length}</div><div class="kpi-l">Canceladas</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--accent2)">${d.conv}%</div><div class="kpi-l">Taxa de conclusão</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.yc.filter(c=>isPrem(c.photos)).length}</div><div class="kpi-l">Clientes premium</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${d.revenue?d.revenue.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Receita registada (CVE)</div></div>`;
+  const covEl=document.getElementById('metrics-coverage');
+  if(d.done.length&&d.coverage<100){covEl.textContent=`⚠ ${d.doneWithPrice.length} de ${d.done.length} sessões concluídas em ${activeYear} têm valor registado (${d.coverage}%) — a receita real pode ser maior. Preenche o campo "Valor" ao concluir uma sessão para números exactos.`;}
+  else if(d.done.length){covEl.textContent=`✓ Todas as sessões concluídas em ${activeYear} têm valor registado.`;}
+  else{covEl.textContent='';}
+  document.getElementById('kpi-row-neg').innerHTML=`
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--accent)">${clients.length}</div><div class="kpi-l">Total de clientes (todos os anos)</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--done)">${d.avgTicket?d.avgTicket.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Ticket médio (CVE)</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${babies.length}</div><div class="kpi-l">Bebés em campanha</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${d.babySessions}</div><div class="kpi-l">Sessões de bebé concluídas</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.babiesFull}</div><div class="kpi-l">Bebés que completaram 1 ano</div></div>`;
+  document.getElementById('chart-months').innerHTML=MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${d.byMonth[i]/Math.max(...d.byMonth,1)*100}%"></div></div><div class="bar-val">${d.byMonth[i]}</div></div>`).join('');
   const statuses=[['done','Concluído','var(--done)'],['sched','Agendado','var(--sched)'],['pend','Pendente','var(--pend)'],['canc','Cancelado','var(--canc)']];
-  const maxS=Math.max(...statuses.map(s=>yc.filter(c=>c.status===s[0]).length),1);
-  document.getElementById('chart-status').innerHTML=statuses.map(([k,l,col])=>{const n=yc.filter(c=>c.status===k).length;return`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${n/maxS*100}%;background:${col}"></div></div><div class="bar-val">${n}</div></div>`;}).join('');
+  const maxS=Math.max(...statuses.map(s=>d.yc.filter(c=>c.status===s[0]).length),1);
+  document.getElementById('chart-status').innerHTML=statuses.map(([k,l,col])=>{const n=d.yc.filter(c=>c.status===k).length;return`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${n/maxS*100}%;background:${col}"></div></div><div class="bar-val">${n}</div></div>`;}).join('');
+  const maxY=Math.max(...d.byYear.map(x=>x.n),1);
+  document.getElementById('chart-years').innerHTML=d.byYear.map(({y,n})=>`<div class="bar-row"><div class="bar-label">${y}</div><div class="bar-track"><div class="bar-fill" style="width:${n/maxY*100}%;background:var(--accent2)"></div></div><div class="bar-val">${n}</div></div>`).join('');
+}
+function exportMetricsPDF(){
+  if(typeof window.jspdf==='undefined'){toast('Não foi possível carregar o gerador de PDF','!');return;}
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const d=metricsData();
+  const pw=doc.internal.pageSize.getWidth();
+  let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Foto Edson JPG — Relatório de Métricas',14,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(10);y+=7;
+  doc.text(`Ano activo: ${activeYear}  ·  Gerado em: ${new Date().toLocaleString('pt-PT')}`,14,y);
+  y+=10;doc.setDrawColor(200);doc.line(14,y,pw-14,y);y+=8;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(`Resumo — ${activeYear}`,14,y);y+=7;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  const lines1=[
+    `Clientes no ano: ${d.yc.length}`,
+    `Sessões concluídas: ${d.done.length}   ·   Agendadas: ${d.sched.length}   ·   Pendentes: ${d.pend.length}   ·   Canceladas: ${d.canc.length}`,
+    `Taxa de conclusão: ${d.conv}%`,
+    `Clientes premium (≥10 fotos): ${d.yc.filter(c=>isPrem(c.photos)).length}`,
+    `Receita registada: ${d.revenue?d.revenue.toLocaleString('pt-PT')+' CVE':'sem valores registados'} (cobertura: ${d.coverage}% das sessões concluídas)`,
+    `Ticket médio: ${d.avgTicket?d.avgTicket.toLocaleString('pt-PT')+' CVE':'—'}`
+  ];
+  lines1.forEach(l=>{doc.text(l,14,y);y+=6;});
+  y+=4;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Negócio (todos os anos)',14,y);y+=7;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  const lines2=[
+    `Total de clientes registados: ${clients.length}`,
+    `Bebés em campanha: ${babies.length}   ·   Sessões de bebé concluídas: ${d.babySessions}   ·   Bebés que completaram 1 ano: ${d.babiesFull}`
+  ];
+  lines2.forEach(l=>{doc.text(l,14,y);y+=6;});
+  y+=4;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(`Clientes por mês (${activeYear})`,14,y);y+=7;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  MONTHS.forEach((m,i)=>{doc.text(`${m}: ${d.byMonth[i]}`,14+((i%4)*46),y+Math.floor(i/4)*6);});
+  y+=Math.ceil(MONTHS.length/4)*6+10;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Clientes por ano',14,y);y+=7;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  d.byYear.forEach(({y:yr,n})=>{doc.text(`${yr}: ${n} clientes`,14,y);y+=6;});
+  doc.save(`metricas-foto-edson-jpg-${activeYear}-${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('PDF exportado','✓');
 }
 
 /* ===== SYNC VIA EMAIL ===== */
