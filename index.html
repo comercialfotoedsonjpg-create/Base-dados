@@ -1076,7 +1076,7 @@ let modalTab='info';
 function switchModalTab(tab,el){modalTab=tab;document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));el.classList.add('on');document.getElementById('modal-tab-info').style.display=tab==='info'?'grid':'none';document.getElementById('modal-tab-extras').style.display=tab==='extras'?'block':'none';}
 function openNewModal(){
   modalTab='info';['n-name','n-email','n-phone','n-facebook','n-bday','n-photos','n-style','n-notes','n-refs','n-price'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('n-sess').value=`${activeYear}-01-01`;document.getElementById('n-status').value='sched';
+  document.getElementById('n-sess').value='';document.getElementById('n-status').value='sched';
   document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));document.querySelector('.modal-tab').classList.add('on');
   document.getElementById('modal-tab-info').style.display='grid';document.getElementById('modal-tab-extras').style.display='none';
   document.getElementById('new-modal').classList.add('open');
