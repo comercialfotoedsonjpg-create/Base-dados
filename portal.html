@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Cinzel:wght@500;600;700&display=swap');
-:root{--bg:#0e0b0c;--surface:#181113;--surface2:#201619;--surface3:#2a1d21;--border:#2f2126;--border2:#3d2b31;--accent:#c8992f;--accent2:#e7c364;--gold:#e7c364;--text:#efe7dd;--text2:#a09591;--text3:#6f615d;--radius:14px;--radius-sm:10px;}
+:root{--bg:#0e0b0c;--surface:#181113;--surface2:#201619;--surface3:#2a1d21;--border:#2f2126;--border2:#3d2b31;--accent:#c8992f;--accent2:#e7c364;--gold:#e7c364;--text:#efe7dd;--text2:#a09591;--text3:#6f615d;--radius:14px;--radius-sm:10px;--good:#4ade9a;--bad:#6f615d;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;}
 .wrap{max-width:640px;margin:0 auto;padding:32px 20px 80px;}
@@ -29,6 +29,8 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
 .btn::after{content:'';position:absolute;top:0;left:0;right:0;height:52%;background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));pointer-events:none;}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);}
 .btn:active{transform:translateY(0) scale(.97);}
+.btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(.4);}
+.btn[disabled]:hover{transform:none;filter:grayscale(.4);}
 .hint{color:var(--text3);font-size:11px;margin-top:10px;text-align:center;}
 .confirm{display:none;text-align:center;padding:20px 4px;}
 .confirm.on{display:block;}
@@ -40,6 +42,31 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
 .required{color:var(--gold);}
 .footer{text-align:center;color:var(--text3);font-size:12px;margin-top:24px;}
 .footer a{color:var(--accent2);text-decoration:none;}
+
+/* ---- Calendario de disponibilidade ---- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-head .cal-month{font-family:'Cinzel',serif;font-size:14px;letter-spacing:.4px;text-transform:capitalize;}
+.cal-nav{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;line-height:1;transition:border-color .15s ease,color .15s ease;}
+.cal-nav:hover{border-color:var(--accent);color:var(--accent2);}
+.cal-nav[disabled]{opacity:.3;cursor:not-allowed;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-dow{text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding-bottom:6px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:12.5px;cursor:pointer;background:var(--surface2);border:1px solid transparent;color:var(--text);transition:border-color .15s ease, background .15s ease, transform .1s ease;}
+.cal-day:hover{border-color:var(--accent);}
+.cal-day.blank{visibility:hidden;cursor:default;}
+.cal-day.past,.cal-day.full{background:transparent;color:var(--text3);cursor:not-allowed;text-decoration:line-through;opacity:.5;}
+.cal-day.past:hover,.cal-day.full:hover{border-color:transparent;}
+.cal-day.free{box-shadow:inset 0 0 0 1px rgba(74,222,154,.25);}
+.cal-day.sel{background:linear-gradient(180deg,#f3d88a 0%,#e0b148 45%,#c8992f 100%);color:#3a2708;font-weight:700;border-color:transparent;transform:scale(1.04);}
+.cal-legend{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:11px;color:var(--text2);}
+.cal-legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.free{background:var(--good);}
+.dot.full{background:var(--text3);}
+.dot.sel{background:var(--accent2);}
+.cal-selected{margin-top:12px;font-size:12.5px;color:var(--text2);text-align:center;min-height:18px;}
+.cal-selected b{color:var(--accent2);}
+.cal-loading{text-align:center;color:var(--text3);font-size:12.5px;padding:20px 0;}
 </style>
 </head>
 <body>
@@ -48,6 +75,14 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
     <div class="hero-badge">EJ</div>
     <h1>Foto Edson JPG</h1>
     <p>Pede a tua sessão fotográfica — respondemos por WhatsApp</p>
+  </div>
+
+  <div class="card">
+    <h2>Escolhe um dia</h2>
+    <div class="sub">Dias com vaga disponível aparecem a verde. Escolher um dia é opcional.</div>
+    <div id="calWrap">
+      <div class="cal-loading" id="calLoading">A carregar disponibilidade…</div>
+    </div>
   </div>
 
   <div class="card">
@@ -86,6 +121,7 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
       <div class="fg">
         <label>Data preferida (opcional)</label>
         <input class="finput" id="f-date" type="date">
+        <div class="hint" style="margin-top:6px;text-align:left;">Escolhe um dia no calendário acima ou define a data aqui.</div>
       </div>
       <div class="fg">
         <label>Mensagem</label>
@@ -110,6 +146,100 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
 
 <script>
 const WA_NUMBER = '2385807498';
+const MAX_PER_DAY = 5;
+const FB_URL = 'https://foto-edson-jpg-crm-default-rtdb.firebaseio.com/publicAvailability.json';
+const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+let availability = {};
+let calView = new Date();
+calView.setDate(1);
+let selectedDate = '';
+
+function pad2(n){ return n<10 ? '0'+n : ''+n; }
+function toISO(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+
+async function loadAvailability(){
+  const calWrap = document.getElementById('calWrap');
+  try{
+    const res = await fetch(FB_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('http '+res.status);
+    const data = await res.json();
+    availability = data || {};
+    renderCalendar();
+  }catch(e){
+    // Fallback gracioso: se a disponibilidade nao puder ser lida, esconde o calendario
+    // e o cliente continua a poder marcar a data livremente no campo abaixo.
+    calWrap.innerHTML = '<div class="cal-loading">Calendário indisponível de momento — usa o campo de data abaixo.</div>';
+  }
+}
+
+function renderCalendar(){
+  const calWrap = document.getElementById('calWrap');
+  const year = calView.getFullYear();
+  const month = calView.getMonth();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  const minView = new Date(today.getFullYear(), today.getMonth(), 1);
+  const maxView = new Date(today.getFullYear(), today.getMonth()+5, 1);
+  const atMin = calView <= minView;
+  const atMax = calView >= maxView;
+
+  let html = '<div class="cal-head">';
+  html += '<div class="cal-nav" id="calPrev"'+(atMin?' disabled':'')+'>‹</div>';
+  html += '<div class="cal-month">'+MONTH_NAMES[month]+' '+year+'</div>';
+  html += '<div class="cal-nav" id="calNext"'+(atMax?' disabled':'')+'>›</div>';
+  html += '</div><div class="cal-grid">';
+  DOW.forEach(d=> html += '<div class="cal-dow">'+d+'</div>');
+  for(let i=0;i<firstDow;i++) html += '<div class="cal-day blank"></div>';
+
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(year, month, day);
+    const iso = toISO(d);
+    const count = availability[iso] || 0;
+    const isPast = d < today;
+    const isFull = count >= MAX_PER_DAY;
+    let cls = 'cal-day';
+    if(isPast) cls += ' past';
+    else if(isFull) cls += ' full';
+    else cls += ' free';
+    if(iso === selectedDate) cls += ' sel';
+    html += '<div class="'+cls+'" data-date="'+iso+'">'+day+'</div>';
+  }
+  html += '</div>';
+  html += '<div class="cal-legend"><span><i class="dot free"></i>Disponível</span><span><i class="dot full"></i>Sem vaga</span><span><i class="dot sel"></i>Selecionado</span></div>';
+  html += '<div class="cal-selected" id="calSelectedTxt">'+(selectedDate ? 'Dia escolhido: <b>'+selectedDate.split('-').reverse().join('/')+'</b>' : 'Nenhum dia escolhido ainda.')+'</div>';
+
+  calWrap.innerHTML = html;
+
+  const prevBtn = document.getElementById('calPrev');
+  const nextBtn = document.getElementById('calNext');
+  if(prevBtn && !atMin) prevBtn.addEventListener('click', ()=>{ calView.setMonth(calView.getMonth()-1); renderCalendar(); });
+  if(nextBtn && !atMax) nextBtn.addEventListener('click', ()=>{ calView.setMonth(calView.getMonth()+1); renderCalendar(); });
+
+  calWrap.querySelectorAll('.cal-day.free').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const iso = el.getAttribute('data-date');
+      selectedDate = (selectedDate === iso) ? '' : iso;
+      document.getElementById('f-date').value = selectedDate;
+      renderCalendar();
+    });
+  });
+}
+
+loadAvailability();
+
+document.getElementById('f-date').addEventListener('change', function(){
+  selectedDate = this.value;
+  if(selectedDate){
+    const d = new Date(selectedDate+'T00:00:00');
+    calView = new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+  renderCalendar();
+});
 
 document.getElementById('bookForm').addEventListener('submit', function(e){
   e.preventDefault();
@@ -144,6 +274,8 @@ function resetForm(){
   document.getElementById('bookForm').reset();
   document.getElementById('bookForm').classList.remove('off');
   document.getElementById('confirmBox').classList.remove('on');
+  selectedDate = '';
+  renderCalendar();
 }
 </script>
 </body>
