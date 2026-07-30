@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foto Edson JPG — Pedir Sessão</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Cinzel:wght@500;600;700&display=swap');
+:root{--bg:#0e0b0c;--surface:#181113;--surface2:#201619;--surface3:#2a1d21;--border:#2f2126;--border2:#3d2b31;--accent:#c8992f;--accent2:#e7c364;--gold:#e7c364;--text:#efe7dd;--text2:#a09591;--text3:#6f615d;--radius:14px;--radius-sm:10px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;}
+.wrap{max-width:640px;margin:0 auto;padding:32px 20px 80px;}
+.hero{text-align:center;padding:20px 0 36px;border-bottom:1px solid var(--border);margin-bottom:32px;}
+.hero-badge{width:64px;height:64px;border-radius:16px;background:linear-gradient(160deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Cinzel',serif;font-weight:700;font-size:22px;color:#1a1208;box-shadow:0 8px 24px rgba(200,153,47,.3);}
+.hero h1{font-family:'Cinzel',serif;font-size:26px;letter-spacing:.4px;margin-bottom:8px;}
+.hero p{color:var(--text2);font-size:14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
+.card h2{font-family:'Cinzel',serif;font-size:18px;margin-bottom:4px;}
+.card .sub{color:var(--text2);font-size:13px;margin-bottom:20px;}
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;}
+.finput,.fsel,.ftextarea{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-family:inherit;font-size:14px;transition:border-color .15s ease, box-shadow .15s ease;}
+.finput:focus,.fsel:focus,.ftextarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,153,47,.18);}
+.ftextarea{resize:vertical;min-height:80px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:480px){.row2{grid-template-columns:1fr;}}
+.btn{width:100%;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:15px 20px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s ease, box-shadow .18s ease, filter .18s ease;background:linear-gradient(180deg,#f3d88a 0%,#e0b148 45%,#c8992f 100%);color:#3a2708;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 -6px 10px rgba(0,0,0,.15), 0 3px 12px rgba(200,153,47,.4);}
+.btn::after{content:'';position:absolute;top:0;left:0;right:0;height:52%;background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));pointer-events:none;}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06);}
+.btn:active{transform:translateY(0) scale(.97);}
+.hint{color:var(--text3);font-size:11px;margin-top:10px;text-align:center;}
+.confirm{display:none;text-align:center;padding:20px 4px;}
+.confirm.on{display:block;}
+.confirm i{font-size:40px;color:#4ade9a;margin-bottom:10px;display:block;}
+.confirm h3{font-family:'Cinzel',serif;font-size:18px;margin-bottom:6px;}
+.confirm p{color:var(--text2);font-size:13px;margin-bottom:18px;}
+.form-body{display:block;}
+.form-body.off{display:none;}
+.required{color:var(--gold);}
+.footer{text-align:center;color:var(--text3);font-size:12px;margin-top:24px;}
+.footer a{color:var(--accent2);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-badge">EJ</div>
+    <h1>Foto Edson JPG</h1>
+    <p>Pede a tua sessão fotográfica — respondemos por WhatsApp</p>
+  </div>
+
+  <div class="card">
+    <h2>Pedir uma sessão</h2>
+    <div class="sub">Preenche os dados abaixo. Ao enviar, abre o WhatsApp com a tua mensagem já pronta.</div>
+
+    <form id="bookForm" class="form-body">
+      <div class="fg">
+        <label>Nome completo <span class="required">*</span></label>
+        <input class="finput" id="f-name" placeholder="O teu nome" required>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>WhatsApp <span class="required">*</span></label>
+          <input class="finput" id="f-phone" placeholder="+238 991 234 567" required>
+        </div>
+        <div class="fg">
+          <label>Email</label>
+          <input class="finput" id="f-email" type="email" placeholder="opcional">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Tipo de sessão <span class="required">*</span></label>
+        <select class="fsel" id="f-type" required>
+          <option value="">Escolhe uma opção</option>
+          <option>Sessão Feminina</option>
+          <option>Sessão de Casal</option>
+          <option>Sessão Familiar</option>
+          <option>Sessão de Aniversário</option>
+          <option>Evento</option>
+          <option>Campanha Mulheres que Inspiram</option>
+          <option>Pacote VIP</option>
+          <option>Retrato Profissional</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Data preferida (opcional)</label>
+        <input class="finput" id="f-date" type="date">
+      </div>
+      <div class="fg">
+        <label>Mensagem</label>
+        <textarea class="ftextarea" id="f-notes" placeholder="Alguma ideia, referência ou pedido especial?"></textarea>
+      </div>
+      <button type="submit" class="btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>&nbsp; Enviar pedido por WhatsApp</button>
+      <div class="hint">Vais ser redirecionado para o WhatsApp para confirmar o envio.</div>
+    </form>
+
+    <div class="confirm" id="confirmBox">
+      <i class="ti ti-circle-check" aria-hidden="true"></i>
+      <h3>Pedido pronto!</h3>
+      <p>Abrimos o WhatsApp com a tua mensagem. É só confirmar o envio por lá.</p>
+      <button class="btn" onclick="resetForm()">Fazer novo pedido</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Foto Edson JPG &middot; <a href="https://wa.me/2385807498" target="_blank" rel="noopener">Falar diretamente no WhatsApp</a>
+  </div>
+</div>
+
+<script>
+const WA_NUMBER = '2385807498';
+
+document.getElementById('bookForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const type = document.getElementById('f-type').value;
+  const date = document.getElementById('f-date').value;
+  const notes = document.getElementById('f-notes').value.trim();
+
+  if(!name || !phone || !type){
+    alert('Por favor preenche o nome, o WhatsApp e o tipo de sessão.');
+    return;
+  }
+
+  let msg = `Olá! Gostaria de marcar uma sessão.\n\n`;
+  msg += `*Nome:* ${name}\n`;
+  msg += `*WhatsApp:* ${phone}\n`;
+  if(email) msg += `*Email:* ${email}\n`;
+  msg += `*Tipo de sessão:* ${type}\n`;
+  if(date) msg += `*Data preferida:* ${date}\n`;
+  if(notes) msg += `*Mensagem:* ${notes}\n`;
+
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+
+  document.getElementById('bookForm').classList.add('off');
+  document.getElementById('confirmBox').classList.add('on');
+});
+
+function resetForm(){
+  document.getElementById('bookForm').reset();
+  document.getElementById('bookForm').classList.remove('off');
+  document.getElementById('confirmBox').classList.remove('on');
+}
+</script>
+</body>
+</html>
