@@ -988,6 +988,7 @@ function render(){
             <span class="tag t-meta">${fmtD(c.session)}</span>
             <span class="tag t-meta" style="color:${prem?'var(--gold)':'var(--text2)'}">${c.photos||0} fotos</span>
             ${c.bday?`<span class="tag t-meta">${fmtBFull(c.bday)}</span>`:''}
+            ${c.history&&c.history.length?`<span class="tag t-meta" title="${c.history.map(h=>h.year+': '+(h.photos||0)+' fotos').join(' | ')}">${c.history.length} ano(s) anterior(es)</span>`:''}
             ${c.price?`<span class="tag" style="background:rgba(74,222,154,.08);color:var(--done)">${c.price}</span>`:''}
           </div>
           ${c.notes?`<div class="notes-preview">${c.notes}</div>`:''}
@@ -1065,8 +1066,8 @@ function saveEdit(id){
   openEditId=null;save();toast('Alterações guardadas','✓');
 }
 function delClient(id){const c=clients.find(x=>x.id===id);if(!confirm(`Apagar "${c?c.name:'cliente'}" permanentemente?`))return;clients=clients.filter(c=>c.id!==id);if(openEditId===id)openEditId=null;save();toast('Cliente apagado','✓');}
-function renovOne(id){const c=clients.find(x=>x.id===id);if(!c)return;const ny=sYear(c)+1;c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}openEditId=null;save();toast('Cliente movido para '+ny,'✓');}
-function renovAll(){const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;list.forEach(c=>{c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;});if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');}
+function renovOne(id){const c=clients.find(x=>x.id===id);if(!c)return;const ny=sYear(c)+1;if(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session)c.status='sched';c.photos=0;delete c.year;if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}openEditId=null;save();toast('Cliente movido para '+ny,'✓');}
+function renovAll(){const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;list.forEach(c=>{cf(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;});if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');}
 function fSt(s,el){fStatus=s;document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));el.classList.add('on');render();}
 function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')}`,'_blank');}
 function openFB(url){if(!url){toast('Sem link de Facebook','!');return;}window.open(url,'_blank');}
