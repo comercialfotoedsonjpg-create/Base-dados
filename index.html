@@ -1468,7 +1468,7 @@ load();migrateSeedImport();buildSidebar();render();firebase.initializeApp(FIREBA
 function publishAvailability(){
   try{
     const counts={};
-    clients.forEach(c=>{ if(c.session){ counts[c.session]=(counts[c.session]||0)+1; } });
+    clients.forEach(c=>{ if(c.session && (c.status==='sched'||c.status==='done')){ counts[c.session]=(counts[c.session]||0)+1; } });
     if(typeof agenda!=='undefined' && agenda && agenda.events){
       agenda.events.forEach(e=>{ if(e.date){ counts[e.date]=(counts[e.date]||0)+1; } });
     }
