@@ -12,7 +12,9 @@
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;}
 .wrap{max-width:640px;margin:0 auto;padding:32px 20px 80px;}
 .hero{text-align:center;padding:20px 0 36px;border-bottom:1px solid var(--border);margin-bottom:32px;}
-.hero-badge{width:64px;height:64px;border-radius:16px;background:linear-gradient(160deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Cinzel',serif;font-weight:700;font-size:22px;color:#1a1208;box-shadow:0 8px 24px rgba(200,153,47,.3);}
+.hero-badge{width:78px;height:78px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6df 0%,var(--accent2) 32%,var(--accent) 75%,#a97b1f 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#2a1a05;box-shadow:0 0 0 1px rgba(255,241,199,.5), 0 0 24px 6px rgba(231,195,100,.55), 0 0 60px 10px rgba(231,195,100,.28), inset 0 2px 4px rgba(255,255,255,.6), inset 0 -6px 10px rgba(0,0,0,.2);position:relative;animation:badgeGlow 3.2s ease-in-out infinite;}
+.hero-badge i{font-size:34px;text-shadow:0 1px 0 rgba(255,255,255,.4);}
+@keyframes badgeGlow{0%,100%{box-shadow:0 0 0 1px rgba(255,241,199,.5), 0 0 24px 6px rgba(231,195,100,.55), 0 0 60px 10px rgba(231,195,100,.28), inset 0 2px 4px rgba(255,255,255,.6), inset 0 -6px 10px rgba(0,0,0,.2);}50%{box-shadow:0 0 0 1px rgba(255,241,199,.6), 0 0 32px 10px rgba(231,195,100,.7), 0 0 80px 16px rgba(231,195,100,.4), inset 0 2px 4px rgba(255,255,255,.7), inset 0 -6px 10px rgba(0,0,0,.2);}}
 .hero h1{font-family:'Cinzel',serif;font-size:26px;letter-spacing:.4px;margin-bottom:8px;}
 .hero p{color:var(--text2);font-size:14px;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
@@ -72,7 +74,7 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
 <body>
 <div class="wrap">
   <div class="hero">
-    <div class="hero-badge">EJ</div>
+    <div class="hero-badge"><i class="ti ti-camera" aria-hidden="true"></i></div>
     <h1>Foto Edson JPG</h1>
     <p>Pede a tua sessão fotográfica — respondemos por WhatsApp</p>
   </div>
