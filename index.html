@@ -1044,7 +1044,7 @@ function render(){
         <div class="card-actions">
           ${hp?`<button class="btn btn-wa btn-xs" onclick="waMsg('${c.phone}','${c.name.replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>WA</button>`:''}
           ${hfb?`<button class="btn btn-fb btn-xs" onclick="openFB('${c.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i>FB</button>`:''}
-          <button class="btn btn-xs" onclick="togglePremium(${c.id})" title="${c.premium?'Remover Premium':'Marcar como Premium'}" style="color:${c.premium?'var(--gold)':'inherit'}"><i class="ti ti-star${c.premium?'-filled':''}" aria-hidden="true"></i></button><button class="btn btn-ghost btn-xs" onclick="toggleEdit(${c.id})">${isOpen?'Fechar':'Editar'}</button>
+          <button class="btn btn-ghost btn-xs" onclick="togglePremium(${c.id})" title="${c.premium?'Remover Premium':'Marcar como Premium'}" style="${c.premium?'color:var(--gold);border-color:rgba(231,195,100,.4)':''}"><i class="ti ti-star${c.premium?'-filled':''}" aria-hidden="true"></i></button><button class="btn btn-ghost btn-xs" onclick="toggleEdit(${c.id})">${isOpen?'Fechar':'Editar'}</button>
           <button class="btn btn-danger btn-xs" onclick="delClient(${c.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
         </div>
       </div>
