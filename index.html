@@ -303,6 +303,7 @@ body{letter-spacing:.1px;}
       <select class="tsel" id="month-sel" onchange="render()">
         <option value="">Todos os meses</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
       </select>
+      <button class="filter-btn" id="sort-btn" onclick="toggleSort(this)" title="Ordenar A-Z">A-Z</button>
       <div class="search-wrap"><i class="ti ti-search search-icon" aria-hidden="true"></i><input type="text" id="srch" placeholder="Pesquisar..." oninput="render()"></div>
     </div>
     <div class="client-list" id="client-list"></div>
@@ -990,7 +991,7 @@ function visible(){
     const qOk=c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.notes||'').toLowerCase().includes(q);
     const moOk=!mo||(currentView==='aniversarios'?(c.bday&&c.bday.split('-')[1]===mo):((c.session&&c.session.split('-')[1]===mo)||(!c.session&&c.bday&&c.bday.split('-')[1]===mo)));
     return stOk&&qOk&&moOk;
-  }).sort((a,b)=>(a.session||'').localeCompare(b.session||''));
+  }).sort((a,b)=>window.sortMode==='name'?a.name.localeCompare(b.name):(a.session||'').localeCompare(b.session||''));
 }
 
 function editTabFor(id){return activeEditTab[id]||'dados';}
@@ -1115,6 +1116,7 @@ function delClient(id){const c=clients.find(x=>x.id===id);if(!confirm(`Apagar "$
 function renovOne(id){const c=clients.find(x=>x.id===id);if(!c)return;const ny=sYear(c)+1;if(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}openEditId=null;save();toast('Cliente movido para '+ny,'✓');}
 function renovAll(){const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;list.forEach(c=>{if(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;});if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');}
 function fSt(s,el){fStatus=s;document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));el.classList.add('on');render();}
+function toggleSort(el){window.sortMode=window.sortMode==='name'?'session':'name';el.classList.toggle('on',window.sortMode==='name');render();}
 function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')}`,'_blank');}
 function openFB(url){if(!url){toast('Sem link de Facebook','!');return;}window.open(url,'_blank');}
 
