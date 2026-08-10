@@ -319,6 +319,7 @@ body{letter-spacing:.1px;}
         <button class="btn btn-primary" onclick="openNewBabyModal()"><i class="ti ti-plus" aria-hidden="true"></i>Novo bebé</button>
       </div>
     </div>
+    <div class="alert bday" id="baby6-alert"><i class="ti ti-gift" aria-hidden="true"></i><span id="baby6-txt"></span></div>
     <div id="baby-list" class="baby-grid"></div>
   </div>
 
@@ -1169,8 +1170,29 @@ function closeYrModal(){document.getElementById('yr-modal').classList.remove('op
 function confirmYear(){const y=parseInt(document.getElementById('new-yr').value);if(!y||y<2000||y>2040){toast('Ano inválido','!');return;}if(years.includes(y)){toast(`O ano ${y} já existe`,'!');return;}years.push(y);years.sort((a,b)=>a-b);activeYear=y;closeYrModal();save();toast(`Ano ${y} criado`,'✓');}
 
 /* ===== CAMPANHAS DE BEBES ===== */
+function monthsOld(bd){
+  if(!bd)return null;
+  const b=new Date(bd+'T00:00:00');if(isNaN(b))return null;
+  const t=new Date();
+  let m=(t.getFullYear()-b.getFullYear())*12+(t.getMonth()-b.getMonth());
+  if(t.getDate()<b.getDate())m--;
+  return m;
+}
+function checkBabyAlerts(){
+  const ba=document.getElementById('baby6-alert');if(!ba)return;
+  const soon=babies.filter(b=>!b.dropped&&monthsOld(b.birthdate)===5);
+  if(soon.length){
+    ba.style.display='flex';
+    document.getElementById('baby6-txt').innerHTML=soon.slice(0,5).map(b=>{
+      const first=(b.mae||b.name).split(' ')[0];
+      const wa=b.phone?` <a href="https://wa.me/${waN(b.phone)}?text=${encodeURIComponent('Olá '+first+'! O(a) '+b.name+' está quase a completar 6 meses — vamos marcar a sessão da lembrancinha? 🎁📸')}" target="_blank" style="color:var(--wa)"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></a>`:'';
+      return `${b.name} completa 6 meses em breve${wa}`;
+    }).join(' · ');
+  } else ba.style.display='none';
+}
 function renderBebes(){
   const bps=document.getElementById('baby-page-sub');if(bps)bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+babies.length+(babies.length===1?' bebé':' bebés');
+  checkBabyAlerts();
   const el=document.getElementById('baby-list');
   if(!babies.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
   const srchEl=document.getElementById('baby-srch');
@@ -1181,10 +1203,10 @@ function renderBebes(){
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
     const done=sessions.filter(s=>s.done).length;
     const milestones=[3,6,12];
-    return`<div class="baby-card">
+    return`<div class="baby-card"${b.dropped?' style="opacity:.55"':''}>
       <div class="baby-card-head">
         <div class="baby-av">👶</div>
-        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
+        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
       <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" title="Mês ${s.month}${s.done?' — concluído':''}" onclick="toggleBabyMonth(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
       <div class="prize-row">
@@ -1197,7 +1219,7 @@ function renderBebes(){
         <span class="hint" style="margin-right:auto">Contacto: ${b.parent||'—'} · ${b.phone||'sem WhatsApp'}</span>
         ${b.phone?`<button class="btn btn-wa btn-xs" onclick="waMsg('${b.phone}','${(b.mae||b.name).replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
         ${b.facebook&&b.facebook.startsWith('http')?`<button class="btn btn-fb btn-xs" onclick="openFB('${b.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
-        <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
+        <button class="btn btn-ghost btn-xs" onclick="toggleBabyDropped(${b.id})" title="${b.dropped?'Marcar como ativo':'Marcar como desistiu'}"><i class="ti ti-${b.dropped?'rotate-clockwise':'user-off'}" aria-hidden="true"></i></button>\n        <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
     </div>`;
   }).join('');
@@ -1209,6 +1231,11 @@ function toggleBabyMonth(id,month){
   s.done=!s.done;if(s.done&&!s.photos)s.photos=1;
   b.updatedAt=Date.now();
   save();
+}
+function toggleBabyDropped(id){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  b.dropped=!b.dropped;b.updatedAt=Date.now();
+  save();toast(b.dropped?'Bebé marcado como desistiu':'Bebé marcado como ativo','✓');
 }
 function delBaby(id){if(!confirm('Apagar este bebé?'))return;babies=babies.filter(b=>b.id!==id);save();toast('Bebé apagado','✓');}
 function openNewBabyModal(){['b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal').classList.add('open');}
