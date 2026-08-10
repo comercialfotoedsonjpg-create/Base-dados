@@ -359,6 +359,7 @@ body{letter-spacing:.1px;}
     <div class="fg full"><span class="flabel">Perfil Facebook</span><input class="finput" id="n-facebook" placeholder="https://facebook.com/nome"></div>
     <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="n-bday" type="date"></div>
     <div class="fg"><span class="flabel">Data da sessão</span><input class="finput" id="n-sess" type="date"></div>
+    <div class="fg"><span class="flabel">Ano (opcional)</span><select class="fsel" id="n-year"><option value="">Automático (pela sessão)</option></select></div>
     <div class="fg"><span class="flabel">Fotos entregues</span><input class="finput" id="n-photos" type="number" min="0"></div>
     <div class="fg"><span class="flabel">Estado</span><select class="fsel" id="n-status"><option value="sched">Agendado</option><option value="done">Concluído</option><option value="pend">Pendente</option><option value="canc">Cancelado</option></select></div>
   </div>
@@ -1063,6 +1064,7 @@ function render(){
             <div class="fg full"><span class="flabel">Facebook</span><input class="finput" id="e-facebook-${c.id}" value="${c.facebook||''}"></div>
             <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="e-bday-${c.id}" type="date" value="${c.bday||''}"></div>
             <div class="fg"><span class="flabel">Data da sessão</span><input class="finput" id="e-sess-${c.id}" type="date" value="${c.session||''}"></div>
+            <div class="fg"><span class="flabel">Ano</span><select class="fsel" id="e-year-${c.id}"><option value=""${!c.year?' selected':''}>Automático (pela sessão)</option>${years.map(y=>`<option value="${y}"${String(c.year||'')===String(y)?' selected':''}>${y}</option>`).join('')}</select></div>
             <div class="fg"><span class="flabel">Valor</span><input class="finput" id="e-price-${c.id}" value="${c.price||''}"></div>
           </div>
           <div class="edit-foot">
@@ -1102,7 +1104,7 @@ function saveEdit(id){
   const n=document.getElementById(`e-name-${id}`).value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   c.name=n;c.email=document.getElementById(`e-email-${id}`).value.trim();c.phone=document.getElementById(`e-phone-${id}`).value.trim();
   c.facebook=document.getElementById(`e-facebook-${id}`).value.trim();c.bday=document.getElementById(`e-bday-${id}`).value;
-  c.session=document.getElementById(`e-sess-${id}`).value;c.photos=parseInt(document.getElementById(`e-photos-${id}`).value)||0;
+  c.session=document.getElementById(`e-sess-${id}`).value;const eys=document.getElementById(`e-year-${id}`);c.year=eys&&eys.value?parseInt(eys.value):null;c.photos=parseInt(document.getElementById(`e-photos-${id}`).value)||0;
   c.status=document.getElementById(`e-status-${id}`).value;c.price=document.getElementById(`e-price-${id}`).value.trim();
   if(document.getElementById(`e-style-${id}`))c.style=document.getElementById(`e-style-${id}`).value.trim();
   if(document.getElementById(`e-notes-${id}`))c.notes=document.getElementById(`e-notes-${id}`).value.trim();
@@ -1128,12 +1130,13 @@ function openNewModal(){
   document.getElementById('n-sess').value='';document.getElementById('n-status').value='sched';
   document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));document.querySelector('.modal-tab').classList.add('on');
   document.getElementById('modal-tab-info').style.display='grid';document.getElementById('modal-tab-extras').style.display='none';
+  document.getElementById('n-year').innerHTML='<option value="">Automático (pela sessão)</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
   document.getElementById('new-modal').classList.add('open');
 }
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
 function saveNew(){
   const n=document.getElementById('n-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
-  const data={id:uid++,name:n,email:document.getElementById('n-email').value.trim(),phone:document.getElementById('n-phone').value.trim(),facebook:document.getElementById('n-facebook').value.trim(),bday:document.getElementById('n-bday').value,session:document.getElementById('n-sess').value,photos:parseInt(document.getElementById('n-photos').value)||0,status:document.getElementById('n-status').value,style:document.getElementById('n-style').value.trim(),notes:document.getElementById('n-notes').value.trim(),refs:document.getElementById('n-refs').value.trim(),price:document.getElementById('n-price').value.trim(),gallery:[],avatar:null};
+  const data={id:uid++,name:n,email:document.getElementById('n-email').value.trim(),phone:document.getElementById('n-phone').value.trim(),facebook:document.getElementById('n-facebook').value.trim(),bday:document.getElementById('n-bday').value,session:document.getElementById('n-sess').value,year:(document.getElementById('n-year')&&document.getElementById('n-year').value)?parseInt(document.getElementById('n-year').value):null,photos:parseInt(document.getElementById('n-photos').value)||0,status:document.getElementById('n-status').value,style:document.getElementById('n-style').value.trim(),notes:document.getElementById('n-notes').value.trim(),refs:document.getElementById('n-refs').value.trim(),price:document.getElementById('n-price').value.trim(),gallery:[],avatar:null};
   clients.push(data);
   const ny=data.session?parseInt(data.session.split('-')[0]):null;
   if(ny&&!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
