@@ -976,7 +976,7 @@ function showView(v,el){
 function getViewClients(){
   switch(currentView){
     case'premium':return clients.filter(c=>isPrem(c.photos));
-    case'aniversarios':return clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=30;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));
+    case'aniversarios':{const mo=(document.getElementById('month-sel')||{}).value;if(mo){return clients.filter(c=>c.bday&&c.bday.split('-')[1]===mo).sort((a,b)=>(a.bday||'').split('-')[2].localeCompare((b.bday||'').split('-')[2]));}return clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=30;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));}
     case'renovar':return clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY);
     default:return clients.filter(c=>sYear(c)===activeYear);
   }
