@@ -976,7 +976,7 @@ function showView(v,el){
 function getViewClients(){
   switch(currentView){
     case'premium':return clients.filter(c=>isPrem(c.photos));
-    case'aniversarios':{const mo=(document.getElementById('month-sel')||{}).value;if(mo){return clients.filter(c=>c.bday&&c.bday.split('-')[1]===mo).sort((a,b)=>(a.bday||'').split('-')[2].localeCompare((b.bday||'').split('-')[2]));}return clients.filter(c=>{const d=bdaySoon(c.bday);return d!==null&&d<=30;}).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));}
+    case'aniversarios':{const mo=(document.getElementById('month-sel')||{}).value;if(mo){return clients.filter(c=>c.bday&&c.bday.split('-')[1]===mo).sort((a,b)=>(a.bday||'').split('-')[2].localeCompare((b.bday||'').split('-')[2]));}return clients.filter(c=>c.bday&&bdaySoon(c.bday)!==null).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));}
     case'renovar':return clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY);
     default:return clients.filter(c=>sYear(c)===activeYear);
   }
@@ -998,7 +998,7 @@ function editTabFor(id){return activeEditTab[id]||'dados';}
 function render(){
   const list=visible();
   checkAlerts();updateStats();
-  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários próximos','Próximos 30 dias'],renovar:['A Renovar','Sessões concluídas para renovar']};
+  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários','Por proximidade (ou filtra por mes)'],renovar:['A Renovar','Sessões concluídas para renovar']};
   const[title,sub]=titles[currentView]||titles.clientes;
   document.getElementById('page-title').textContent=title;
   document.getElementById('page-sub').textContent=sub;
