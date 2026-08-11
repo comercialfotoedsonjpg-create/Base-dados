@@ -322,6 +322,7 @@ body{letter-spacing:.1px;}
     <div class="toolbar">
       <button class="filter-btn on" id="baby-tab-active" onclick="setBabyTab('active',this)">Ativos</button>
       <button class="filter-btn" id="baby-tab-archived" onclick="setBabyTab('archived',this)">Arquivados</button>
+      <button class="filter-btn" id="baby-tab-dropped" onclick="setBabyTab('dropped',this)">Desistiram</button>
     </div>
     <div class="alert bday" id="baby6-alert"><i class="ti ti-gift" aria-hidden="true"></i><span id="baby6-txt"></span></div>
     <div id="baby-list" class="baby-grid"></div>
@@ -1205,13 +1206,13 @@ function renderBebes(){
   const el=document.getElementById('baby-list');
   if(!babies.length){const bps0=document.getElementById('baby-page-sub');if(bps0)bps0.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · 0 bebés';el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
   const bfm=babyTab;
-  const base=bfm==='archived'?babies.filter(b=>b.archived):babies.filter(b=>!b.archived);
+  const base=bfm==='archived'?babies.filter(b=>b.archived):bfm==='dropped'?babies.filter(b=>b.dropped&&!b.archived):babies.filter(b=>!b.archived&&!b.dropped);
   const bps=document.getElementById('baby-page-sub');
-  if(bps){const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
+  if(bps){const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
   const srchEl=document.getElementById('baby-srch');
   const q=(srchEl?srchEl.value:'').trim().toLowerCase();
   const bsm=(document.getElementById('baby-sort-sel')||{}).value||'birth';const list=(q?base.filter(b=>[b.name,b.mae,b.parent,b.phone].some(v=>(v||'').toLowerCase().includes(q))):base.slice()).sort((a,b)=>{if(bsm==='name')return (a.name||'').localeCompare(b.name||'');if(bsm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(bsm==='created')return (b.id||0)-(a.id||0);return (a.birthdate||'').localeCompare(b.birthdate||'');});
-  if(!list.length){const msg=q?`Nenhum bebé encontrado para "${escH(q)}"`:(bfm==='archived'?'Nenhum bebé arquivado':'Nenhum bebé ativo');el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${msg}</div></div>`;return;}
+  if(!list.length){const msg=q?`Nenhum bebé encontrado para "${escH(q)}"`:(bfm==='archived'?'Nenhum bebé arquivado':bfm==='dropped'?'Nenhum bebé desistiu':'Nenhum bebé ativo');el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${msg}</div></div>`;return;}
   el.innerHTML=list.map(b=>{
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
     const done=sessions.filter(s=>s.done).length;
