@@ -945,6 +945,7 @@ function save(){
   else{setSyncStatus('local');}
 }
 
+function activeBabiesCount(){return babies.filter(b=>!b.archived&&!b.dropped).length;}
 function buildSidebar(){
   const allY=[...new Set([...years,...clients.map(c=>sYear(c)).filter(Boolean)])].sort((a,b)=>a-b);
   years=[...allY];
@@ -957,7 +958,7 @@ function buildSidebar(){
   document.getElementById('nav-total').textContent=clients.length;
   document.getElementById('nav-prem').textContent=prem;
   document.getElementById('nav-renov').textContent=renov;
-  document.getElementById('nav-bebes').textContent=babies.length;
+  document.getElementById('nav-bebes').textContent=activeBabiesCount();
 }
 
 function renderCurrent(){
@@ -1448,7 +1449,7 @@ function renderMetricas(){
   document.getElementById('kpi-row-neg').innerHTML=`
     <div class="kpi-card"><div class="kpi-n" style="color:var(--accent)">${clients.length}</div><div class="kpi-l">Total de clientes (todos os anos)</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--done)">${d.avgTicket?d.avgTicket.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Ticket médio (CVE)</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${babies.length}</div><div class="kpi-l">Bebés em campanha</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${activeBabiesCount()}</div><div class="kpi-l">Bebés em campanha</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${d.babySessions}</div><div class="kpi-l">Sessões de bebé concluídas</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.babiesFull}</div><div class="kpi-l">Bebés que completaram 1 ano</div></div>`;
   document.getElementById('chart-months').innerHTML=MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${d.byMonth[i]/Math.max(...d.byMonth,1)*100}%"></div></div><div class="bar-val">${d.byMonth[i]}</div></div>`).join('');
@@ -1484,7 +1485,7 @@ function exportMetricsPDF(){
   doc.setFont('helvetica','normal');doc.setFontSize(10);
   const lines2=[
     `Total de clientes registados: ${clients.length}`,
-    `Bebés em campanha: ${babies.length}   ·   Sessões de bebé concluídas: ${d.babySessions}   ·   Bebés que completaram 1 ano: ${d.babiesFull}`
+    `Bebés em campanha: ${activeBabiesCount()}   ·   Sessões de bebé concluídas: ${d.babySessions}   ·   Bebés que completaram 1 ano: ${d.babiesFull}`
   ];
   lines2.forEach(l=>{doc.text(l,14,y);y+=6;});
   y+=4;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(`Clientes por mês (${activeYear})`,14,y);y+=7;
