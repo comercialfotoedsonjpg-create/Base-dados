@@ -878,6 +878,7 @@ const fmtD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${
 const fmtBFull=d=>{if(!d)return'—';const p=d.split('-');return p.length>=3?`${p[2]} ${MONTHS[parseInt(p[1])-1]}`:'—';};
 const waN=p=>p?p.replace(/[\s\-()]/g,''):'';
 const sYear=c=>c.year||(c.session?parseInt(c.session.split('-')[0]):null);
+const ycFor=y=>y==='none'?clients.filter(c=>sYear(c)===null):clients.filter(c=>sYear(c)===y);
 const needsR=c=>c.status==='done'&&sYear(c)!==null&&sYear(c)===activeYear;
 
 function bdaySoon(d){
@@ -949,11 +950,14 @@ function activeBabiesCount(){return babies.filter(b=>!b.archived&&!b.dropped).le
 function buildSidebar(){
   const allY=[...new Set([...years,...clients.map(c=>sYear(c)).filter(Boolean)])].sort((a,b)=>a-b);
   years=[...allY];
-  document.getElementById('years-nav').innerHTML=allY.map(y=>{
+  let yrsHtml=allY.map(y=>{
     const cnt=clients.filter(c=>sYear(c)===y).length;
     return`<button class="year-tab${y===activeYear?' active':''}" onclick="setYear(${y})">${y}<span class="ycount">${cnt}</span></button>`;
   }).join('');
-  const prem=clients.filter(c=>isPrem(c.photos)).length;
+  const noYearCnt=clients.filter(c=>sYear(c)===null).length;
+  if(noYearCnt>0){yrsHtml+=`<button class="year-tab${activeYear==='none'?' active':''}" onclick="setYear('none')">Sem ano<span class="ycount">${noYearCnt}</span></button>`;}
+  document.getElementById('years-nav').innerHTML=yrsHtml;
+  const prem=clients.filter(c=>isPrem(c.photos)||c.premium).length;
   const renov=clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY).length;
   document.getElementById('nav-total').textContent=clients.length;
   document.getElementById('nav-prem').textContent=prem;
@@ -988,7 +992,7 @@ function getViewClients(){
     case'premium':return clients.filter(c=>isPrem(c.photos)||c.premium);
     case'aniversarios':{const mo=(document.getElementById('month-sel')||{}).value;if(mo){return clients.filter(c=>c.bday&&c.bday.split('-')[1]===mo).sort((a,b)=>(a.bday||'').split('-')[2].localeCompare((b.bday||'').split('-')[2]));}return clients.filter(c=>c.bday&&bdaySoon(c.bday)!==null).sort((a,b)=>bdaySoon(a.bday)-bdaySoon(b.bday));}
     case'renovar':return clients.filter(c=>c.status==='done'&&sYear(c)!==null&&sYear(c)<=CY);
-    default:return clients.filter(c=>sYear(c)===activeYear);
+    default:return ycFor(activeYear);
   }
 }
 
@@ -1008,7 +1012,8 @@ function editTabFor(id){return activeEditTab[id]||'dados';}
 function render(){
   const list=visible();
   checkAlerts();updateStats();
-  const titles={clientes:[`Clientes — ${activeYear}`,`${clients.filter(c=>sYear(c)===activeYear).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários','Por proximidade (ou filtra por mes)'],renovar:['A Renovar','Sessões concluídas para renovar']};
+  const noYearMode=activeYear==='none';
+  const titles={clientes:[noYearMode?'Clientes — Sem ano':`Clientes — ${activeYear}`,noYearMode?`${ycFor('none').length} clientes sem ano definido`:`${clients.filter(c=>sYear(c)===activeYear).length} clientes neste ano`],premium:['Clientes Premium','Com 10 ou mais fotos entregues'],aniversarios:['Aniversários','Por proximidade (ou filtra por mes)'],renovar:['A Renovar','Sessões concluídas para renovar']};
   const[title,sub]=titles[currentView]||titles.clientes;
   document.getElementById('page-title').textContent=title;
   document.getElementById('page-sub').textContent=sub;
@@ -1165,9 +1170,9 @@ function checkAlerts(){
   else{ra.style.display='none';rab.style.display='none';}
 }
 function updateStats(){
-  const yc=clients.filter(c=>sYear(c)===activeYear);
+  const yc=ycFor(activeYear);
   document.getElementById('s-tot').textContent=yc.length;
-  document.getElementById('s-prem').textContent=yc.filter(c=>isPrem(c.photos)).length;
+  document.getElementById('s-prem').textContent=yc.filter(c=>isPrem(c.photos)||c.premium).length;
   document.getElementById('s-done').textContent=yc.filter(c=>c.status==='done').length;
   document.getElementById('s-sched').textContent=yc.filter(c=>c.status==='sched').length;
 }
@@ -1440,7 +1445,7 @@ function renderMetricas(){
     <div class="kpi-card"><div class="kpi-n" style="color:var(--pend)">${d.pend.length}</div><div class="kpi-l">Pendentes</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--canc)">${d.canc.length}</div><div class="kpi-l">Canceladas</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--accent2)">${d.conv}%</div><div class="kpi-l">Taxa de conclusão</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.yc.filter(c=>isPrem(c.photos)).length}</div><div class="kpi-l">Clientes premium</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.yc.filter(c=>isPrem(c.photos)||c.premium).length}</div><div class="kpi-l">Clientes premium</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${d.revenue?d.revenue.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Receita registada (CVE)</div></div>`;
   const covEl=document.getElementById('metrics-coverage');
   if(d.done.length&&d.coverage<100){covEl.textContent=`⚠ ${d.doneWithPrice.length} de ${d.done.length} sessões concluídas em ${activeYear} têm valor registado (${d.coverage}%) — a receita real pode ser maior. Preenche o campo "Valor" ao concluir uma sessão para números exactos.`;}
@@ -1476,7 +1481,7 @@ function exportMetricsPDF(){
     `Clientes no ano: ${d.yc.length}`,
     `Sessões concluídas: ${d.done.length}   ·   Agendadas: ${d.sched.length}   ·   Pendentes: ${d.pend.length}   ·   Canceladas: ${d.canc.length}`,
     `Taxa de conclusão: ${d.conv}%`,
-    `Clientes premium (≥10 fotos): ${d.yc.filter(c=>isPrem(c.photos)).length}`,
+    `Clientes premium: ${d.yc.filter(c=>isPrem(c.photos)||c.premium).length}`,
     `Receita registada: ${d.revenue?d.revenue.toLocaleString('pt-PT')+' CVE':'sem valores registados'} (cobertura: ${d.coverage}% das sessões concluídas)`,
     `Ticket médio: ${d.avgTicket?d.avgTicket.toLocaleString('pt-PT')+' CVE':'—'}`
   ];
