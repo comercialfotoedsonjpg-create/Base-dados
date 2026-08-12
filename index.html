@@ -182,7 +182,10 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-day.outside .cal-daynum{color:var(--text3);opacity:.45}
 .cal-daynum{font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
 .cal-day.today .cal-daynum{background:var(--accent);color:#1a1210;font-weight:700}
-.cal-chip{font-size:10.5px;padding:2px 6px;border-radius:5px;background:rgba(200,153,47,.16);color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.5}
+.cal-chip{font-size:10.5px;padding:2px 6px;border-radius:5px;background:rgba(200,153,47,.16);color:var(--accent2);cursor:pointer;line-height:1.5;display:flex;align-items:center;gap:4px;overflow:hidden}
+.cal-chip-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.cal-chip-wa{flex-shrink:0;color:var(--wa);font-size:11px;cursor:pointer}
+.cal-chip-wa:hover{opacity:.7}
 .cal-chip:hover{background:rgba(200,153,47,.3)}
 .cal-chip.sess{background:rgba(79,195,247,.14);color:var(--sched)}
 .cal-chip.sess:hover{background:rgba(79,195,247,.28)}
@@ -1301,8 +1304,8 @@ function renderAgenda(){
   const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
   const todayISO=calISO(new Date());
   const evByDate={};
-  (agenda.events||[]).forEach(e=>{if(!e.date)return;(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time});});
-  clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name});}});
+  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone;evCname=cc.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname});});
+  clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name});}});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
   let html='';
   CAL_WEEKDAYS.forEach(w=>html+=`<div class="cal-weekday">${w}</div>`);
@@ -1320,7 +1323,7 @@ function renderAgenda(){
     const more=dayEvents.length-shown.length;
     html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="calDayClick('${iso}')">
       <div class="cal-daynum">${dnum}</div>
-      ${shown.map(ev=>`<div class="cal-chip${ev.type==='sess'?' sess':''}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</div>`).join('')}
+      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();calDayClick('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
