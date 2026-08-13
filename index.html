@@ -883,7 +883,15 @@ const isPrem=p=>parseInt(p||0)>=10;
 const fmtD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};
 const fmtBFull=d=>{if(!d)return'—';const p=d.split('-');return p.length>=3?`${p[2]} ${MONTHS[parseInt(p[1])-1]}`:'—';};
 const waN=p=>p?p.replace(/[\s\-()]/g,''):'';
-const sYear=c=>c.year||(c.session?parseInt(c.session.split('-')[0]):null);
+function nextBdayYear(bday){
+  if(!bday)return null;
+  const p=bday.split('-');if(p.length<3)return null;
+  const now=new Date();
+  const todayISO=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const thisYearBday=`${now.getFullYear()}-${p[1]}-${p[2]}`;
+  return thisYearBday<todayISO?now.getFullYear()+1:now.getFullYear();
+}
+const sYear=c=>c.year||(c.session?parseInt(c.session.split('-')[0]):null)||nextBdayYear(c.bday);
 const ycFor=y=>y==='none'?clients.filter(c=>sYear(c)===null):clients.filter(c=>sYear(c)===y);
 const needsR=c=>c.status==='done'&&sYear(c)!==null&&sYear(c)===activeYear;
 
