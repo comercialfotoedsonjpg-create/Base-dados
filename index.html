@@ -198,6 +198,12 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip:hover{background:rgba(200,153,47,.3)}
 .cal-chip.sess{background:rgba(79,195,247,.14);color:var(--sched)}
 .cal-chip.sess:hover{background:rgba(79,195,247,.28)}
+.cal-chip.aniv{background:rgba(249,168,212,.16);color:#f9a8d4}
+.cal-chip.aniv:hover{background:rgba(249,168,212,.3)}
+.cal-chip.reun{background:rgba(129,140,248,.16);color:#a5b4fc}
+.cal-chip.reun:hover{background:rgba(129,140,248,.3)}
+.cal-chip.outro{background:rgba(160,149,145,.16);color:var(--text2)}
+.cal-chip.outro:hover{background:rgba(160,149,145,.3)}
 .cal-more{font-size:10px;color:var(--text3);padding:1px 6px;cursor:pointer}
 .cal-more:hover{color:var(--text2)}
 .ev-title-wrap{position:relative}
@@ -346,6 +352,13 @@ body{letter-spacing:.1px;}
     <div class="topbar"><div><div class="page-title">Agenda</div><div class="page-sub">Sessões e compromissos</div></div>
       <div class="topbar-actions"><button class="btn btn-primary" onclick="openNewEventModal()"><i class="ti ti-plus" aria-hidden="true"></i>Nova sessão</button></div>
     </div>
+    <div class="toolbar">
+      <button class="filter-btn on" id="agenda-tab-all" onclick="setAgendaTypeFilter('all',this)">Todos</button>
+      <button class="filter-btn" id="agenda-tab-sessao" onclick="setAgendaTypeFilter('sessao',this)">Sessões</button>
+      <button class="filter-btn" id="agenda-tab-aniversario" onclick="setAgendaTypeFilter('aniversario',this)">Aniversários</button>
+      <button class="filter-btn" id="agenda-tab-reuniao" onclick="setAgendaTypeFilter('reuniao',this)">Reuniões</button>
+      <button class="filter-btn" id="agenda-tab-outro" onclick="setAgendaTypeFilter('outro',this)">Outros</button>
+    </div>
     <div class="cal-header">
       <div class="cal-nav"><button class="cal-nav-btn" onclick="calPrevMonth()" aria-label="Mês anterior"><i class="ti ti-chevron-left" aria-hidden="true"></i></button><button class="cal-today-btn" onclick="calGoToday()">Hoje</button></div>
       <div class="cal-title" id="cal-title"></div>
@@ -426,6 +439,7 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
     <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><input class="finput" id="ev-contact" placeholder="+238 991 234 567"></div>
+    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
     <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
@@ -1353,7 +1367,7 @@ function saveNewBaby(){
 }
 
 /* ===== AGENDA (calendário estilo Apple Calendar) ===== */
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),editingEventId=null,calPrefillDate=null;
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),editingEventId=null,calPrefillDate=null,agendaTypeFilter='all';
 const CAL_WEEKDAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const CAL_MONTHNAMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 function calISO(dt){return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
@@ -1362,6 +1376,12 @@ function calPrevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderA
 function calNextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderAgenda();}
 function calGoToday(){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();renderAgenda();}
 function calDayClick(iso){calPrefillDate=iso;openNewEventModal(iso);}
+function setAgendaTypeFilter(t,el){
+  agendaTypeFilter=t;
+  document.querySelectorAll('#panel-agenda .toolbar .filter-btn').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  renderAgenda();
+}
 
 function renderAgenda(){
   const el=document.getElementById('agenda-list');
@@ -1373,8 +1393,8 @@ function renderAgenda(){
   const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
   const todayISO=calISO(new Date());
   const evByDate={};
-  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname});});
-  clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name});}});
+  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,kind:e.type||'sessao'});});
+  clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name,kind:'sessao'});}});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
   let html='';
   CAL_WEEKDAYS.forEach(w=>html+=`<div class="cal-weekday">${w}</div>`);
@@ -1387,12 +1407,12 @@ function renderAgenda(){
     else{dnum=dayNum;cellDate=new Date(calYear,calMonth,dayNum);}
     const iso=calISO(cellDate);
     const isToday=iso===todayISO;
-    const dayEvents=evByDate[iso]||[];
+    const dayEvents=(evByDate[iso]||[]).filter(ev=>agendaTypeFilter==='all'||ev.kind===agendaTypeFilter);
     const shown=dayEvents.slice(0,3);
     const more=dayEvents.length-shown.length;
     html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="calDayClick('${iso}')">
       <div class="cal-daynum">${dnum}</div>
-      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
+      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();calDayClick('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
@@ -1402,6 +1422,7 @@ function renderAgenda(){
 function openNewEventModal(prefillDate){
   editingEventId=null;
   ['ev-title','ev-date','ev-time','ev-local','ev-notes','ev-client-id','ev-contact'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ev-type').value='sessao';
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
   document.getElementById('event-modal-title').textContent='Nova sessão';
   document.getElementById('ev-delete-btn').style.display='none';
@@ -1417,6 +1438,7 @@ function editEvent(id){
   document.getElementById('ev-notes').value=e.notes||'';
   document.getElementById('ev-client-id').value=e.clientId||'';
   document.getElementById('ev-contact').value=e.contact||'';
+  document.getElementById('ev-type').value=e.type||'sessao';
   document.getElementById('event-modal-title').textContent='Editar sessão';
   document.getElementById('ev-delete-btn').style.display='';
   document.getElementById('event-modal').classList.add('open');
@@ -1427,7 +1449,7 @@ function saveNewEvent(){
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
   if(!agenda.events)agenda.events=[];
   const cid=document.getElementById('ev-client-id').value;
-  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid?parseInt(cid):null,contact:document.getElementById('ev-contact').value.trim()};
+  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid?parseInt(cid):null,contact:document.getElementById('ev-contact').value.trim(),type:document.getElementById('ev-type').value||'sessao'};
   if(editingEventId!=null){
     const e=agenda.events.find(x=>x.id===editingEventId);
     if(e)Object.assign(e,data);
