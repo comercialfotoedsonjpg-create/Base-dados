@@ -393,7 +393,7 @@ body{letter-spacing:.1px;}
 
 <!-- NEW BABY MODAL -->
 <div class="overlay" id="baby-modal"><div class="modal">
-  <div class="modal-head"><h2>Novo Bebé</h2><button class="modal-close" onclick="closeNewBabyModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-head"><h2 id="baby-modal-title">Novo Bebé</h2><button class="modal-close" onclick="closeNewBabyModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body">
     <div class="fg full"><span class="flabel">Nome do bebé *</span><input class="finput" id="b-name"></div>
     <div class="fg"><span class="flabel">Data de nascimento</span><input class="finput" id="b-birthdate" type="date"></div>
@@ -1250,6 +1250,7 @@ function renderBebes(){
         <span class="hint" style="margin-right:auto">Contacto: ${b.parent||'—'} · ${b.phone||'sem WhatsApp'}</span>
         ${b.phone?`<button class="btn btn-wa btn-xs" onclick="waMsg('${b.phone}','${(b.mae||b.name).replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
         ${b.facebook&&b.facebook.startsWith('http')?`<button class="btn btn-fb btn-xs" onclick="openFB('${b.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="editBaby(${b.id})"><i class="ti ti-pencil" aria-hidden="true"></i>Editar</button>
         ${(done>=12||b.archived)?`<button class="btn btn-ghost btn-xs" onclick="toggleBabyArchived(${b.id})" title="${b.archived?'Desarquivar':'Arquivar (completou 12 meses)'}"><i class="ti ti-archive" aria-hidden="true"></i></button>`:''}
         <button class="btn btn-ghost btn-xs" onclick="toggleBabyDropped(${b.id})" title="${b.dropped?'Marcar como ativo':'Marcar como desistiu'}"><i class="ti ti-${b.dropped?'rotate-clockwise':'user-off'}" aria-hidden="true"></i></button>\n        <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
@@ -1276,10 +1277,29 @@ function toggleBabyArchived(id){
   renderBebes();
 }
 function delBaby(id){if(!confirm('Apagar este bebé?'))return;babies=babies.filter(b=>b.id!==id);save();toast('Bebé apagado','✓');}
-function openNewBabyModal(){['b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal').classList.add('open');}
-function closeNewBabyModal(){document.getElementById('baby-modal').classList.remove('open');}
+let editingBabyId=null;
+function openNewBabyModal(){editingBabyId=null;['b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal-title').textContent='Novo Bebé';document.getElementById('baby-modal').classList.add('open');}
+function editBaby(id){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  editingBabyId=id;
+  document.getElementById('b-name').value=b.name||'';
+  document.getElementById('b-mae').value=b.mae||'';
+  document.getElementById('b-parent').value=b.parent||'';
+  document.getElementById('b-phone').value=b.phone||'';
+  document.getElementById('b-facebook').value=b.facebook||'';
+  document.getElementById('b-birthdate').value=b.birthdate||'';
+  document.getElementById('b-year').value=b.year||activeYear;
+  document.getElementById('baby-modal-title').textContent='Editar Bebé';
+  document.getElementById('baby-modal').classList.add('open');
+}
+function closeNewBabyModal(){document.getElementById('baby-modal').classList.remove('open');editingBabyId=null;}
 function saveNewBaby(){
   const n=document.getElementById('b-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  if(editingBabyId!=null){
+    const b=babies.find(x=>x.id===editingBabyId);if(!b){closeNewBabyModal();return;}
+    b.name=n;b.mae=document.getElementById('b-mae').value.trim();b.parent=document.getElementById('b-parent').value.trim();b.birthdate=document.getElementById('b-birthdate').value;b.phone=document.getElementById('b-phone').value.trim();b.facebook=document.getElementById('b-facebook').value.trim();b.year=parseInt(document.getElementById('b-year').value)||activeYear;b.updatedAt=Date.now();
+    closeNewBabyModal();save();toast('Bebé atualizado com sucesso','✓');return;
+  }
   babies.push({id:babyUid++,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
   closeNewBabyModal();save();toast('Bebé criado com sucesso','✓');
 }
