@@ -102,6 +102,14 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .t-meta{background:rgba(100,100,100,.1);color:var(--text2)}
 .card-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
 .notes-preview{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic;border-left:2px solid var(--border2);padding-left:8px}
+.history-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px;background:var(--surface2)}
+.history-row.h-current{border-color:var(--accent);background:rgba(200,153,47,.08)}
+.history-row .h-year{font-weight:700;color:var(--accent);min-width:46px}
+.history-row .h-photos{color:var(--text2)}
+.history-row .h-del{margin-left:8px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;font-family:inherit}
+.history-row .h-del:hover{color:var(--canc)}
+.history-add{display:flex;gap:8px;margin-top:10px;align-items:center}
+.history-total{font-size:12px;color:var(--text3);margin-top:10px}
 .edit-panel{display:none;background:var(--surface2);border-top:1px solid var(--border)}
 .edit-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
 .edit-tab{padding:10px 16px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:transparent;font-family:inherit}
@@ -1048,6 +1056,7 @@ function render(){
     const hig=!!(c.instagram&&c.instagram.trim());
     const isOpen=openEditId===c.id;
     const etab=editTabFor(c.id);
+    const totalPhotos=(c.photos||0)+((c.history||[]).reduce((s,h)=>s+(h.photos||0),0));
     const avSrc=c.avatar||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     return`<div class="client-card${rn?' renov-hl':''}${isOpen?' editing':''}" id="card-${c.id}">
       <div class="card-main">
@@ -1083,6 +1092,7 @@ function render(){
           <button class="edit-tab${etab==='dados'?' on':''}" onclick="switchEditTab(${c.id},'dados',this)">Dados</button>
           <button class="edit-tab${etab==='gostos'?' on':''}" onclick="switchEditTab(${c.id},'gostos',this)">Gostos e pedidos</button>
           <button class="edit-tab${etab==='galeria'?' on':''}" onclick="switchEditTab(${c.id},'galeria',this)">Galeria</button>
+          <button class="edit-tab${etab==='historico'?' on':''}" onclick="switchEditTab(${c.id},'historico',this)">Histórico</button>
         </div>
         <div class="edit-tab-content${etab==='dados'?' on':''}" id="et-dados-${c.id}">
           <div class="edit-grid">
@@ -1119,6 +1129,19 @@ function render(){
             <label class="gallery-add" title="Adicionar fotos"><i class="ti ti-photo-plus" aria-hidden="true"></i><span>Adicionar fotos</span><input type="file" accept="image/*" multiple onchange="addClientGalleryPhoto(${c.id},this)"></label>
           </div>
         </div>
+        <div class="edit-tab-content${etab==='historico'?' on':''}" id="et-historico-${c.id}">
+          <div class="flabel" style="margin-bottom:8px">Histórico de sessões por ano</div>
+          <div id="history-list-${c.id}">
+            <div class="history-row h-current"><span class="h-year">${sYear(c)||'—'}</span><span>${c.session?fmtD(c.session):'sem data'}</span><span class="h-photos">${c.photos||0} fotos</span><span class="tag ${st.tc}" style="margin-left:auto">${st.l}</span></div>
+            ${(c.history&&c.history.length)?c.history.map((h,i)=>`<div class="history-row"><span class="h-year">${h.year}</span><span>${h.session?fmtD(h.session):'—'}</span><span class="h-photos">${h.photos||0} fotos</span><span class="tag t-meta" style="margin-left:auto">${h.status==='done'?'Concluído':h.status==='pend'?'Pendente':h.status==='canc'?'Cancelado':'Agendado'}</span><button class="h-del" onclick="delHistoryEntry(${c.id},${i})" title="Remover">×</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3)">Sem sessões anteriores registadas.</div>'}
+          </div>
+          <div class="history-add">
+            <input class="finput" id="h-year-${c.id}" type="number" placeholder="Ano" style="width:90px">
+            <input class="finput" id="h-photos-${c.id}" type="number" placeholder="Fotos" style="width:90px">
+            <button class="btn btn-ghost btn-sm" onclick="addHistoryEntry(${c.id})">+ Adicionar ano anterior</button>
+          </div>
+          <div class="history-total">Total de fotos entregues (todos os anos): <strong>${totalPhotos}</strong></div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1146,6 +1169,20 @@ function saveEdit(id){
   c.updatedAt=Date.now();openEditId=null;save();toast('Alterações guardadas','✓');
 }
 function delClient(id){const c=clients.find(x=>x.id===id);if(!confirm(`Apagar "${c?c.name:'cliente'}" permanentemente?`))return;clients=clients.filter(c=>c.id!==id);if(openEditId===id)openEditId=null;save();toast('Cliente apagado','✓');}
+function addHistoryEntry(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const y=parseInt(document.getElementById(`h-year-${id}`).value);
+  const p=parseInt(document.getElementById(`h-photos-${id}`).value)||0;
+  if(!y){toast('Indica o ano','!');return;}
+  if(!c.history)c.history=[];
+  c.history.push({year:y,photos:p,session:null,status:'done'});
+  c.history.sort((a,b)=>b.year-a.year);
+  save();render();toast('Histórico adicionado','✓');
+}
+function delHistoryEntry(id,idx){
+  const c=clients.find(x=>x.id===id);if(!c||!c.history)return;
+  c.history.splice(idx,1);save();render();
+}
 function renovOne(id){const c=clients.find(x=>x.id===id);if(!c)return;const ny=sYear(c)+1;if(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}openEditId=null;save();toast('Cliente movido para '+ny,'✓');}
 function renovAll(){const list=clients.filter(needsR);const ny=activeYear+1;if(!list.length)return;list.forEach(c=>{if(!c.history)c.history=[];c.history.push({year:sYear(c),session:c.session,photos:c.photos,status:c.status});c.session=renewD(c.session);c.status='sched';c.photos=0;delete c.year;});if(!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}activeYear=ny;openEditId=null;save();toast(`${list.length} clientes movidos para ${ny}`,'✓');}
 function fSt(s,el){fStatus=s;document.querySelectorAll('.filter-btn').forEach(e=>e.classList.remove('on'));el.classList.add('on');render();}
