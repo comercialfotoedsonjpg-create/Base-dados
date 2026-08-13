@@ -106,6 +106,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .history-row.h-current{border-color:var(--accent);background:rgba(200,153,47,.08)}
 .history-row .h-year{font-weight:700;color:var(--accent);min-width:46px}
 .history-row .h-photos{color:var(--text2)}
+.history-row .h-desc{color:var(--text3);font-style:italic;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .history-row .h-del{margin-left:8px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;font-family:inherit}
 .history-row .h-del:hover{color:var(--canc)}
 .history-add{display:flex;gap:8px;margin-top:10px;align-items:center}
@@ -1133,12 +1134,13 @@ function render(){
           <div class="flabel" style="margin-bottom:8px">Histórico de sessões por ano</div>
           <div id="history-list-${c.id}">
             <div class="history-row h-current"><span class="h-year">${sYear(c)||'—'}</span><span>${c.session?fmtD(c.session):'sem data'}</span><span class="h-photos">${c.photos||0} fotos</span><span class="tag ${st.tc}" style="margin-left:auto">${st.l}</span></div>
-            ${(c.history&&c.history.length)?c.history.map((h,i)=>`<div class="history-row"><span class="h-year">${h.year}</span><span>${h.session?fmtD(h.session):'—'}</span><span class="h-photos">${h.photos||0} fotos</span><span class="tag t-meta" style="margin-left:auto">${h.status==='done'?'Concluído':h.status==='pend'?'Pendente':h.status==='canc'?'Cancelado':'Agendado'}</span><button class="h-del" onclick="delHistoryEntry(${c.id},${i})" title="Remover">×</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3)">Sem sessões anteriores registadas.</div>'}
+            ${(c.history&&c.history.length)?c.history.map((h,i)=>`<div class="history-row"><span class="h-year">${h.year}</span><span>${h.session?fmtD(h.session):'—'}</span><span class="h-photos">${h.photos||0} fotos</span>${h.desc?`<span class="h-desc">${h.desc}</span>`:''}<span class="tag t-meta" style="margin-left:auto">${h.status==='done'?'Concluído':h.status==='pend'?'Pendente':h.status==='canc'?'Cancelado':'Agendado'}</span><button class="h-del" onclick="delHistoryEntry(${c.id},${i})" title="Remover">×</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3)">Sem sessões anteriores registadas.</div>'}
           </div>
           <div class="history-add">
-            <input class="finput" id="h-year-${c.id}" type="number" placeholder="Ano" style="width:90px">
-            <input class="finput" id="h-photos-${c.id}" type="number" placeholder="Fotos" style="width:90px">
-            <button class="btn btn-ghost btn-sm" onclick="addHistoryEntry(${c.id})">+ Adicionar ano anterior</button>
+            <input class="finput" id="h-year-${c.id}" type="number" placeholder="Ano" style="width:80px">
+            <input class="finput" id="h-photos-${c.id}" type="number" placeholder="Fotos" style="width:80px">
+            <input class="finput" id="h-desc-${c.id}" type="text" placeholder="Descrição (opcional)" style="flex:1">
+            <button class="btn btn-ghost btn-sm" onclick="addHistoryEntry(${c.id})">+ Adicionar</button>
           </div>
           <div class="history-total">Total de fotos entregues (todos os anos): <strong>${totalPhotos}</strong></div>
         </div>
@@ -1173,9 +1175,10 @@ function addHistoryEntry(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   const y=parseInt(document.getElementById(`h-year-${id}`).value);
   const p=parseInt(document.getElementById(`h-photos-${id}`).value)||0;
+  const d=(document.getElementById(`h-desc-${id}`).value||'').trim();
   if(!y){toast('Indica o ano','!');return;}
   if(!c.history)c.history=[];
-  c.history.push({year:y,photos:p,session:null,status:'done'});
+  c.history.push({year:y,photos:p,desc:d,session:null,status:'done'});
   c.history.sort((a,b)=>b.year-a.year);
   save();render();toast('Histórico adicionado','✓');
 }
