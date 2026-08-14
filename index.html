@@ -1105,7 +1105,7 @@ function visible(){
     const qOk=c.name.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.notes||'').toLowerCase().includes(q);
     const moOk=!mo||(currentView==='aniversarios'?(c.bday&&c.bday.split('-')[1]===mo):((c.session&&c.session.split('-')[1]===mo)||(!c.session&&c.bday&&c.bday.split('-')[1]===mo)));
     return stOk&&qOk&&moOk;
-  }).sort((a,b)=>{const sm=(document.getElementById('sort-sel')||{}).value||'session';if(sm==='name')return a.name.localeCompare(b.name);if(sm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(sm==='created')return (b.id||0)-(a.id||0);return (a.session||'').localeCompare(b.session||'');});
+  }).sort((a,b)=>{const sm=(document.getElementById('sort-sel')||{}).value||'session';if(sm==='name')return a.name.localeCompare(b.name);if(sm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(sm==='created')return (b.id||0)-(a.id||0);if(currentView==='aniversarios'){const mo2=document.getElementById('month-sel').value;if(mo2)return (a.bday||'').split('-')[2].localeCompare((b.bday||'').split('-')[2]);return bdaySoon(a.bday)-bdaySoon(b.bday);}return (a.session||'').localeCompare(b.session||'');});
 }
 
 function editTabFor(id){return activeEditTab[id]||'dados';}
@@ -1118,6 +1118,8 @@ function render(){
   const[title,sub]=titles[currentView]||titles.clientes;
   document.getElementById('page-title').textContent=title;
   document.getElementById('page-sub').textContent=sub;
+  const sortFirstOpt=document.querySelector('#sort-sel option[value="session"]');
+  if(sortFirstOpt)sortFirstOpt.textContent=currentView==='aniversarios'?'Aniversário (mais próximo)':'Data da sessão';
   const el=document.getElementById('client-list');
   if(!list.length){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-users" aria-hidden="true"></i></div><div class="empty-title">Sem clientes</div><div class="empty-sub">Clica em "Novo cliente" para adicionar.</div></div>`;
