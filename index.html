@@ -186,7 +186,11 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-nav-btn:hover{background:var(--surface2);color:var(--text)}
 .cal-today-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit}
 .cal-today-btn:hover{background:var(--surface2);color:var(--text)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);border-left:1px solid var(--border);margin:0 20px 20px;border-radius:var(--radius);overflow:hidden}
+.cal-grid-wrap{margin:0 20px 20px;overflow-x:auto;border-radius:var(--radius);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.cal-grid-wrap::-webkit-scrollbar{height:6px}
+.cal-grid-wrap::-webkit-scrollbar-track{background:transparent}
+.cal-grid-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));border-top:1px solid var(--border);border-left:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-width:588px}
 .cal-weekday{padding:8px 6px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);background:var(--surface2);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
 .cal-day{min-height:104px;padding:6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:3px}
 .cal-day:hover{background:var(--surface2)}
@@ -370,7 +374,7 @@ body{letter-spacing:.1px;}
       <div class="cal-title" id="cal-title"></div>
       <div class="cal-nav"><button class="cal-nav-btn" onclick="calNextMonth()" aria-label="Mês seguinte"><i class="ti ti-chevron-right" aria-hidden="true"></i></button></div>
     </div>
-    <div class="cal-grid" id="agenda-list"></div>
+    <div class="cal-grid-wrap"><div class="cal-grid" id="agenda-list"></div></div>
   </div>
 
   <!-- METRICAS -->
