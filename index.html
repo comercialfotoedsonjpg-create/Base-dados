@@ -213,6 +213,11 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip.reun:hover{background:rgba(129,140,248,.3)}
 .cal-chip.outro{background:rgba(160,149,145,.16);color:var(--text2)}
 .cal-chip.outro:hover{background:rgba(160,149,145,.3)}
+.day-ev-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface2);cursor:pointer;transition:background .15s}
+.day-ev-row:hover{background:var(--surface3)}
+.day-ev-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);min-width:40px;flex-shrink:0}
+.day-ev-title{flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.day-ev-row .cal-chip{flex-shrink:0;pointer-events:none;cursor:default}
 .cal-more{font-size:10px;color:var(--text3);padding:1px 6px;cursor:pointer}
 .cal-more:hover{color:var(--text2)}
 .ev-title-wrap{position:relative}
@@ -456,6 +461,15 @@ body{letter-spacing:.1px;}
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
   </div>
   <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
+</div></div>
+
+<!-- DAY MODAL -->
+<div class="overlay" id="day-modal"><div class="modal" style="max-width:440px">
+  <div class="modal-head"><h2 id="day-modal-title">Dia</h2><button class="modal-close" onclick="closeDayModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body single">
+    <div id="day-modal-list"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeDayModal()">Fechar</button><button class="btn btn-primary" onclick="addSessionForDay()"><i class="ti ti-plus" aria-hidden="true"></i>Nova sessão neste dia</button></div>
 </div></div>
 
 <!-- SYNC MODAL -->
@@ -1377,7 +1391,7 @@ function saveNewBaby(){
 }
 
 /* ===== AGENDA (calendário estilo Apple Calendar) ===== */
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),editingEventId=null,calPrefillDate=null,agendaTypeFilter='all';
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),editingEventId=null,calPrefillDate=null,agendaTypeFilter='all',evByDateCache={},dayModalISO=null;
 const CAL_WEEKDAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const CAL_MONTHNAMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 function calISO(dt){return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
@@ -1386,6 +1400,33 @@ function calPrevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderA
 function calNextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderAgenda();}
 function calGoToday(){const t=new Date();calYear=t.getFullYear();calMonth=t.getMonth();renderAgenda();}
 function calDayClick(iso){calPrefillDate=iso;openNewEventModal(iso);}
+function openDayModal(iso){
+  dayModalISO=iso;
+  const list=(evByDateCache[iso]||[]).filter(ev=>agendaTypeFilter==='all'||ev.kind===agendaTypeFilter);
+  const d=new Date(iso+'T00:00:00');
+  document.getElementById('day-modal-title').textContent=`${d.getDate()} de ${CAL_MONTHNAMES[d.getMonth()]} de ${d.getFullYear()}`;
+  const box=document.getElementById('day-modal-list');
+  if(!list.length){
+    box.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Sem compromissos neste dia.</div>';
+  }else{
+    box.innerHTML=list.map(ev=>{
+      const hasPhone=!!(ev.phone&&ev.phone.trim());
+      const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';
+      const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';
+      const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':'Sessão';
+      const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
+      return `<div class="day-ev-row" onclick="closeDayModal();${openFn}">
+        <span class="day-ev-time">${ev.time?escH(ev.time):'--:--'}</span>
+        <span class="day-ev-title">${escH(ev.title)}</span>
+        <span class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}">${kindLabel}</span>
+        ${waBtn}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('day-modal').classList.add('open');
+}
+function closeDayModal(){document.getElementById('day-modal').classList.remove('open');}
+function addSessionForDay(){const iso=dayModalISO;closeDayModal();calDayClick(iso);}
 function setAgendaTypeFilter(t,el){
   agendaTypeFilter=t;
   document.querySelectorAll('#panel-agenda .toolbar .filter-btn').forEach(e=>e.classList.remove('on'));
@@ -1406,6 +1447,7 @@ function renderAgenda(){
   (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,kind:e.type||'sessao'});});
   clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name,kind:'sessao'});}});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
+  evByDateCache=evByDate;
   let html='';
   CAL_WEEKDAYS.forEach(w=>html+=`<div class="cal-weekday">${w}</div>`);
   const totalCells=Math.ceil((startOffset+daysInMonth)/7)*7;
@@ -1420,10 +1462,10 @@ function renderAgenda(){
     const dayEvents=(evByDate[iso]||[]).filter(ev=>agendaTypeFilter==='all'||ev.kind===agendaTypeFilter);
     const shown=dayEvents.slice(0,3);
     const more=dayEvents.length-shown.length;
-    html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="calDayClick('${iso}')">
+    html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="openDayModal('${iso}')">
       <div class="cal-daynum">${dnum}</div>
       ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
-      ${more>0?`<div class="cal-more" onclick="event.stopPropagation();calDayClick('${iso}')">+${more} mais</div>`:''}
+      ${more>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
   el.innerHTML=html;
