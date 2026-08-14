@@ -60,12 +60,15 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min
 .alert.bday{background:rgba(240,180,41,.06);border-color:rgba(240,180,41,.15);color:var(--gold)}
 .alert.renov{background:rgba(74,222,154,.05);border-color:rgba(74,222,154,.12);color:var(--done)}
 .alert-btn{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font-family:inherit;white-space:nowrap}
-.toolbar{padding:10px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border)}
-.filter-btn{font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit}
+.toolbar{padding:10px 20px;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.toolbar::-webkit-scrollbar{height:6px}
+.toolbar::-webkit-scrollbar-track{background:transparent}
+.toolbar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.filter-btn{font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;flex-shrink:0}
 .filter-btn.on{background:rgba(155,140,255,.15);color:var(--accent);border-color:rgba(155,140,255,.4)}
 .filter-btn.renov-f{color:var(--done);border-color:rgba(74,222,154,.2)}
 .filter-btn.renov-f.on{background:rgba(74,222,154,.12)}
-select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:12px;border-radius:5px;padding:5px 10px;font-family:inherit;cursor:pointer}
+select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:12px;border-radius:5px;padding:5px 10px;font-family:inherit;cursor:pointer;flex-shrink:0}
 .search-wrap{margin-left:auto;position:relative}
 .search-wrap input{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:13px;padding:6px 12px 6px 34px;font-family:inherit;width:200px}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px}
