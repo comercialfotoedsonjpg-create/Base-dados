@@ -200,6 +200,8 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip.sess:hover{background:rgba(79,195,247,.28)}
 .cal-chip.aniv{background:rgba(249,168,212,.16);color:#f9a8d4}
 .cal-chip.aniv:hover{background:rgba(249,168,212,.3)}
+.cal-chip.mesv{background:rgba(196,181,253,.18);color:#c4b5fd}
+.cal-chip.mesv:hover{background:rgba(196,181,253,.32)}
 .cal-chip.reun{background:rgba(129,140,248,.16);color:#a5b4fc}
 .cal-chip.reun:hover{background:rgba(129,140,248,.3)}
 .cal-chip.outro{background:rgba(160,149,145,.16);color:var(--text2)}
@@ -356,6 +358,7 @@ body{letter-spacing:.1px;}
       <button class="filter-btn on" id="agenda-tab-all" onclick="setAgendaTypeFilter('all',this)">Todos</button>
       <button class="filter-btn" id="agenda-tab-sessao" onclick="setAgendaTypeFilter('sessao',this)">Sessões</button>
       <button class="filter-btn" id="agenda-tab-aniversario" onclick="setAgendaTypeFilter('aniversario',this)">Aniversários</button>
+      <button class="filter-btn" id="agenda-tab-mesversario" onclick="setAgendaTypeFilter('mesversario',this)">Mesversários</button>
       <button class="filter-btn" id="agenda-tab-reuniao" onclick="setAgendaTypeFilter('reuniao',this)">Reuniões</button>
       <button class="filter-btn" id="agenda-tab-outro" onclick="setAgendaTypeFilter('outro',this)">Outros</button>
     </div>
@@ -439,7 +442,7 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
     <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><input class="finput" id="ev-contact" placeholder="+238 991 234 567"></div>
-    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
+    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="mesversario">Mesversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
     <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
@@ -1412,7 +1415,7 @@ function renderAgenda(){
     const more=dayEvents.length-shown.length;
     html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="calDayClick('${iso}')">
       <div class="cal-daynum">${dnum}</div>
-      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
+      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${waBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();calDayClick('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
