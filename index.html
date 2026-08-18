@@ -103,6 +103,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .t-pend{background:rgba(251,191,36,.1);color:var(--pend)}
 .t-canc{background:rgba(248,113,113,.1);color:var(--canc)}
 .t-meta{background:rgba(100,100,100,.1);color:var(--text2)}
+.t-qualif{background:rgba(200,153,47,.12);color:var(--accent)}
 .card-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
 .notes-preview{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic;border-left:2px solid var(--border2);padding-left:8px}
 .history-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px;background:var(--surface2)}
@@ -324,6 +325,7 @@ body{letter-spacing:.1px;}
     </div>
   </div>
   <div class="nav-section">Menu</div>
+  <button class="nav-item" onclick="showView('leads',this)" style="background:rgba(56,189,248,.06);border-left:3px solid #38bdf8;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-target-arrow ni-icon" style="color:#38bdf8" aria-hidden="true"></i><span style="color:#38bdf8;font-weight:500;font-size:12px">Leads 🎯</span><span class="ni-badge" id="nav-leads" style="background:rgba(56,189,248,.15);color:#38bdf8">0</span></button>
   <button class="nav-item active" onclick="showView('clientes',this)"><i class="ti ti-users ni-icon" aria-hidden="true"></i><span>Clientes</span><span class="ni-badge" id="nav-total">0</span></button>
   <button class="nav-item" onclick="showView('premium',this)"><i class="ti ti-star ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Premium</span><span class="ni-badge" id="nav-prem">0</span></button>
   <button class="nav-item" onclick="showView('aniversarios',this)"><i class="ti ti-gift ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Aniversários</span></button>
@@ -392,6 +394,29 @@ body{letter-spacing:.1px;}
     </div>
     <div class="alert bday" id="baby6-alert"><i class="ti ti-gift" aria-hidden="true"></i><span id="baby6-txt"></span></div>
     <div id="baby-list" class="baby-grid"></div>
+  </div>
+
+  <!-- LEADS -->
+  <div class="panel" id="panel-leads">
+    <div class="topbar"><div><div class="page-title">🎯 Leads</div><div class="page-sub" id="lead-page-sub">Funil de leads — captação até conversão</div></div>
+      <div class="topbar-actions">
+        <select class="tsel" id="lead-sort-sel" onchange="renderLeads()"><option value="followup">Mais urgentes</option><option value="name">A-Z</option><option value="modified">Últ. modificado</option><option value="created">Últ. criado</option></select>
+        <div class="search-wrap" style="margin-left:0"><i class="ti ti-search search-icon" aria-hidden="true"></i><input type="text" id="lead-srch" placeholder="Procurar lead..." oninput="renderLeads()"></div>
+        <button class="btn btn-primary" onclick="openNewLeadModal()"><i class="ti ti-plus" aria-hidden="true"></i>Novo lead</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="filter-btn on" id="lead-tab-ativos" onclick="setLeadTab('ativos',this)">Ativos</button>
+      <button class="filter-btn" id="lead-tab-novo" onclick="setLeadTab('novo',this)">Novo</button>
+      <button class="filter-btn" id="lead-tab-contactado" onclick="setLeadTab('contactado',this)">Contactado</button>
+      <button class="filter-btn" id="lead-tab-qualificado" onclick="setLeadTab('qualificado',this)">Qualificado</button>
+      <button class="filter-btn" id="lead-tab-agendado" onclick="setLeadTab('agendado',this)">Agendado</button>
+      <button class="filter-btn" id="lead-tab-convertido" onclick="setLeadTab('convertido',this)">Convertidos</button>
+      <button class="filter-btn" id="lead-tab-perdido" onclick="setLeadTab('perdido',this)">Perdidos</button>
+      <button class="filter-btn" id="lead-tab-todos" onclick="setLeadTab('todos',this)">Todos</button>
+    </div>
+    <div class="alert bday" id="lead-alert"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="lead-alert-txt"></span></div>
+    <div id="lead-list" class="baby-grid"></div>
   </div>
 
   <!-- AGENDA -->
@@ -476,6 +501,23 @@ body{letter-spacing:.1px;}
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNewBabyModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewBaby()">Guardar bebé</button></div>
 </div></div>
 
+<!-- NEW LEAD MODAL -->
+<div class="overlay" id="lead-modal"><div class="modal">
+  <div class="modal-head"><h2 id="lead-modal-title">Novo Lead</h2><button class="modal-close" onclick="closeNewLeadModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body">
+    <div class="fg full"><span class="flabel">Nome *</span><input class="finput" id="l-name"></div>
+    <div class="fg"><span class="flabel">WhatsApp</span><input class="finput" id="l-phone" placeholder="+238 991 234 567"></div>
+    <div class="fg"><span class="flabel">Origem</span><select class="fsel" id="l-origem"><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="WhatsApp direto">WhatsApp direto</option><option value="Indicação">Indicação</option><option value="Site">Site</option><option value="Outro">Outro</option></select></div>
+    <div class="fg"><span class="flabel">Serviço de interesse</span><select class="fsel" id="l-servico"><option value="Sessão Feminina">Sessão Feminina</option><option value="Sessão de Casal">Sessão de Casal</option><option value="Sessão Familiar">Sessão Familiar</option><option value="Sessão de Aniversário">Sessão de Aniversário</option><option value="Evento">Evento</option><option value="Campanha Mulheres que Inspiram">Campanha Mulheres que Inspiram</option><option value="Pacote VIP">Pacote VIP</option><option value="Retratos Profissionais">Retratos Profissionais</option><option value="Outro">Outro</option></select></div>
+    <div class="fg"><span class="flabel">Estado</span><select class="fsel" id="l-estado"><option value="novo">Novo</option><option value="contactado">Contactado</option><option value="qualificado">Qualificado</option><option value="agendado">Agendado</option><option value="convertido">Convertido</option><option value="perdido">Perdido</option></select></div>
+    <div class="fg"><span class="flabel">Valor orçamento</span><input class="finput" id="l-valor" placeholder="80€"></div>
+    <div class="fg"><span class="flabel">Próxima ação</span><input class="finput" id="l-acao" placeholder="Enviar portfólio"></div>
+    <div class="fg"><span class="flabel">Data próximo follow-up</span><input class="finput" id="l-followup" type="date"></div>
+    <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="l-notas"></textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-danger" id="lead-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingLead()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" onclick="closeNewLeadModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewLead()">Guardar lead</button></div>
+</div></div>
+
 <!-- NEW EVENT MODAL -->
 <div class="overlay" id="event-modal"><div class="modal" style="max-width:460px">
   <div class="modal-head"><h2 id="event-modal-title">Nova sessão</h2><button class="modal-close" onclick="closeNewEventModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
@@ -552,7 +594,7 @@ function setSyncStatus(mode){
 function pushToFirebase(){
   if(!fbRef)return;
   setSyncStatus('syncing');
-  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda}).then(()=>{
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads}).then(()=>{
     setSyncStatus('synced');
   }).catch(()=>{setSyncStatus('offline');});
 }
@@ -568,10 +610,12 @@ function initFirebaseSync(){
         years=remote.years||SEED_YEARS.slice();
         babies=remote.babies||[];
         agenda=remote.agenda||{events:[]};
+        leads=remote.leads||[];
         uid=Math.max(...clients.map(c=>c.id),0)+1;
         babyUid=Math.max(...babies.map(b=>b.id),0)+1;
         eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
-        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda}));}catch(e){}
+        leadUid=Math.max(...leads.map(l=>l.id),0)+1;
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads}));}catch(e){}
         buildSidebar();renderCurrent();
         setSyncStatus('synced');
         fbReady=true;
@@ -954,7 +998,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},activeYear=CY,fStatus='all',babyTab='active',uid=1,babyUid=1,eventUid=1,currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -963,6 +1007,7 @@ const isPrem=p=>parseInt(p||0)>=10;
 const fmtD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};
 const fmtBFull=d=>{if(!d)return'—';const p=d.split('-');return p.length>=3?`${p[2]} ${MONTHS[parseInt(p[1])-1]}`:'—';};
 const waN=p=>p?p.replace(/[\s\-()]/g,''):'';
+const todayISO=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 function nextBdayYear(bday){
   if(!bday)return null;
   const p=bday.split('-');if(p.length<3)return null;
@@ -989,18 +1034,19 @@ function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_crm')||'{}');
     if(d.clients&&d.clients.length){
-      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};
+      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];
     }else{
-      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};
+      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];
     }
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     babyUid=Math.max(...babies.map(b=>b.id),0)+1;
     eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
+    leadUid=Math.max(...leads.map(l=>l.id),0)+1;
     const ay=clients.map(c=>sYear(c)).filter(Boolean);
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
     years.sort((a,b)=>a-b);
     if(!years.includes(activeYear)&&years.length)activeYear=years[years.length-1];
-  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};}
+  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];}
 }
 
 function normKey(c){
@@ -1034,7 +1080,7 @@ function migrateSeedImport(){
 }
 let saveTimer=null;
 function save(){
-  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda}));}catch(e){}
+  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads}));}catch(e){}
   buildSidebar();renderCurrent();
   if(fbRef){pushToFirebase();}
   else{setSyncStatus('local');}
@@ -1057,11 +1103,13 @@ function buildSidebar(){
   document.getElementById('nav-prem').textContent=prem;
   document.getElementById('nav-renov').textContent=renov;
   document.getElementById('nav-bebes').textContent=activeBabiesCount();
+  document.getElementById('nav-leads').textContent=lateLeadsCount();
 }
 
 function renderCurrent(){
   if(['clientes','premium','aniversarios','renovar'].includes(currentView))render();
   else if(currentView==='bebes')renderBebes();
+  else if(currentView==='leads')renderLeads();
   else if(currentView==='agenda')renderAgenda();
   else if(currentView==='metricas')renderMetricas();
 }
@@ -1077,6 +1125,7 @@ function showView(v,el){
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   if(['clientes','premium','aniversarios','renovar'].includes(v)){showPanel('panel-clientlist');buildSidebar();render();}
   else if(v==='bebes'){showPanel('panel-bebes');renderBebes();}
+  else if(v==='leads'){showPanel('panel-leads');renderLeads();}
   else if(v==='agenda'){showPanel('panel-agenda');renderAgenda();}
   else if(v==='metricas'){showPanel('panel-metricas');renderMetricas();}
   if(window.innerWidth<=768)closeSidebar();
@@ -1451,6 +1500,169 @@ function saveNewBaby(){
   }
   babies.push({id:babyUid++,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
   closeNewBabyModal();save();toast('Bebé criado com sucesso','✓');
+}
+
+/* ===== LEADS ===== */
+const LEAD_ESTADOS={
+  novo:{l:'Novo',tc:'t-sched'},
+  contactado:{l:'Contactado',tc:'t-pend'},
+  qualificado:{l:'Qualificado',tc:'t-qualif'},
+  agendado:{l:'Agendado',tc:'t-done'},
+  convertido:{l:'Convertido',tc:'t-prem'},
+  perdido:{l:'Perdido',tc:'t-canc'}
+};
+function leadDaysSince(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr+'T00:00:00');if(isNaN(d))return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  return Math.round((today-d)/(1000*60*60*24));
+}
+function leadAlert(l){
+  const ref=l.dataUltimoContacto||l.dataEntrada;
+  const days=leadDaysSince(ref);
+  if(days===null)return null;
+  if(l.estado==='novo'&&days>=1)return{late:true,days};
+  if(l.estado==='contactado'&&days>=2)return{late:true,days};
+  if(l.estado==='qualificado'&&days>=5)return{late:true,days};
+  if(l.estado==='perdido'&&days>=30)return{late:false,days,reactivate:true};
+  return{late:false,days};
+}
+function lateLeadsCount(){return leads.filter(l=>!['convertido','perdido'].includes(l.estado)).map(leadAlert).filter(a=>a&&a.late).length;}
+function checkLeadAlerts(){
+  const la=document.getElementById('lead-alert');if(!la)return;
+  const late=leads.filter(l=>!['convertido','perdido'].includes(l.estado)).map(l=>({l,a:leadAlert(l)})).filter(x=>x.a&&x.a.late);
+  if(late.length){
+    la.style.display='flex';
+    document.getElementById('lead-alert-txt').innerHTML=late.slice(0,5).map(x=>{
+      const wa=x.l.phone?` <a href="https://wa.me/${waN(x.l.phone)}" target="_blank" style="color:var(--wa)"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></a>`:'';
+      return`${x.l.name} — ${x.a.days} dia(s) sem contacto${wa}`;
+    }).join(' · ');
+  }else la.style.display='none';
+}
+function setLeadTab(t,el){
+  leadTab=t;
+  document.querySelectorAll('#panel-leads .toolbar .filter-btn').forEach(e=>e.classList.remove('on'));
+  if(el)el.classList.add('on');
+  renderLeads();
+}
+function renderLeads(){
+  checkLeadAlerts();
+  const el=document.getElementById('lead-list');
+  const sub=document.getElementById('lead-page-sub');
+  if(!leads.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-target-arrow" aria-hidden="true"></i></div><div class="empty-title">Sem leads registados</div><div class="empty-sub">Clica em "Novo lead" para adicionar.</div></div>`;
+    if(sub)sub.textContent='Funil de leads — captação até conversão · 0 leads';
+    return;
+  }
+  const lt=leadTab;
+  const base=lt==='todos'?leads.slice():lt==='ativos'?leads.filter(l=>!['convertido','perdido'].includes(l.estado)):leads.filter(l=>l.estado===lt);
+  const lateCount=base.filter(l=>{const a=leadAlert(l);return a&&a.late;}).length;
+  if(sub)sub.textContent=base.length+(base.length===1?' lead':' leads')+(lateCount?' · '+lateCount+(lateCount===1?' atrasado':' atrasados'):'');
+  const q=(document.getElementById('lead-srch')||{}).value.trim().toLowerCase();
+  const sm=(document.getElementById('lead-sort-sel')||{}).value||'followup';
+  const list=(q?base.filter(l=>[l.name,l.phone,l.origem,l.servico,l.notas].some(v=>(v||'').toLowerCase().includes(q))):base.slice()).sort((a,b)=>{
+    if(sm==='name')return (a.name||'').localeCompare(b.name||'');
+    if(sm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);
+    if(sm==='created')return (b.id||0)-(a.id||0);
+    const aa=leadAlert(a),bb=leadAlert(b);
+    const aLate=aa&&aa.late?1:0,bLate=bb&&bb.late?1:0;
+    if(aLate!==bLate)return bLate-aLate;
+    const af=a.dataProximoFollowup||'9999-99-99',bf=b.dataProximoFollowup||'9999-99-99';
+    return af.localeCompare(bf);
+  });
+  if(!list.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${q?`Nenhum lead encontrado para "${q}"`:'Nenhum lead nesta categoria'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(l=>{
+    const alert=leadAlert(l);
+    const info=LEAD_ESTADOS[l.estado]||LEAD_ESTADOS.novo;
+    const hasPhone=!!(l.phone&&l.phone.trim());
+    const estOpts=Object.keys(LEAD_ESTADOS).map(k=>`<option value="${k}"${l.estado===k?' selected':''}>${LEAD_ESTADOS[k].l}</option>`).join('');
+    return`<div class="baby-card${alert&&alert.late?' pend-hl':''}">
+      <div class="baby-card-head">
+        <div class="baby-av">🎯</div>
+        <div style="flex:1;min-width:0">
+          <div class="baby-name">${l.name} <span class="tag ${info.tc}">${info.l}</span>${alert&&alert.late?` <span class="tag t-canc">⚠ ${alert.days} dia(s) sem contacto</span>`:''}${alert&&alert.reactivate?` <span class="tag t-meta">Reativar</span>`:''}</div>
+          <div class="baby-meta">${l.origem||'—'} · ${l.servico||'—'}${l.valor?' · '+l.valor:''}</div>
+        </div>
+      </div>
+      ${l.proximaAcao?`<div class="hint" style="padding:0 14px 8px">Próxima ação: ${l.proximaAcao}${l.dataProximoFollowup?' até '+fmtD(l.dataProximoFollowup):''}</div>`:''}
+      ${l.notas?`<div class="notes-preview" style="margin:0 14px 8px">${l.notas}</div>`:''}
+      <div class="baby-card-foot">
+        <span class="hint" style="margin-right:auto">${hasPhone?l.phone:'sem contacto'}</span>
+        ${hasPhone?`<button class="btn btn-wa btn-xs" onclick="waMsg('${l.phone}','${l.name.replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
+        <select class="tsel" style="font-size:11px;padding:4px 6px" onchange="setLeadEstado(${l.id},this.value)">${estOpts}</select>
+        ${l.estado!=='convertido'?`<button class="btn btn-success btn-xs" onclick="convertLeadToClient(${l.id})" title="Converter em cliente"><i class="ti ti-user-check" aria-hidden="true"></i></button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="editLead(${l.id})">Editar</button>
+        <button class="btn btn-danger btn-xs" onclick="delLead(${l.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setLeadEstado(id,estado){
+  const l=leads.find(x=>x.id===id);if(!l)return;
+  l.estado=estado;l.dataUltimoContacto=todayISO();l.updatedAt=Date.now();
+  save();toast('Estado atualizado','✓');
+}
+function convertLeadToClient(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;
+  if(!confirm(`Converter "${l.name}" em cliente?`))return;
+  clients.push({id:uid++,name:l.name,email:'',phone:l.phone||'',facebook:'',instagram:'',bday:'',session:'',photos:0,status:'pend',style:l.servico||'',notes:'Convertido de lead'+(l.notas?': '+l.notas:''),refs:'',price:l.valor||'',gallery:[],avatar:null,updatedAt:Date.now()});
+  l.estado='convertido';l.dataUltimoContacto=todayISO();l.updatedAt=Date.now();
+  save();toast('Lead convertido em cliente — edita os detalhes em Clientes','✓');
+}
+function delLead(id){if(!confirm('Apagar este lead?'))return;leads=leads.filter(l=>l.id!==id);save();toast('Lead apagado','✓');}
+let editingLeadId=null;
+function openNewLeadModal(){
+  editingLeadId=null;
+  ['l-name','l-phone','l-valor','l-acao','l-followup','l-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('l-origem').value='Instagram';
+  document.getElementById('l-servico').value='Sessão Feminina';
+  document.getElementById('l-estado').value='novo';
+  document.getElementById('lead-modal-title').textContent='Novo Lead';
+  document.getElementById('lead-delete-btn').style.display='none';
+  document.getElementById('lead-modal').classList.add('open');
+}
+function editLead(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;
+  editingLeadId=id;
+  document.getElementById('l-name').value=l.name||'';
+  document.getElementById('l-phone').value=l.phone||'';
+  document.getElementById('l-origem').value=l.origem||'Instagram';
+  document.getElementById('l-servico').value=l.servico||'Sessão Feminina';
+  document.getElementById('l-estado').value=l.estado||'novo';
+  document.getElementById('l-valor').value=l.valor||'';
+  document.getElementById('l-acao').value=l.proximaAcao||'';
+  document.getElementById('l-followup').value=l.dataProximoFollowup||'';
+  document.getElementById('l-notas').value=l.notas||'';
+  document.getElementById('lead-modal-title').textContent='Editar Lead';
+  document.getElementById('lead-delete-btn').style.display='';
+  document.getElementById('lead-modal').classList.add('open');
+}
+function closeNewLeadModal(){document.getElementById('lead-modal').classList.remove('open');editingLeadId=null;}
+function deleteEditingLead(){if(editingLeadId!=null)delLead(editingLeadId);closeNewLeadModal();}
+function saveNewLead(){
+  const n=document.getElementById('l-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  const data={
+    name:n,
+    phone:document.getElementById('l-phone').value.trim(),
+    origem:document.getElementById('l-origem').value,
+    servico:document.getElementById('l-servico').value,
+    estado:document.getElementById('l-estado').value,
+    valor:document.getElementById('l-valor').value.trim(),
+    proximaAcao:document.getElementById('l-acao').value.trim(),
+    dataProximoFollowup:document.getElementById('l-followup').value,
+    notas:document.getElementById('l-notas').value.trim(),
+    updatedAt:Date.now()
+  };
+  if(editingLeadId!=null){
+    const l=leads.find(x=>x.id===editingLeadId);
+    if(l)Object.assign(l,data);
+    closeNewLeadModal();save();toast('Lead atualizado','✓');return;
+  }
+  leads.push(Object.assign({id:leadUid++,dataEntrada:todayISO(),dataUltimoContacto:todayISO()},data));
+  closeNewLeadModal();save();toast('Lead adicionado','✓');
 }
 
 /* ===== AGENDA (calendário estilo Apple Calendar) ===== */
