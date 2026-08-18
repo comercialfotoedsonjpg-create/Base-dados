@@ -164,6 +164,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .chart-title{font-size:13px;font-weight:600;margin-bottom:14px}
 .baby-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px 20px}
 .baby-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.baby-card.pend-hl{border-left:3px solid var(--pend)}
 .baby-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
 .baby-av{width:42px;height:42px;border-radius:50%;background:rgba(249,168,212,.12);border:2px solid rgba(249,168,212,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .baby-name{font-size:14px;font-weight:600}
@@ -385,6 +386,7 @@ body{letter-spacing:.1px;}
     </div>
     <div class="toolbar">
       <button class="filter-btn on" id="baby-tab-active" onclick="setBabyTab('active',this)">Ativos</button>
+      <button class="filter-btn" id="baby-tab-month" onclick="setBabyTab('month',this)">Este mês</button>
       <button class="filter-btn" id="baby-tab-archived" onclick="setBabyTab('archived',this)">Arquivados</button>
       <button class="filter-btn" id="baby-tab-dropped" onclick="setBabyTab('dropped',this)">Desistiram</button>
     </div>
@@ -1328,6 +1330,20 @@ function monthsOld(bd){
   if(t.getDate()<b.getDate())m--;
   return m;
 }
+function mesDate(bd,n){const b=new Date(bd+'T00:00:00');if(isNaN(b))return null;return new Date(b.getFullYear(),b.getMonth()+n,b.getDate());}
+function mesThisMonthInfo(b){
+  if(!b.birthdate)return null;
+  const now=new Date();
+  const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
+  for(let n=1;n<=12;n++){
+    const d=mesDate(b.birthdate,n);
+    if(d&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()){
+      const s=sessions.find(x=>x.month===n);
+      return{mesN:n,date:d,done:!!(s&&s.done)};
+    }
+  }
+  return null;
+}
 function checkBabyAlerts(){
   const ba=document.getElementById('baby6-alert');if(!ba)return;
   const soon=babies.filter(b=>!b.dropped&&monthsOld(b.birthdate)===5);
@@ -1351,21 +1367,26 @@ function renderBebes(){
   const el=document.getElementById('baby-list');
   if(!babies.length){const bps0=document.getElementById('baby-page-sub');if(bps0)bps0.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · 0 bebés';el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
   const bfm=babyTab;
-  const base=bfm==='archived'?babies.filter(b=>b.archived):bfm==='dropped'?babies.filter(b=>b.dropped&&!b.archived):babies.filter(b=>!b.archived&&!b.dropped);
+  const base=bfm==='archived'?babies.filter(b=>b.archived):bfm==='dropped'?babies.filter(b=>b.dropped&&!b.archived):bfm==='month'?babies.filter(b=>!b.archived&&!b.dropped&&mesThisMonthInfo(b)):babies.filter(b=>!b.archived&&!b.dropped);
   const bps=document.getElementById('baby-page-sub');
-  if(bps){const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
+  if(bps){
+    if(bfm==='month'){const pend=base.filter(b=>{const mi=mesThisMonthInfo(b);return mi&&!mi.done;}).length;bps.textContent=base.length+(base.length===1?' bebé com mesversário este mês · ':' bebés com mesversário este mês · ')+pend+(pend===1?' pendente':' pendentes');}
+    else{const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
+  }
   const srchEl=document.getElementById('baby-srch');
   const q=(srchEl?srchEl.value:'').trim().toLowerCase();
-  const bsm=(document.getElementById('baby-sort-sel')||{}).value||'birth';const list=(q?base.filter(b=>[b.name,b.mae,b.parent,b.phone].some(v=>(v||'').toLowerCase().includes(q))):base.slice()).sort((a,b)=>{if(bsm==='name')return (a.name||'').localeCompare(b.name||'');if(bsm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(bsm==='created')return (b.id||0)-(a.id||0);return (a.birthdate||'').localeCompare(b.birthdate||'');});
-  if(!list.length){const msg=q?`Nenhum bebé encontrado para "${escH(q)}"`:(bfm==='archived'?'Nenhum bebé arquivado':bfm==='dropped'?'Nenhum bebé desistiu':'Nenhum bebé ativo');el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${msg}</div></div>`;return;}
+  const bsm=(document.getElementById('baby-sort-sel')||{}).value||'birth';const list=(q?base.filter(b=>[b.name,b.mae,b.parent,b.phone].some(v=>(v||'').toLowerCase().includes(q))):base.slice()).sort((a,b)=>{if(bfm==='month'){const ma=mesThisMonthInfo(a),mb=mesThisMonthInfo(b);if(!!(ma&&ma.done)!==!!(mb&&mb.done))return(ma&&ma.done?1:0)-(mb&&mb.done?1:0);return(ma?ma.date:0)-(mb?mb.date:0);}if(bsm==='name')return (a.name||'').localeCompare(b.name||'');if(bsm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(bsm==='created')return (b.id||0)-(a.id||0);return (a.birthdate||'').localeCompare(b.birthdate||'');});
+  if(!list.length){const msg=q?`Nenhum bebé encontrado para "${escH(q)}"`:(bfm==='archived'?'Nenhum bebé arquivado':bfm==='dropped'?'Nenhum bebé desistiu':bfm==='month'?'Nenhum bebé com mesversário este mês':'Nenhum bebé ativo');el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${msg}</div></div>`;return;}
   el.innerHTML=list.map(b=>{
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
     const done=sessions.filter(s=>s.done).length;
     const milestones=[3,6,12];
-    return`<div class="baby-card"${(b.dropped||b.archived)?' style="opacity:.55"':''}>
+    const mesInfo=mesThisMonthInfo(b);
+    const mesBadge=mesInfo?` <span class="tag ${mesInfo.done?'t-done':'t-pend'}" title="Mesversário de ${mesInfo.mesN} mes(es)">🎂 ${mesInfo.done?'Feito este mês':'Pendente este mês'} · ${String(mesInfo.date.getDate()).padStart(2,'0')}/${String(mesInfo.date.getMonth()+1).padStart(2,'0')}</span>`:'';
+    return`<div class="baby-card${mesInfo&&!mesInfo.done?' pend-hl':''}"${(b.dropped||b.archived)?' style="opacity:.55"':''}>
       <div class="baby-card-head">
         <div class="baby-av">👶</div>
-        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
+        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
       <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" title="Mês ${s.month}${s.done?' — concluído':''}" onclick="toggleBabyMonth(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
       <div class="prize-row">
