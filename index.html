@@ -1207,27 +1207,18 @@ function selectProjResult(id){
     setTimeout(()=>{editBaby(id);},60);
   }
 }
-function goPendList(){goView('clientes');const btn=document.querySelector(`.filter-btn[onclick*="'pend'"]`);if(btn)btn.click();}
 function renderProjetos(){
-  const pendAll=clients.filter(c=>c.status==='pend').sort((a,b)=>b.id-a.id);
-  const pend=pendAll.slice(0,20);
-  const futuras=clients.filter(c=>c.status==='sched').sort((a,b)=>(a.session||'9999').localeCompare(b.session||'9999'));
   const editing=clients.filter(c=>c.status==='editing').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   const entregues=clients.filter(c=>c.status==='done').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,25);
   const activeBabies=babies.length;
   const premiumCount=clients.filter(c=>c.premium).length;
-  const col=(title,color,list,emptyMsg,totalCount)=>{
-    totalCount=totalCount===undefined?list.length:totalCount;
-    const more=totalCount-list.length;
-    return `
+  const col=(title,color,list,emptyMsg)=>`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:200px">
       <div style="font-weight:700;font-size:13px;color:${color};margin-bottom:10px;display:flex;justify-content:space-between">
-        <span>${title}</span><span>${totalCount}</span>
+        <span>${title}</span><span>${list.length}</span>
       </div>
       ${list.length?list.map(projCard).join(''):`<div style="font-size:12px;color:var(--text3);padding:20px 0;text-align:center">${emptyMsg}</div>`}
-      ${more>0?`<button class="btn btn-sm btn-ghost" style="width:100%;margin-top:4px" onclick="goPendList()">+${more} mais → ver todos</button>`:''}
     </div>`;
-  };
   const campanhasCol=`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:200px">
       <div style="font-weight:700;font-size:13px;color:var(--gold);margin-bottom:10px">Campanhas em Andamento</div>
@@ -1241,8 +1232,6 @@ function renderProjetos(){
       </div>
     </div>`;
   document.getElementById('proj-board').innerHTML=
-    col('⏳ Pendentes','var(--pend)',pend,'Nenhum cliente pendente',pendAll.length)+
-    col('🗓️ Futuras','var(--sched)',futuras,'Nenhuma sessão agendada')+
     col('✂️ Em Edição','var(--edit)',editing,'Nada em edição')+
     col('✅ Entregues (recentes)','var(--done)',entregues,'Nada entregue ainda')+
     campanhasCol;
