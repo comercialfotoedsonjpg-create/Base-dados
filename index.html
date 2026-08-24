@@ -502,6 +502,11 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="baby-modal"><div class="modal">
   <div class="modal-head"><h2 id="baby-modal-title">Novo Bebé</h2><button class="modal-close" onclick="closeNewBabyModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body">
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Procurar cliente existente (opcional)</span>
+      <input class="finput" id="b-search" autocomplete="off" placeholder="Escreve para procurar um cliente..." oninput="babyClientSearch()" onfocus="babyClientSearch()" onblur="babyClientBlur()">
+      <div class="ev-dd" id="b-search-dropdown"></div>
+    </div>
     <div class="fg full"><span class="flabel">Nome do bebé *</span><input class="finput" id="b-name"></div>
     <div class="fg"><span class="flabel">Data de nascimento</span><input class="finput" id="b-birthdate" type="date"></div>
     <div class="fg"><span class="flabel">Nome da mãe</span><input class="finput" id="b-mae"></div>
@@ -1556,7 +1561,34 @@ function toggleBabyArchived(id){
 }
 function delBaby(id){if(!confirm('Apagar este bebé?'))return;babies=babies.filter(b=>b.id!==id);save();toast('Bebé apagado','✓');}
 let editingBabyId=null;
-function openNewBabyModal(){editingBabyId=null;['b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal-title').textContent='Novo Bebé';document.getElementById('baby-modal').classList.add('open');}
+function babyClientSearch(){
+  const q=document.getElementById('b-search').value.trim().toLowerCase();
+  const dd=document.getElementById('b-search-dropdown');
+  let pool=clients.filter(c=>c.name);
+  if(q)pool=pool.filter(c=>c.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem clientes encontrados</div>';dd.classList.add('open');return;}
+  pool.sort((a,b)=>a.name.localeCompare(b.name));
+  pool=pool.slice(0,50);
+  let html='';
+  pool.forEach(c=>{
+    html+=`<div class="ev-dd-item" onmousedown="selectBabyClient(${c.id})"><span>${escH(c.name)}</span>${c.phone?`<span class="ev-dd-sub">${escH(c.phone)}</span>`:''}</div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+function babyClientBlur(){setTimeout(()=>{const dd=document.getElementById('b-search-dropdown');if(dd)dd.classList.remove('open');},150);}
+function selectBabyClient(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('b-search').value=c.name;
+  document.getElementById('b-name').value=c.name;
+  if(c.bday)document.getElementById('b-birthdate').value=c.bday;
+  if(c.phone)document.getElementById('b-phone').value=c.phone;
+  if(c.facebook)document.getElementById('b-facebook').value=c.facebook;
+  const m=(c.notes||'').match(/Pais\/Contacto:\s*(.+)/i);
+  if(m)document.getElementById('b-mae').value=m[1].trim();
+  document.getElementById('b-search-dropdown').classList.remove('open');
+}
+function openNewBabyModal(){editingBabyId=null;['b-search','b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal-title').textContent='Novo Bebé';document.getElementById('baby-modal').classList.add('open');}
 function editBaby(id){
   const b=babies.find(x=>x.id===id);if(!b)return;
   editingBabyId=id;
