@@ -449,6 +449,14 @@ body{letter-spacing:.1px;}
     <!-- PROJETOS -->
   <div class="panel" id="panel-projetos">
     <div class="topbar"><div><div class="page-title">📋 Projetos</div><div class="page-sub">Sessões futuras, em edição, entregues e campanhas em andamento</div></div></div>
+    <div id="proj-filter-bar" style="padding:10px 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <button class="filter-btn on" id="proj-f-aniv" onclick="projFilterMode('aniv',this)">Aniversário</button>
+      <button class="filter-btn" id="proj-f-mesv" onclick="projFilterMode('mesv',this)">Mesversário</button>
+      <div class="ev-title-wrap" style="flex:1;min-width:220px;position:relative">
+        <input class="finput" id="proj-search" style="width:100%" autocomplete="off" placeholder="Procurar cliente (aniversário)..." oninput="projSearch()" onfocus="projSearch()" onblur="projSearchBlur()">
+        <div class="ev-dd" id="proj-search-dropdown"></div>
+      </div>
+    </div>
     <div id="proj-board" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start"></div>
   </div>
 
@@ -1160,6 +1168,45 @@ function projActionBtn(c){
   return '';
 }
 function goView(v){const btn=document.querySelector(`[onclick*="'${v}'"]`);if(btn)btn.click();}
+let projMode='aniv';
+function projFilterMode(mode,el){
+  projMode=mode;
+  document.querySelectorAll('#proj-filter-bar .filter-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('proj-search').placeholder=mode==='aniv'?'Procurar cliente (aniversário)...':'Procurar bebé (mesversário)...';
+  projSearch();
+}
+function projSearch(){
+  const q=document.getElementById('proj-search').value.trim().toLowerCase();
+  const dd=document.getElementById('proj-search-dropdown');
+  let pool=projMode==='aniv'?clients.filter(c=>c.name):babies.filter(b=>b.name);
+  if(q)pool=pool.filter(x=>x.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem resultados</div>';dd.classList.add('open');return;}
+  pool.sort((a,b)=>a.name.localeCompare(b.name));
+  pool=pool.slice(0,50);
+  let html='';
+  pool.forEach(x=>{
+    const sub=projMode==='aniv'?(ST[x.status]?ST[x.status].l:''):(x.mae||'');
+    html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})"><span>${escH(x.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+function projSearchBlur(){setTimeout(()=>{const dd=document.getElementById('proj-search-dropdown');if(dd)dd.classList.remove('open');},150);}
+function selectProjResult(id){
+  if(projMode==='aniv'){
+    const c=clients.find(x=>x.id===id);
+    goView('clientes');
+    if(c){const y=sYear(c);if(y&&y!==activeYear){activeYear=y;buildSidebar();render();}}
+    setTimeout(()=>{
+      const card=document.getElementById('card-'+id);
+      if(card){card.scrollIntoView({behavior:'smooth',block:'center'});toggleEdit(id);}
+    },60);
+  } else {
+    goView('bebes');
+    setTimeout(()=>{editBaby(id);},60);
+  }
+}
 function goPendList(){goView('clientes');const btn=document.querySelector(`.filter-btn[onclick*="'pend'"]`);if(btn)btn.click();}
 function renderProjetos(){
   const pendAll=clients.filter(c=>c.status==='pend').sort((a,b)=>b.id-a.id);
