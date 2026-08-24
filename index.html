@@ -1201,8 +1201,13 @@ function projSearch(){
   pool=pool.slice(0,50);
   let html='';
   pool.forEach(x=>{
-    const sub=projMode==='aniv'?(ST[x.status]?ST[x.status].l:''):(x.mae||'');
-    html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})"><span>${escH(x.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
+    if(projMode==='aniv'){
+      const opts=['sched','pend','editing','done','canc'].map(s=>`<option value="${s}"${x.status===s?' selected':''}>${ST[s].l}</option>`).join('');
+      html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>${escH(x.name)}</span><select class="finput" style="width:150px;font-size:12px;padding:4px 8px" onmousedown="event.stopPropagation()" onchange="quickSetStatus(${x.id},this.value)">${opts}</select></div>`;
+    } else {
+      const sub=x.mae||'';
+      html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})"><span>${escH(x.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
+    }
   });
   dd.innerHTML=html;
   dd.classList.add('open');
