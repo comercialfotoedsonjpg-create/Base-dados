@@ -526,6 +526,7 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="event-modal"><div class="modal" style="max-width:460px">
   <div class="modal-head"><h2 id="event-modal-title">Nova sessão</h2><button class="modal-close" onclick="closeNewEventModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body single">
+    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type" onchange="evTitleSearch()"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="mesversario">Mesversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
     <div class="fg full ev-title-wrap">
       <span class="flabel">Cliente / Título *</span>
       <input class="finput" id="ev-title" autocomplete="off" placeholder="Escreve para procurar um cliente..." oninput="evTitleSearch()" onfocus="evTitleSearch()" onblur="evTitleBlur()">
@@ -533,8 +534,7 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
     <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><input class="finput" id="ev-contact" placeholder="+238 991 234 567"></div>
-    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type" onchange="evTitleSearch()"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="mesversario">Mesversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
-    <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
+        <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
