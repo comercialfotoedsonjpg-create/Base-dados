@@ -1159,6 +1159,7 @@ function projCard(c){
   const av=avC(c.id),bg=av[0],fg=av[1];
   const initial=(c.name||'?').trim()[0]||'?';
   const dateStr=c.session?c.session.split('-').reverse().join('/'):'';
+  const opts=['sched','pend','editing','done','canc'].map(s=>`<option value="${s}"${c.status===s?' selected':''}>${ST[s].l}</option>`).join('');
   return `<div class="client-card" style="padding:10px 12px;margin-bottom:8px">
     <div style="display:flex;align-items:center;gap:8px">
       <div class="c-avatar-placeholder" style="width:32px;height:32px;font-size:12px;background:${bg};color:${fg}"><span>${initial}</span></div>
@@ -1167,7 +1168,9 @@ function projCard(c){
         <div style="font-size:11px;color:var(--text3)">${dateStr||'sem data'}</div>
       </div>
     </div>
-    <div style="display:flex;gap:6px;margin-top:8px">${projActionBtn(c)}</div>
+    <div style="margin-top:8px">
+      <select class="finput" style="width:100%;font-size:12px;padding:4px 8px" onchange="quickSetStatus(${c.id},this.value)">${opts}</select>
+    </div>
   </div>`;
 }
 function projActionBtn(c){
