@@ -533,7 +533,7 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
     <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><input class="finput" id="ev-contact" placeholder="+238 991 234 567"></div>
-    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="mesversario">Mesversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
+    <div class="fg"><span class="flabel">Tipo</span><select class="fsel" id="ev-type" onchange="evTitleSearch()"><option value="sessao">Sessão de fotos</option><option value="aniversario">Aniversário</option><option value="mesversario">Mesversário</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select></div>
     <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
@@ -1723,7 +1723,7 @@ function renderAgenda(){
   const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
   const todayISO=calISO(new Date());
   const evByDate={};
-  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,kind:e.type||'sessao',date:e.date,local:e.local||''});});
+  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;}}else if(e.babyId){const cb=babies.find(x=>x.id===e.babyId);if(cb){evPhone=cb.phone||evPhone;evCname=cb.name;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,kind:e.type||'sessao',date:e.date,local:e.local||''});});
   clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name,kind:'sessao',date:c.session,local:''});}});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
   evByDateCache=evByDate;
@@ -1767,7 +1767,7 @@ function editEvent(id){
   document.getElementById('ev-time').value=e.time||'';
   document.getElementById('ev-local').value=e.local||'';
   document.getElementById('ev-notes').value=e.notes||'';
-  document.getElementById('ev-client-id').value=e.clientId||'';
+  document.getElementById('ev-client-id').value=e.babyId?('b'+e.babyId):(e.clientId||'');
   document.getElementById('ev-contact').value=e.contact||'';
   document.getElementById('ev-type').value=e.type||'sessao';
   document.getElementById('event-modal-title').textContent='Editar sessão';
@@ -1779,8 +1779,8 @@ function saveNewEvent(){
   const t=document.getElementById('ev-title').value.trim();const d=document.getElementById('ev-date').value;
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
   if(!agenda.events)agenda.events=[];
-  const cid=document.getElementById('ev-client-id').value;
-  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid?parseInt(cid):null,contact:document.getElementById('ev-contact').value.trim(),type:document.getElementById('ev-type').value||'sessao'};
+  const cid=document.getElementById('ev-client-id').value;const isBaby=cid.startsWith('b');
+  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid&&!isBaby?parseInt(cid):null,babyId:cid&&isBaby?parseInt(cid.slice(1)):null,contact:document.getElementById('ev-contact').value.trim(),type:document.getElementById('ev-type').value||'sessao'};
   if(editingEventId!=null){
     const e=agenda.events.find(x=>x.id===editingEventId);
     if(e)Object.assign(e,data);
@@ -1795,10 +1795,10 @@ function evTitleSearch(){
   const q=document.getElementById('ev-title').value.trim().toLowerCase();
   const dd=document.getElementById('ev-title-dropdown');
   document.getElementById('ev-client-id').value='';
-  let pool=clients.filter(c=>c.name);
+  const __evType=document.getElementById('ev-type').value;const __evKind=__evType==='mesversario'?'baby':'client';let pool=__evKind==='baby'?babies.filter(b=>b.name):clients.filter(c=>c.name);
   if(q)pool=pool.filter(c=>c.name.toLowerCase().includes(q));
   if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem clientes encontrados</div>';dd.classList.add('open');return;}
-  const keyDate=c=>c.session||c.bday||'';
+  const keyDate=c=>c.session||c.bday||c.birthdate||'';
   pool.sort((a,b)=>{const da=keyDate(a)||'9999-99',db=keyDate(b)||'9999-99';return da.localeCompare(db)||a.name.localeCompare(b.name);});
   pool=pool.slice(0,200);
   const yearGroups={};
@@ -1819,19 +1819,19 @@ function evTitleSearch(){
       const label=mk==='00'?'':CAL_MONTHNAMES[parseInt(mk)-1];
       if(label)html+=`<div class="ev-dd-group">${label}</div>`;
       yearGroups[y][mk].forEach(c=>{
-        html+=`<div class="ev-dd-item" onmousedown="selectEvClient(${c.id})"><span>${escH(c.name)}</span>${c.phone?`<span class="ev-dd-sub">${escH(c.phone)}</span>`:''}</div>`;
+        html+=`<div class="ev-dd-item" onmousedown="selectEvClient(${c.id},'${__evKind}')"><span>${escH(c.name)}</span>${c.phone?`<span class="ev-dd-sub">${escH(c.phone)}</span>`:''}</div>`;
       });
     });
   });
   dd.innerHTML=html;
   dd.classList.add('open');
 }
-function selectEvClient(id){
-  const c=clients.find(x=>x.id===id);if(!c)return;
+function selectEvClient(id,kind){
+  const c=kind==='baby'?babies.find(x=>x.id===id):clients.find(x=>x.id===id);if(!c)return;
   document.getElementById('ev-title').value=c.name;
-  document.getElementById('ev-client-id').value=c.id;
+  document.getElementById('ev-client-id').value=kind==='baby'?('b'+c.id):c.id;
   const dateEl=document.getElementById('ev-date');
-  if(!dateEl.value&&c.session)dateEl.value=c.session;
+  if(!dateEl.value&&(c.session||c.birthdate))dateEl.value=(c.session||c.birthdate);
   document.getElementById('ev-title-dropdown').classList.remove('open');
 }
 function deleteEditingEvent(){if(editingEventId!=null)delEvent(editingEventId);closeNewEventModal();}
