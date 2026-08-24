@@ -452,6 +452,14 @@ body{letter-spacing:.1px;}
     <div id="proj-filter-bar" style="padding:10px 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
       <button class="filter-btn on" id="proj-f-aniv" onclick="projFilterMode('aniv',this)">Aniversário</button>
       <button class="filter-btn" id="proj-f-mesv" onclick="projFilterMode('mesv',this)">Mesversário</button>
+      <select class="finput" id="proj-f-status" style="width:170px" onchange="projSearch()" onblur="projSearchBlur()">
+        <option value="">Todos os estados</option>
+        <option value="pend">⏳ Pendente</option>
+        <option value="sched">🗓️ Agendado</option>
+        <option value="editing">✂️ Em Edição</option>
+        <option value="done">✅ Entregue</option>
+        <option value="canc">❌ Cancelado</option>
+      </select>
       <div class="ev-title-wrap" style="flex:1;min-width:220px;position:relative">
         <input class="finput" id="proj-search" style="width:100%" autocomplete="off" placeholder="Procurar cliente (aniversário)..." oninput="projSearch()" onfocus="projSearch()" onblur="projSearchBlur()">
         <div class="ev-dd" id="proj-search-dropdown"></div>
@@ -1174,12 +1182,17 @@ function projFilterMode(mode,el){
   document.querySelectorAll('#proj-filter-bar .filter-btn').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   document.getElementById('proj-search').placeholder=mode==='aniv'?'Procurar cliente (aniversário)...':'Procurar bebé (mesversário)...';
+  const statusSel=document.getElementById('proj-f-status');
+  statusSel.style.display=mode==='aniv'?'':'none';
+  if(mode!=='aniv')statusSel.value='';
   projSearch();
 }
 function projSearch(){
   const q=document.getElementById('proj-search').value.trim().toLowerCase();
+  const status=projMode==='aniv'?document.getElementById('proj-f-status').value:'';
   const dd=document.getElementById('proj-search-dropdown');
   let pool=projMode==='aniv'?clients.filter(c=>c.name):babies.filter(b=>b.name);
+  if(status)pool=pool.filter(c=>c.status===status);
   if(q)pool=pool.filter(x=>x.name.toLowerCase().includes(q));
   if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem resultados</div>';dd.classList.add('open');return;}
   pool.sort((a,b)=>a.name.localeCompare(b.name));
