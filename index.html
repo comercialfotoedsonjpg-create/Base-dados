@@ -452,7 +452,7 @@ body{letter-spacing:.1px;}
     <div id="proj-filter-bar" style="padding:10px 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
       <button class="filter-btn on" id="proj-f-aniv" onclick="projFilterMode('aniv',this)">Aniversário</button>
       <button class="filter-btn" id="proj-f-mesv" onclick="projFilterMode('mesv',this)">Mesversário</button>
-      <select class="finput" id="proj-f-status" style="width:170px" onchange="projSearch()" onblur="projSearchBlur()">
+      <select class="finput" id="proj-f-status" style="width:170px" onchange="projSearch()">
         <option value="">Todos os estados</option>
         <option value="pend">⏳ Pendente</option>
         <option value="sched">🗓️ Agendado</option>
@@ -462,10 +462,10 @@ body{letter-spacing:.1px;}
       </select>
       <button class="btn btn-sm btn-primary" onclick="openNewModal()"><i class="ti ti-plus" aria-hidden="true"></i> Novo Cliente</button>
       <div class="ev-title-wrap" style="flex:1;min-width:220px;position:relative">
-        <input class="finput" id="proj-search" style="width:100%" autocomplete="off" placeholder="Procurar cliente (aniversário)..." oninput="projSearch()" onfocus="projSearch()" onblur="projSearchBlur()">
-        <div class="ev-dd" id="proj-search-dropdown"></div>
+        <input class="finput" id="proj-search" style="width:100%" autocomplete="off" placeholder="Procurar cliente (aniversário)..." oninput="projSearch()">
       </div>
     </div>
+    <div class="ev-dd" id="proj-search-dropdown" style="position:static;width:auto;margin:0 20px 14px;max-height:340px;box-shadow:none"></div>
     <div id="proj-board" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start"></div>
   </div>
 
@@ -1250,6 +1250,7 @@ function renderProjetos(){
     col('✂️ Em Edição','var(--edit)',editing,'Nada em edição')+
     col('✅ Entregues (recentes)','var(--done)',entregues,'Nada entregue ainda')+
     campanhasCol;
+  projSearch();
 }
 function quickSetStatus(id,newStatus){
   const c=clients.find(x=>x.id===id);if(!c)return;
