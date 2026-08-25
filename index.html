@@ -1206,7 +1206,7 @@ function projSearch(){
   pool.forEach(x=>{
     if(projMode==='aniv'){
       const opts=['sched','pend','editing','done','canc'].map(s=>`<option value="${s}"${x.status===s?' selected':''}>${ST[s].l}</option>`).join('');
-      html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>${escH(x.name)}</span><select class="finput" style="width:150px;font-size:12px;padding:4px 8px" onmousedown="event.stopPropagation()" onchange="quickSetStatus(${x.id},this.value)">${opts}</select></div>`;
+      html+=`<div class="ev-dd-item" onmousedown="quickSetStatus(${x.id},'editing')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer"><span>${escH(x.name)}</span><select class="finput" style="width:150px;font-size:12px;padding:4px 8px" onmousedown="event.stopPropagation()" onchange="quickSetStatus(${x.id},this.value)">${opts}</select></div>`;
     } else {
       const sub=x.mae||'';
       html+=`<div class="ev-dd-item" onmousedown="selectProjResult(${x.id})"><span>${escH(x.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
