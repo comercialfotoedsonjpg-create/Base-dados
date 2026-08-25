@@ -487,8 +487,8 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="proj-type-modal"><div class="modal" style="max-width:380px">
   <div class="modal-head"><h2>Novo Projeto</h2><button class="modal-close" onclick="closeProjTypeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewModal()">👤 Cliente / Aniversário</button>
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewBabyModal()">🍼 Bebé / Mesversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();projFilterMode('aniv',document.getElementById('proj-f-aniv'));document.getElementById('proj-search').focus();">👤 Cliente / Aniversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();projFilterMode('mesv',document.getElementById('proj-f-mesv'));document.getElementById('proj-search').focus();">🍼 Bebé / Mesversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openOutroModal()">📋 Outro</button>
   </div>
 </div></div>
