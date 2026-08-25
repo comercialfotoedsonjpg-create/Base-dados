@@ -488,7 +488,7 @@ body{letter-spacing:.1px;}
   <div class="modal-head"><h2>Novo Projeto</h2><button class="modal-close" onclick="closeProjTypeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();projFilterMode('aniv',document.getElementById('proj-f-aniv'));document.getElementById('proj-search').focus();">👤 Cliente / Aniversário</button>
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();projFilterMode('mesv',document.getElementById('proj-f-mesv'));document.getElementById('proj-search').focus();">🍼 Bebé / Mesversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openMesvQuickModal();">🍼 Bebé / Mesversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openOutroModal()">📋 Outro</button>
   </div>
 </div></div>
@@ -509,6 +509,23 @@ body{letter-spacing:.1px;}
     </select></div>
     <div class="fg full"><span class="flabel">Data</span><input class="finput" id="o-date" type="date"></div>
     <button class="btn btn-primary" onclick="saveOutro()" style="margin-top:6px">Criar Projeto</button>
+  </div>
+</div></div>
+<div class="overlay" id="mesv-quick-modal"><div class="modal" style="max-width:380px">
+  <div class="modal-head"><h2>Novo Projeto — Mesversário</h2><button class="modal-close" onclick="closeMesvQuickModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:grid;gap:12px;padding:20px">
+    <div class="fg full"><span class="flabel">Nome do cliente *</span><input class="finput" id="mq-name" placeholder="Nome"></div>
+    <div class="fg full"><span class="flabel">Aniversário</span><input class="finput" id="mq-bday" type="date"></div>
+    <div class="fg full"><span class="flabel">Contacto (opcional)</span><input class="finput" id="mq-contact" placeholder="+238 991 234 567"></div>
+    <div class="fg full"><span class="flabel">Onde estão as fotos</span><select class="fsel" id="mq-device" onchange="document.getElementById('mq-device-other-wrap').style.display=this.value==='Outro'?'block':'none'">
+      <option value="">Selecionar...</option>
+      <option value="SSD">SSD</option>
+      <option value="Email">Email</option>
+      <option value="Pendrive">Pendrive</option>
+      <option value="Outro">Outro (especificar)</option>
+    </select></div>
+    <div class="fg full" id="mq-device-other-wrap" style="display:none"><span class="flabel">Especificar</span><input class="finput" id="mq-device-other" placeholder="Onde exatamente..."></div>
+    <button class="btn btn-primary" onclick="saveMesvQuick()" style="margin-top:6px">Criar Projeto</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -1520,6 +1537,23 @@ function openNewProjectChoice(){document.getElementById('proj-type-modal').class
 function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
 function openOutroModal(){document.getElementById('o-name').value='';document.getElementById('o-type').value='';document.getElementById('o-date').value='';document.getElementById('outro-modal').classList.add('open');}
 function closeOutroModal(){document.getElementById('outro-modal').classList.remove('open');}
+function openMesvQuickModal(){
+  document.getElementById('mq-name').value='';
+  document.getElementById('mq-bday').value='';
+  document.getElementById('mq-contact').value='';
+  document.getElementById('mq-device').value='';
+  document.getElementById('mq-device-other').value='';
+  document.getElementById('mq-device-other-wrap').style.display='none';
+  document.getElementById('mesv-quick-modal').classList.add('open');
+}
+function closeMesvQuickModal(){document.getElementById('mesv-quick-modal').classList.remove('open');}
+function saveMesvQuick(){
+  const n=document.getElementById('mq-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  const deviceSel=document.getElementById('mq-device').value;
+  const device=deviceSel==='Outro'?document.getElementById('mq-device-other').value.trim():deviceSel;
+  babies.push({id:babyUid++,name:n,mae:'',parent:'',birthdate:document.getElementById('mq-bday').value,phone:document.getElementById('mq-contact').value.trim(),facebook:'',year:activeYear,startmonth:1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),photoDevice:device,updatedAt:Date.now()});
+  closeMesvQuickModal();save();toast('Projeto criado com sucesso','✓');
+}
 function saveOutro(){
   const n=document.getElementById('o-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   const data={id:uid++,name:n,email:'',phone:'',facebook:'',instagram:'',bday:'',session:document.getElementById('o-date').value,year:null,photos:0,status:'sched',style:document.getElementById('o-type').value,notes:'',refs:'',price:'',gallery:[],avatar:null,updatedAt:Date.now()};
