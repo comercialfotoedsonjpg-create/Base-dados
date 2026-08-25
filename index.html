@@ -488,6 +488,11 @@ body{letter-spacing:.1px;}
   <div class="modal-head"><h2>Novo cliente</h2><button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-tabs"><button class="modal-tab on" onclick="switchModalTab('info',this)">Dados</button><button class="modal-tab" onclick="switchModalTab('extras',this)">Gostos e pedidos</button></div>
   <div class="modal-body" id="modal-tab-info">
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Já é cliente registado? Procurar (opcional)</span>
+      <input class="finput" id="n-search" autocomplete="off" placeholder="Escreve para procurar um cliente existente..." oninput="newClientSearch()" onfocus="newClientSearch()" onblur="newClientSearchBlur()">
+      <div class="ev-dd" id="n-search-dropdown"></div>
+    </div>
     <div class="fg full"><span class="flabel">Nome completo *</span><input class="finput" id="n-name" placeholder="Ana Silva"></div>
     <div class="fg"><span class="flabel">Email</span><input class="finput" id="n-email" type="email"></div>
     <div class="fg"><span class="flabel">Telemóvel WhatsApp</span><input class="finput" id="n-phone" placeholder="+238 991 234 567"></div>
@@ -1475,7 +1480,8 @@ function openIG(url){if(!url){toast('Sem link de Instagram','!');return;}window.
 let modalTab='info';
 function switchModalTab(tab,el){modalTab=tab;document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));el.classList.add('on');document.getElementById('modal-tab-info').style.display=tab==='info'?'grid':'none';document.getElementById('modal-tab-extras').style.display=tab==='extras'?'block':'none';}
 function openNewModal(){
-  modalTab='info';['n-name','n-email','n-phone','n-facebook','n-instagram','n-bday','n-photos','n-style','n-notes','n-refs','n-price'].forEach(id=>document.getElementById(id).value='');
+  modalTab='info';['n-search','n-name','n-email','n-phone','n-facebook','n-instagram','n-bday','n-photos','n-style','n-notes','n-refs','n-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('n-search-dropdown').innerHTML='';
   document.getElementById('n-sess').value='';document.getElementById('n-status').value='sched';
   document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));document.querySelector('.modal-tab').classList.add('on');
   document.getElementById('modal-tab-info').style.display='grid';document.getElementById('modal-tab-extras').style.display='none';
@@ -1483,6 +1489,27 @@ function openNewModal(){
   document.getElementById('new-modal').classList.add('open');
 }
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
+function newClientSearch(){
+  const q=document.getElementById('n-search').value.trim().toLowerCase();
+  const dd=document.getElementById('n-search-dropdown');
+  let pool=clients.filter(c=>c.name);
+  if(q)pool=pool.filter(c=>c.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem resultados</div>';dd.classList.add('open');return;}
+  pool.sort((a,b)=>a.name.localeCompare(b.name));
+  pool=pool.slice(0,30);
+  let html='';
+  pool.forEach(c=>{
+    const sub=ST[c.status]?ST[c.status].l:'';
+    html+=`<div class="ev-dd-item" onmousedown="selectExistingForProject(${c.id})"><span>${escH(c.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+function newClientSearchBlur(){setTimeout(()=>{const dd=document.getElementById('n-search-dropdown');if(dd)dd.classList.remove('open');},150);}
+function selectExistingForProject(id){
+  closeNewModal();
+  quickSetStatus(id,'editing');
+}
 function saveNew(){
   const n=document.getElementById('n-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   const data={id:uid++,name:n,email:document.getElementById('n-email').value.trim(),phone:document.getElementById('n-phone').value.trim(),facebook:document.getElementById('n-facebook').value.trim(),instagram:document.getElementById('n-instagram').value.trim(),bday:document.getElementById('n-bday').value,session:document.getElementById('n-sess').value,year:(document.getElementById('n-year')&&document.getElementById('n-year').value)?parseInt(document.getElementById('n-year').value):null,photos:parseInt(document.getElementById('n-photos').value)||0,status:document.getElementById('n-status').value,style:document.getElementById('n-style').value.trim(),notes:document.getElementById('n-notes').value.trim(),refs:document.getElementById('n-refs').value.trim(),price:document.getElementById('n-price').value.trim(),gallery:[],avatar:null,updatedAt:Date.now()};
