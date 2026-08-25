@@ -460,7 +460,7 @@ body{letter-spacing:.1px;}
         <option value="done">✅ Entregue</option>
         <option value="canc">❌ Cancelado</option>
       </select>
-      <button class="btn btn-sm btn-primary" onclick="openNewModal()"><i class="ti ti-plus" aria-hidden="true"></i> Novo Cliente</button>
+      <button class="btn btn-sm btn-primary" onclick="openNewProjectChoice()"><i class="ti ti-plus" aria-hidden="true"></i> Novo Projeto</button>
       <div class="ev-title-wrap" style="flex:1;min-width:220px;position:relative">
         <input class="finput" id="proj-search" style="width:100%" autocomplete="off" placeholder="Procurar cliente (aniversário)..." oninput="projSearch()">
       </div>
@@ -484,6 +484,13 @@ body{letter-spacing:.1px;}
 </main>
 
 <!-- NEW CLIENT MODAL -->
+<div class="overlay" id="proj-type-modal"><div class="modal" style="max-width:380px">
+  <div class="modal-head"><h2>Novo Projeto</h2><button class="modal-close" onclick="closeProjTypeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewModal()">👤 Cliente / Aniversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewBabyModal()">🍼 Bebé / Mesversário</button>
+  </div>
+</div></div>
 <div class="overlay" id="new-modal"><div class="modal">
   <div class="modal-head"><h2>Novo cliente</h2><button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-tabs"><button class="modal-tab on" onclick="switchModalTab('info',this)">Dados</button><button class="modal-tab" onclick="switchModalTab('extras',this)">Gostos e pedidos</button></div>
@@ -1489,6 +1496,8 @@ function openNewModal(){
   document.getElementById('new-modal').classList.add('open');
 }
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
+function openNewProjectChoice(){document.getElementById('proj-type-modal').classList.add('open');}
+function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
 function newClientSearch(){
   const q=document.getElementById('n-search').value.trim().toLowerCase();
   const dd=document.getElementById('n-search-dropdown');
