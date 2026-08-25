@@ -489,6 +489,26 @@ body{letter-spacing:.1px;}
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewModal()">👤 Cliente / Aniversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openNewBabyModal()">🍼 Bebé / Mesversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openOutroModal()">📋 Outro</button>
+  </div>
+</div></div>
+<div class="overlay" id="outro-modal"><div class="modal" style="max-width:380px">
+  <div class="modal-head"><h2>Novo Projeto — Outro</h2><button class="modal-close" onclick="closeOutroModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:grid;gap:12px;padding:20px">
+    <div class="fg full"><span class="flabel">Nome *</span><input class="finput" id="o-name" placeholder="Nome"></div>
+    <div class="fg full"><span class="flabel">Tipo de Sessão</span><select class="fsel" id="o-type">
+      <option value="">Selecionar...</option>
+      <option value="Sessão Feminina">Sessão Feminina</option>
+      <option value="Sessão de Casal">Sessão de Casal</option>
+      <option value="Sessão Familiar">Sessão Familiar</option>
+      <option value="Sessão de Aniversário">Sessão de Aniversário</option>
+      <option value="Evento">Evento</option>
+      <option value="Campanha Mulheres que Inspiram">Campanha Mulheres que Inspiram</option>
+      <option value="Pacote VIP">Pacote VIP</option>
+      <option value="Retratos Profissionais">Retratos Profissionais</option>
+    </select></div>
+    <div class="fg full"><span class="flabel">Data</span><input class="finput" id="o-date" type="date"></div>
+    <button class="btn btn-primary" onclick="saveOutro()" style="margin-top:6px">Criar Projeto</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -1498,6 +1518,17 @@ function openNewModal(){
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
 function openNewProjectChoice(){document.getElementById('proj-type-modal').classList.add('open');}
 function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
+function openOutroModal(){document.getElementById('o-name').value='';document.getElementById('o-type').value='';document.getElementById('o-date').value='';document.getElementById('outro-modal').classList.add('open');}
+function closeOutroModal(){document.getElementById('outro-modal').classList.remove('open');}
+function saveOutro(){
+  const n=document.getElementById('o-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
+  const data={id:uid++,name:n,email:'',phone:'',facebook:'',instagram:'',bday:'',session:document.getElementById('o-date').value,year:null,photos:0,status:'sched',style:document.getElementById('o-type').value,notes:'',refs:'',price:'',gallery:[],avatar:null,updatedAt:Date.now()};
+  clients.push(data);
+  const ny=data.session?parseInt(data.session.split('-')[0]):null;
+  if(ny&&!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
+  if(ny)activeYear=ny;
+  closeOutroModal();save();toast('Projeto criado com sucesso','✓');
+}
 function newClientSearch(){
   const q=document.getElementById('n-search').value.trim().toLowerCase();
   const dd=document.getElementById('n-search-dropdown');
