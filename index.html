@@ -184,6 +184,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .bm-btn:hover{border-color:var(--accent);color:var(--accent)}
 .bm-btn.done{background:rgba(74,222,154,.12);color:var(--done);border-color:rgba(74,222,154,.3)}
 .bm-btn.milestone{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.3)}
+.bm-btn.na{opacity:.3;pointer-events:none;background:var(--surface2)}
 .bm-photos-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);font-size:8px;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.55;cursor:pointer;transition:.15s}
 .bm-photos-badge:hover{opacity:1;background:var(--accent);color:#fff;border-color:var(--accent)}
 .baby-card-foot{padding:8px 14px;display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
@@ -641,6 +642,7 @@ body{letter-spacing:.1px;}
     <div class="fg"><span class="flabel">WhatsApp da mãe</span><input class="finput" id="b-phone"></div>
     <div class="fg"><span class="flabel">Facebook da mãe</span><input class="finput" id="b-facebook"></div>
     <div class="fg"><span class="flabel">Ano da campanha</span><input class="finput" id="b-year" type="number" value="2026"></div>
+    <div class="fg"><span class="flabel">Mês de início na campanha</span><select class="finput" id="b-startmonth"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNewBabyModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewBaby()">Guardar bebé</button></div>
 </div></div>
@@ -1914,7 +1916,7 @@ function renderBebes(){
         <div class="baby-av">👶</div>
         <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
+      <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.month<(b.startmonth||1)?' na':(s.done?' done':(milestones.includes(s.month)?' milestone':''))}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.month<(b.startmonth||1)?' — antes do início na campanha':(s.done?' — concluído':'')}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
@@ -2014,7 +2016,7 @@ function selectBabyClient(id){
   if(m)document.getElementById('b-mae').value=m[1].trim();
   document.getElementById('b-search-dropdown').classList.remove('open');
 }
-function openNewBabyModal(){editingBabyId=null;['b-search','b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('baby-modal-title').textContent='Novo Bebé';document.getElementById('baby-modal').classList.add('open');}
+function openNewBabyModal(){editingBabyId=null;['b-search','b-name','b-mae','b-parent','b-phone','b-facebook','b-birthdate'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-year').value=activeYear;document.getElementById('b-startmonth').value='1';document.getElementById('baby-modal-title').textContent='Novo Bebé';document.getElementById('baby-modal').classList.add('open');}
 function editBaby(id){
   const b=babies.find(x=>x.id===id);if(!b)return;
   editingBabyId=id;
@@ -2023,6 +2025,7 @@ function editBaby(id){
   document.getElementById('b-parent').value=b.parent||'';
   document.getElementById('b-phone').value=b.phone||'';
   document.getElementById('b-facebook').value=b.facebook||'';
+  document.getElementById('b-startmonth').value=String(b.startmonth||1);
   document.getElementById('b-birthdate').value=b.birthdate||'';
   document.getElementById('b-year').value=b.year||activeYear;
   document.getElementById('baby-modal-title').textContent='Editar Bebé';
@@ -2033,10 +2036,10 @@ function saveNewBaby(){
   const n=document.getElementById('b-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   if(editingBabyId!=null){
     const b=babies.find(x=>x.id===editingBabyId);if(!b){closeNewBabyModal();return;}
-    b.name=n;b.mae=document.getElementById('b-mae').value.trim();b.parent=document.getElementById('b-parent').value.trim();b.birthdate=document.getElementById('b-birthdate').value;b.phone=document.getElementById('b-phone').value.trim();b.facebook=document.getElementById('b-facebook').value.trim();b.year=parseInt(document.getElementById('b-year').value)||activeYear;b.updatedAt=Date.now();
+    b.name=n;b.mae=document.getElementById('b-mae').value.trim();b.parent=document.getElementById('b-parent').value.trim();b.birthdate=document.getElementById('b-birthdate').value;b.phone=document.getElementById('b-phone').value.trim();b.facebook=document.getElementById('b-facebook').value.trim();b.year=parseInt(document.getElementById('b-year').value)||activeYear;b.startmonth=parseInt(document.getElementById('b-startmonth').value)||1;b.updatedAt=Date.now();
     closeNewBabyModal();save();toast('Bebé atualizado com sucesso','✓');return;
   }
-  babies.push({id:babyUid++,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
+  babies.push({id:babyUid++,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:parseInt(document.getElementById('b-startmonth').value)||1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
   closeNewBabyModal();save();toast('Bebé criado com sucesso','✓');
 }
 
