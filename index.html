@@ -553,9 +553,13 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="print-modal"><div class="modal">
   <div class="modal-head"><h2 id="print-modal-title">Novo Pedido de Impressão</h2><button class="modal-close" onclick="closePrintModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:20px">
+    <div class="fg full" style="display:flex;gap:8px">
+      <button class="filter-btn on" id="pr-mode-aniv" type="button" onclick="printClientMode('aniv',this)">Aniversário</button>
+      <button class="filter-btn" id="pr-mode-mesv" type="button" onclick="printClientMode('mesv',this)">Mesversário</button>
+    </div>
     <div class="fg full ev-title-wrap">
       <span class="flabel">Cliente</span>
-      <input class="finput" id="pr-client" autocomplete="off" placeholder="Nome do cliente" oninput="printClientSearch()" onfocus="printClientSearch()">
+      <input class="finput" id="pr-client" autocomplete="off" placeholder="Nome do cliente..." oninput="printClientSearch()" onfocus="printClientSearch()">
       <div class="ev-dd" id="pr-client-dropdown"></div>
     </div>
     <div class="fg full"><span class="flabel">Quantidade de fotos</span><input class="finput" id="pr-qty" type="number" min="0"></div>
@@ -1134,7 +1138,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},editing:{l:'Em Edição',tc:'t-edit'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,editingPrintId=null,currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -1372,11 +1376,20 @@ function dismissFromProjetos(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   c.projDismissed=true;save();toast('Removido do quadro','✓');renderProjetos();
 }
+function printClientMode(mode,el){
+  printMode=mode;
+  document.querySelectorAll('#pr-mode-aniv,#pr-mode-mesv').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('pr-client').placeholder=mode==='aniv'?'Nome do cliente...':'Nome do bebé...';
+  document.getElementById('pr-client').value='';
+  document.getElementById('pr-client-dropdown').innerHTML='';
+  document.getElementById('pr-client-dropdown').classList.remove('open');
+}
 function printClientSearch(){
   const q=document.getElementById('pr-client').value.trim().toLowerCase();
   const dd=document.getElementById('pr-client-dropdown');
   if(!q){dd.innerHTML='';dd.classList.remove('open');return;}
-  let pool=clients.filter(c=>c.name&&c.name.toLowerCase().includes(q)).slice(0,15);
+  const pool=(printMode==='mesv'?babies:clients).filter(c=>c.name&&c.name.toLowerCase().includes(q)).slice(0,15);
   if(!pool.length){dd.innerHTML='';dd.classList.remove('open');return;}
   let html='';
   pool.forEach(c=>{
@@ -1386,12 +1399,17 @@ function printClientSearch(){
   dd.classList.add('open');
 }
 function selectPrintClient(id){
-  const c=clients.find(x=>x.id===id);if(!c)return;
+  const pool=printMode==='mesv'?babies:clients;
+  const c=pool.find(x=>x.id===id);if(!c)return;
   document.getElementById('pr-client').value=c.name;
   document.getElementById('pr-client-dropdown').classList.remove('open');
 }
 function openPrintModal(){
   editingPrintId=null;
+  printMode='aniv';
+  document.querySelectorAll('#pr-mode-aniv,#pr-mode-mesv').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pr-mode-aniv').classList.add('on');
+  document.getElementById('pr-client').placeholder='Nome do cliente...';
   document.getElementById('pr-client').value='';
   document.getElementById('pr-client-dropdown').innerHTML='';
   document.getElementById('pr-qty').value='';
