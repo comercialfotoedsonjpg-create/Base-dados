@@ -338,6 +338,7 @@ body{letter-spacing:.1px;}
   <button class="nav-item" onclick="showView('bebes',this)" style="background:rgba(249,168,212,.06);border-left:3px solid #f9a8d4;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i><span style="color:#f9a8d4;font-weight:500;font-size:12px">Campanhas Bebés 📸</span><span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span></button>
   <button class="nav-item" onclick="showView('agenda',this)"><i class="ti ti-calendar ni-icon" aria-hidden="true"></i><span>Agenda</span></button>
   <button class="nav-item" onclick="showView('projetos',this)"><i class="ti ti-layout-kanban ni-icon" style="color:#9b8cff" aria-hidden="true"></i><span style="color:#9b8cff">Projetos</span></button>
+  <button class="nav-item" onclick="showView('impressoes',this)"><i class="ti ti-printer ni-icon" style="color:#4fc3f7" aria-hidden="true"></i><span style="color:#4fc3f7">Impressões</span></button>
   <button class="nav-item" onclick="showView('metricas',this)"><i class="ti ti-chart-bar ni-icon" aria-hidden="true"></i><span>Métricas</span></button>
   <div class="nav-section" style="margin-top:8px">Anos</div>
   <div class="years-section" id="years-nav"></div>
@@ -456,6 +457,18 @@ body{letter-spacing:.1px;}
     <div id="proj-board" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start"></div>
   </div>
 
+  <!-- IMPRESSÕES -->
+  <div class="panel" id="panel-impressoes">
+    <div class="topbar"><div><div class="page-title">🖨️ Impressões</div><div class="page-sub">Pedidos de fotos impressas por mês</div></div></div>
+    <div id="print-filter-bar" style="padding:10px 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <select class="finput" id="print-f-month" style="width:180px" onchange="renderImpressoes()">
+        <option value="">Todos os meses</option>
+      </select>
+      <button class="btn btn-sm btn-primary" onclick="openPrintModal()"><i class="ti ti-plus" aria-hidden="true"></i> Novo Pedido</button>
+    </div>
+    <div id="print-list" style="padding:16px 20px;display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
   <!-- METRICAS -->
   <div class="panel" id="panel-metricas">
     <div class="topbar"><div><div class="page-title">Métricas</div><div class="page-sub">Visão geral do negócio</div></div>
@@ -535,6 +548,35 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="bc-search-dropdown"></div>
     </div>
     <button class="btn btn-primary" style="padding:16px;font-size:15px;margin-top:6px" onclick="closeBabyChoiceModal();openMesvQuickModal();">✏️ Criar novo</button>
+  </div>
+</div></div>
+<div class="overlay" id="print-modal"><div class="modal">
+  <div class="modal-head"><h2 id="print-modal-title">Novo Pedido de Impressão</h2><button class="modal-close" onclick="closePrintModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:20px">
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Cliente</span>
+      <input class="finput" id="pr-client" autocomplete="off" placeholder="Nome do cliente" oninput="printClientSearch()" onfocus="printClientSearch()">
+      <div class="ev-dd" id="pr-client-dropdown"></div>
+    </div>
+    <div class="fg full"><span class="flabel">Quantidade de fotos</span><input class="finput" id="pr-qty" type="number" min="0"></div>
+    <div class="fg full"><span class="flabel">Tamanho</span><select class="fsel" id="pr-size">
+      <option value="">Selecionar...</option>
+      <option value="10x15">10x15</option>
+      <option value="13x18">13x18</option>
+      <option value="15x21">15x21</option>
+      <option value="20x25">20x25</option>
+      <option value="20x30">20x30</option>
+      <option value="A4">A4</option>
+      <option value="Outro">Outro</option>
+    </select></div>
+    <div class="fg full"><span class="flabel">Valor pago</span><input class="finput" id="pr-price" placeholder="0"></div>
+    <div class="fg full"><span class="flabel">Mês</span><input class="finput" id="pr-month" type="month"></div>
+    <div class="fg full" style="display:flex;gap:20px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="pr-printed"> Impresso</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="pr-delivered"> Entregue</label>
+    </div>
+    <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="pr-notes"></textarea></div>
+    <button class="btn btn-primary" onclick="savePrint()" style="margin-top:6px">Guardar Pedido</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -686,7 +728,7 @@ function setSyncStatus(mode){
 function pushToFirebase(){
   if(!fbRef)return;
   setSyncStatus('syncing');
-  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads}).then(()=>{
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints}).then(()=>{
     setSyncStatus('synced');
   }).catch(()=>{setSyncStatus('offline');});
 }
@@ -703,11 +745,13 @@ function initFirebaseSync(){
         babies=remote.babies||[];
         agenda=remote.agenda||{events:[]};
         leads=remote.leads||[];
+        prints=remote.prints||[];
         uid=Math.max(...clients.map(c=>c.id),0)+1;
         babyUid=Math.max(...babies.map(b=>b.id),0)+1;
         eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
         leadUid=Math.max(...leads.map(l=>l.id),0)+1;
-        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads}));}catch(e){}
+        printUid=Math.max(...prints.map(p=>p.id),0)+1;
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints}));}catch(e){}
         buildSidebar();renderCurrent();
         setSyncStatus('synced');
         fbReady=true;
@@ -1090,7 +1134,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},editing:{l:'Em Edição',tc:'t-edit'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},leads=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,editingPrintId=null,currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -1126,14 +1170,15 @@ function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_crm')||'{}');
     if(d.clients&&d.clients.length){
-      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];
+      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];
     }else{
-      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];
+      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];
     }
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     babyUid=Math.max(...babies.map(b=>b.id),0)+1;
     eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
     leadUid=Math.max(...leads.map(l=>l.id),0)+1;
+    printUid=Math.max(...prints.map(p=>p.id),0)+1;
     const ay=clients.map(c=>sYear(c)).filter(Boolean);
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
     years.sort((a,b)=>a-b);
@@ -1172,7 +1217,7 @@ function migrateSeedImport(){
 }
 let saveTimer=null;
 function save(){
-  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads}));}catch(e){}
+  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints}));}catch(e){}
   buildSidebar();renderCurrent();
   if(fbRef){pushToFirebase();}
   else{setSyncStatus('local');}
@@ -1204,6 +1249,7 @@ function renderCurrent(){
   else if(currentView==='leads')renderLeads();
   else if(currentView==='agenda')renderAgenda();
   else if(currentView==='projetos')renderProjetos();
+  else if(currentView==='impressoes')renderImpressoes();
   else if(currentView==='metricas')renderMetricas();
 }
 
@@ -1326,6 +1372,118 @@ function dismissFromProjetos(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   c.projDismissed=true;save();toast('Removido do quadro','✓');renderProjetos();
 }
+function printClientSearch(){
+  const q=document.getElementById('pr-client').value.trim().toLowerCase();
+  const dd=document.getElementById('pr-client-dropdown');
+  if(!q){dd.innerHTML='';dd.classList.remove('open');return;}
+  let pool=clients.filter(c=>c.name&&c.name.toLowerCase().includes(q)).slice(0,15);
+  if(!pool.length){dd.innerHTML='';dd.classList.remove('open');return;}
+  let html='';
+  pool.forEach(c=>{
+    html+=`<div class="ev-dd-item" onmousedown="selectPrintClient(${c.id})"><span>${escH(c.name)}</span></div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+function selectPrintClient(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('pr-client').value=c.name;
+  document.getElementById('pr-client-dropdown').classList.remove('open');
+}
+function openPrintModal(){
+  editingPrintId=null;
+  document.getElementById('pr-client').value='';
+  document.getElementById('pr-client-dropdown').innerHTML='';
+  document.getElementById('pr-qty').value='';
+  document.getElementById('pr-size').value='';
+  document.getElementById('pr-price').value='';
+  const now=new Date();
+  document.getElementById('pr-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('pr-printed').checked=false;
+  document.getElementById('pr-delivered').checked=false;
+  document.getElementById('pr-notes').value='';
+  document.getElementById('print-modal-title').textContent='Novo Pedido de Impressão';
+  document.getElementById('print-modal').classList.add('open');
+}
+function closePrintModal(){document.getElementById('print-modal').classList.remove('open');}
+function savePrint(){
+  const client=document.getElementById('pr-client').value.trim();
+  if(!client){toast('O nome do cliente é obrigatório','!');return;}
+  const data={
+    client,
+    qty:parseInt(document.getElementById('pr-qty').value)||0,
+    size:document.getElementById('pr-size').value,
+    price:document.getElementById('pr-price').value.trim(),
+    month:document.getElementById('pr-month').value,
+    printed:document.getElementById('pr-printed').checked,
+    delivered:document.getElementById('pr-delivered').checked,
+    notes:document.getElementById('pr-notes').value.trim(),
+    updatedAt:Date.now()
+  };
+  if(editingPrintId!=null){
+    const p=prints.find(x=>x.id===editingPrintId);
+    if(p)Object.assign(p,data);
+  }else{
+    data.id=printUid++;
+    data.createdAt=Date.now();
+    prints.push(data);
+  }
+  closePrintModal();save();toast('Pedido guardado','✓');
+}
+function editPrint(id){
+  const p=prints.find(x=>x.id===id);if(!p)return;
+  editingPrintId=id;
+  document.getElementById('pr-client').value=p.client||'';
+  document.getElementById('pr-client-dropdown').innerHTML='';
+  document.getElementById('pr-qty').value=p.qty||'';
+  document.getElementById('pr-size').value=p.size||'';
+  document.getElementById('pr-price').value=p.price||'';
+  document.getElementById('pr-month').value=p.month||'';
+  document.getElementById('pr-printed').checked=!!p.printed;
+  document.getElementById('pr-delivered').checked=!!p.delivered;
+  document.getElementById('pr-notes').value=p.notes||'';
+  document.getElementById('print-modal-title').textContent='Editar Pedido';
+  document.getElementById('print-modal').classList.add('open');
+}
+function deletePrint(id){
+  if(!confirm('Eliminar este pedido de impressão?'))return;
+  const idx=prints.findIndex(x=>x.id===id);
+  if(idx>-1)prints.splice(idx,1);
+  save();toast('Pedido eliminado','✓');
+}
+function togglePrintFlag(id,field){
+  const p=prints.find(x=>x.id===id);if(!p)return;
+  p[field]=!p[field];p.updatedAt=Date.now();save();
+}
+function renderImpressoes(){
+  const monthSel=document.getElementById('print-f-month');
+  const months=[...new Set(prints.map(p=>p.month).filter(Boolean))].sort().reverse();
+  const curVal=monthSel.value;
+  monthSel.innerHTML='<option value="">Todos os meses</option>'+months.map(m=>`<option value="${m}"${m===curVal?' selected':''}>${m}</option>`).join('');
+  const filterMonth=monthSel.value;
+  let list=prints.slice();
+  if(filterMonth)list=list.filter(p=>p.month===filterMonth);
+  list.sort((a,b)=>(b.month||'').localeCompare(a.month||'')||(b.createdAt||0)-(a.createdAt||0));
+  const box=document.getElementById('print-list');
+  if(!list.length){box.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Sem pedidos de impressão</div>';return;}
+  box.innerHTML=list.map(p=>`
+    <div class="client-card" style="padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${escH(p.client)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${p.qty||0} fotos${p.size?' · '+escH(p.size):''}${p.price?' · '+escH(p.price):''}${p.month?' · '+p.month:''}</div>
+          ${p.notes?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${escH(p.notes)}</div>`:''}
+        </div>
+        <button style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer" onclick="deletePrint(${p.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" ${p.printed?'checked':''} onchange="togglePrintFlag(${p.id},'printed')"> Impresso</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" ${p.delivered?'checked':''} onchange="togglePrintFlag(${p.id},'delivered')"> Entregue</label>
+        <button style="margin-left:auto;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline" onclick="editPrint(${p.id})">Editar</button>
+      </div>
+    </div>
+  `).join('');
+}
 function showView(v,el){
   currentView=v;openEditId=null;fStatus='all';
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');
@@ -1334,6 +1492,7 @@ function showView(v,el){
   else if(v==='leads'){showPanel('panel-leads');renderLeads();}
   else if(v==='agenda'){showPanel('panel-agenda');renderAgenda();}
   else if(v==='projetos'){showPanel('panel-projetos');renderProjetos();}
+  else if(v==='impressoes'){showPanel('panel-impressoes');renderImpressoes();}
   else if(v==='metricas'){showPanel('panel-metricas');renderMetricas();}
   if(window.innerWidth<=768)closeSidebar();
 }
