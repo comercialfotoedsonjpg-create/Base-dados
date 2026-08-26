@@ -175,7 +175,11 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .baby-av{width:42px;height:42px;border-radius:50%;background:rgba(249,168,212,.12);border:2px solid rgba(249,168,212,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .baby-name{font-size:14px;font-weight:600}
 .baby-meta{font-size:11px;color:var(--text3);margin-top:2px}
-.baby-months-grid{display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.baby-months-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border)}
+.baby-months-grid{display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;flex:1;min-width:0}
+.baby-photos-total{width:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:1px solid var(--border);padding:10px 4px;background:rgba(148,163,253,.05)}
+.bpt-num{font-size:17px;font-weight:700;color:var(--accent)}
+.bpt-label{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;text-align:center}
 .bm-btn{width:37px;height:37px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;transition:.15s;position:relative;line-height:1.2}
 .bm-btn:hover{border-color:var(--accent);color:var(--accent)}
 .bm-btn.done{background:rgba(74,222,154,.12);color:var(--done);border-color:rgba(74,222,154,.3)}
@@ -1901,7 +1905,7 @@ function renderBebes(){
   if(!list.length){const msg=q?`Nenhum bebé encontrado para "${escH(q)}"`:(bfm==='archived'?'Nenhum bebé arquivado':bfm==='dropped'?'Nenhum bebé desistiu':bfm==='month'?'Nenhum bebé com mesversário este mês':'Nenhum bebé ativo');el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-search" aria-hidden="true"></i></div><div class="empty-title">${msg}</div></div>`;return;}
   el.innerHTML=list.map(b=>{
     const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
-    const done=sessions.filter(s=>s.done).length;
+    const done=sessions.filter(s=>s.done).length;const totalPhotos=sessions.reduce((sum,s)=>sum+(s.photos||0),0);
     const milestones=[3,6,12];
     const mesInfo=mesThisMonthInfo(b);
     const mesBadge=mesInfo?` <span class="tag ${mesInfo.done?'t-done':'t-pend'}" title="Mesversário de ${mesInfo.mesN} mes(es)">🎂 ${mesInfo.done?'Feito este mês':'Pendente este mês'} · ${String(mesInfo.date.getDate()).padStart(2,'0')}/${String(mesInfo.date.getMonth()+1).padStart(2,'0')}</span>`:'';
@@ -1910,7 +1914,7 @@ function renderBebes(){
         <div class="baby-av">👶</div>
         <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div>
+      <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
