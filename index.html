@@ -1908,6 +1908,7 @@ function renderBebes(){
     if(bfm==='month'){const pend=base.filter(b=>{const mi=mesThisMonthInfo(b);return mi&&!mi.done;}).length;bps.textContent=base.length+(base.length===1?' bebé com mesversário este mês · ':' bebés com mesversário este mês · ')+pend+(pend===1?' pendente':' pendentes');}
     else{const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
   }
+  if(bps){const testiCount=babies.filter(b=>b.testimonial).length;bps.textContent+=' · '+testiCount+' de '+babies.length+' com depoimento';}
   const srchEl=document.getElementById('baby-srch');
   const q=(srchEl?srchEl.value:'').trim().toLowerCase();
   const bsm=(document.getElementById('baby-sort-sel')||{}).value||'birth';const list=(q?base.filter(b=>[b.name,b.mae,b.parent,b.phone].some(v=>(v||'').toLowerCase().includes(q))):base.slice()).sort((a,b)=>{if(bfm==='month'){const ma=mesThisMonthInfo(a),mb=mesThisMonthInfo(b);if(!!(ma&&ma.done)!==!!(mb&&mb.done))return(ma&&ma.done?1:0)-(mb&&mb.done?1:0);return(ma?ma.date:0)-(mb?mb.date:0);}if(bsm==='name')return (a.name||'').localeCompare(b.name||'');if(bsm==='modified')return (b.updatedAt||0)-(a.updatedAt||0);if(bsm==='created')return (b.id||0)-(a.id||0);return (a.birthdate||'').localeCompare(b.birthdate||'');});
