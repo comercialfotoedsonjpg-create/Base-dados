@@ -474,7 +474,7 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="proj-type-modal"><div class="modal" style="max-width:380px">
   <div class="modal-head"><h2>Novo Projeto</h2><button class="modal-close" onclick="closeProjTypeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();showView('clientes',document.querySelector('.nav-item[onclick*=\'clientes\']'));">👤 Cliente / Aniversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openClienteChoiceModal();">👤 Cliente / Aniversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openMesvQuickModal();">🍼 Bebé / Mesversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openOutroModal()">📋 Outro</button>
   </div>
@@ -513,6 +513,13 @@ body{letter-spacing:.1px;}
     </select></div>
     <div class="fg full" id="mq-device-other-wrap" style="display:none"><span class="flabel">Especificar</span><input class="finput" id="mq-device-other" placeholder="Onde exatamente..."></div>
     <button class="btn btn-primary" onclick="saveMesvQuick()" style="margin-top:6px">Criar Projeto</button>
+  </div>
+</div></div>
+<div class="overlay" id="cliente-choice-modal"><div class="modal" style="max-width:380px">
+  <div class="modal-head"><h2>Cliente / Aniversário</h2><button class="modal-close" onclick="closeClienteChoiceModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeClienteChoiceModal();showView('clientes',document.querySelector('.nav-item[onclick*=\'clientes\']'));">🔍 Selecionar cliente registado</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeClienteChoiceModal();openOutroModal();">✏️ Criar novo</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -1521,6 +1528,8 @@ function openNewModal(){
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
 function openNewProjectChoice(){document.getElementById('proj-type-modal').classList.add('open');}
 function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
+function openClienteChoiceModal(){document.getElementById('cliente-choice-modal').classList.add('open');}
+function closeClienteChoiceModal(){document.getElementById('cliente-choice-modal').classList.remove('open');}
 function openOutroModal(){document.getElementById('o-name').value='';document.getElementById('o-type').value='';document.getElementById('o-date').value='';document.getElementById('outro-modal').classList.add('open');}
 function closeOutroModal(){document.getElementById('outro-modal').classList.remove('open');}
 function openMesvQuickModal(){
