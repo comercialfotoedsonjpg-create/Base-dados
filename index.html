@@ -180,7 +180,8 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .bm-btn:hover{border-color:var(--accent);color:var(--accent)}
 .bm-btn.done{background:rgba(74,222,154,.12);color:var(--done);border-color:rgba(74,222,154,.3)}
 .bm-btn.milestone{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.3)}
-.bm-photos-badge{position:absolute;top:-5px;right:-5px;min-width:14px;height:14px;padding:0 2px;border-radius:7px;background:var(--accent);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 1.5px var(--surface)}
+.bm-photos-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);font-size:8px;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.55;cursor:pointer;transition:.15s}
+.bm-photos-badge:hover{opacity:1;background:var(--accent);color:#fff;border-color:var(--accent)}
 .baby-card-foot{padding:8px 14px;display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 .prize-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 0}
 .prize-tag{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--surface3);color:var(--text3)}
@@ -1909,7 +1910,7 @@ function renderBebes(){
         <div class="baby-av">👶</div>
         <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge">${s.photos}</span>`:''}</div>`).join('')}</div>
+      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
