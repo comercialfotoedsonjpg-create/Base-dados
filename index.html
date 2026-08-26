@@ -1218,6 +1218,7 @@ function projCard(c){
     <div style="margin-top:8px">
       <select class="finput" style="width:100%;font-size:12px;padding:4px 8px" onchange="quickSetStatus(${c.id},this.value)">${opts}</select>
     </div>
+    ${c.status==='done'?`<div style="margin-top:6px;text-align:right"><button style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0" onclick="dismissFromProjetos(${c.id})">🗑️ Remover do quadro</button></div>`:''}
   </div>`;
 }
 function projActionBtn(c){
@@ -1279,7 +1280,7 @@ function selectProjResult(id){
 }
 function renderProjetos(){
   const editing=clients.filter(c=>c.status==='editing').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-  const entregues=clients.filter(c=>c.status==='done').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,25);
+  const entregues=clients.filter(c=>c.status==='done'&&!c.projDismissed).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,25);
   const activeBabies=babies.length;
   const premiumCount=clients.filter(c=>c.premium).length;
   const col=(title,color,list,emptyMsg)=>`
@@ -1309,6 +1310,10 @@ function renderProjetos(){
 function quickSetStatus(id,newStatus){
   const c=clients.find(x=>x.id===id);if(!c)return;
   c.status=newStatus;c.updatedAt=Date.now();save();toast('Estado atualizado','✓');renderProjetos();
+}
+function dismissFromProjetos(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  c.projDismissed=true;save();toast('Removido do quadro','✓');renderProjetos();
 }
 function showView(v,el){
   currentView=v;openEditId=null;fStatus='all';
