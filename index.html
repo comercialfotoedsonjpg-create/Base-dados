@@ -191,6 +191,8 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .prize-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 0}
 .prize-tag{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--surface3);color:var(--text3)}
 .prize-tag.on{background:rgba(240,180,41,.15);color:var(--gold)}
+.prize-tag.testi{cursor:pointer}
+.prize-tag.testi.on{background:rgba(74,222,154,.15);color:var(--done)}
 .agenda-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
 .agenda-date{font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);width:90px;flex-shrink:0}
 .cal-header{display:flex;align-items:center;justify-content:center;gap:18px;padding:0 20px 16px;position:relative}
@@ -1477,6 +1479,11 @@ function deletePrint(id){
   if(idx>-1)prints.splice(idx,1);
   save();toast('Pedido eliminado','✓');
 }
+function toggleBabyTestimonial(id){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  b.testimonial=!b.testimonial;b.updatedAt=Date.now();save();
+  toast(b.testimonial?'Depoimento marcado':'Depoimento desmarcado','✓');
+}
 function togglePrintFlag(id,field){
   const p=prints.find(x=>x.id===id);if(!p)return;
   p[field]=!p[field];p.updatedAt=Date.now();save();
@@ -1921,6 +1928,7 @@ function renderBebes(){
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
         <span class="prize-tag${done>=12?' on':''}">🏅 1 ano</span>
+        <span class="prize-tag testi${b.testimonial?' on':''}" onclick="toggleBabyTestimonial(${b.id})" title="Marcar se a mãe já deu depoimento">💬 Depoimento</span>
         <span class="hint" style="margin-left:auto;align-self:center">${done}/12</span>
       </div>
       <div class="baby-card-foot">
