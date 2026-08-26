@@ -518,8 +518,12 @@ body{letter-spacing:.1px;}
 <div class="overlay" id="cliente-choice-modal"><div class="modal" style="max-width:380px">
   <div class="modal-head"><h2>Cliente / Aniversário</h2><button class="modal-close" onclick="closeClienteChoiceModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeClienteChoiceModal();showView('clientes',document.querySelector('.nav-item[onclick*=\'clientes\']'));">🔍 Selecionar cliente registado</button>
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeClienteChoiceModal();openOutroModal();">✏️ Criar novo</button>
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Procurar cliente registado</span>
+      <input class="finput" id="cc-search" autocomplete="off" placeholder="Escreve o nome..." oninput="clienteChoiceSearch()" onfocus="clienteChoiceSearch()">
+      <div class="ev-dd" id="cc-search-dropdown"></div>
+    </div>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px;margin-top:6px" onclick="closeClienteChoiceModal();openOutroModal();">✏️ Criar novo</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -1528,7 +1532,23 @@ function openNewModal(){
 function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
 function openNewProjectChoice(){document.getElementById('proj-type-modal').classList.add('open');}
 function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
-function openClienteChoiceModal(){document.getElementById('cliente-choice-modal').classList.add('open');}
+function openClienteChoiceModal(){document.getElementById('cc-search').value='';document.getElementById('cc-search-dropdown').innerHTML='';document.getElementById('cc-search-dropdown').classList.remove('open');document.getElementById('cliente-choice-modal').classList.add('open');}
+function clienteChoiceSearch(){
+  const q=document.getElementById('cc-search').value.trim().toLowerCase();
+  const dd=document.getElementById('cc-search-dropdown');
+  if(!q){dd.innerHTML='';dd.classList.remove('open');return;}
+  let pool=clients.filter(c=>c.name&&c.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem resultados</div>';dd.classList.add('open');return;}
+  pool.sort((a,b)=>a.name.localeCompare(b.name));
+  pool=pool.slice(0,30);
+  let html='';
+  pool.forEach(c=>{
+    const sub=ST[c.status]?ST[c.status].l:'';
+    html+=`<div class="ev-dd-item" onmousedown="closeClienteChoiceModal();selectExistingForProject(${c.id})"><span>${escH(c.name)}</span>${sub?`<span class="ev-dd-sub">${escH(sub)}</span>`:''}</div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
 function closeClienteChoiceModal(){document.getElementById('cliente-choice-modal').classList.remove('open');}
 function openOutroModal(){document.getElementById('o-name').value='';document.getElementById('o-type').value='';document.getElementById('o-date').value='';document.getElementById('outro-modal').classList.add('open');}
 function closeOutroModal(){document.getElementById('outro-modal').classList.remove('open');}
