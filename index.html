@@ -1908,7 +1908,7 @@ function renderBebes(){
         <div class="baby-av">👶</div>
         <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" title="Mês ${s.month}${s.done?' — concluído':''}" onclick="toggleBabyMonth(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
+      <div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.done?' done':(milestones.includes(s.month)?' milestone':'')}" title="Mês ${s.month}${s.done?' — concluído':''}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}</div>`).join('')}</div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
@@ -1933,6 +1933,20 @@ function toggleBabyMonth(id,month){
   s.done=!s.done;if(s.done&&!s.photos)s.photos=1;
   b.updatedAt=Date.now();
   save();
+}
+function setBabyMonthPhotos(id,month){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  if(!b.sessions)b.sessions=Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
+  const s=b.sessions.find(x=>x.month===month);
+  const val=prompt('Quantas fotos foram levadas no mês '+month+'?',s.photos||0);
+  if(val===null)return;
+  const n=parseInt(val);
+  if(isNaN(n)||n<0){toast('Número inválido','!');return;}
+  s.photos=n;
+  s.done=n>0;
+  b.updatedAt=Date.now();
+  save();
+  toast('Fotos atualizadas','✓');
 }
 function toggleBabyDropped(id){
   const b=babies.find(x=>x.id===id);if(!b)return;
