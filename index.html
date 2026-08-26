@@ -185,6 +185,10 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .bm-btn.done{background:rgba(74,222,154,.12);color:var(--done);border-color:rgba(74,222,154,.3)}
 .bm-btn.milestone{background:rgba(240,180,41,.12);color:var(--gold);border-color:rgba(240,180,41,.3)}
 .bm-btn.na{opacity:.3;pointer-events:none;background:var(--surface2)}
+.bm-btn.atrasado{background:rgba(248,113,113,.15);color:var(--canc);border-color:rgba(248,113,113,.4)}
+.bm-btn.resched{background:rgba(251,191,36,.15);color:var(--pend);border-color:rgba(251,191,36,.4)}
+.bm-resched-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);font-size:8px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer}
+.alert.overdue{background:rgba(248,113,113,.06);border-color:rgba(248,113,113,.15);color:var(--canc)}
 .bm-photos-badge{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);font-size:8px;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.55;cursor:pointer;transition:.15s}
 .bm-photos-badge:hover{opacity:1;background:var(--accent);color:#fff;border-color:var(--accent)}
 .baby-card-foot{padding:8px 14px;display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
@@ -410,6 +414,7 @@ body{letter-spacing:.1px;}
       <button class="filter-btn" id="baby-tab-testi" onclick="setBabyTab('testi',this)">Feito Depoimento</button>
     </div>
     <div class="alert bday" id="baby6-alert"><i class="ti ti-gift" aria-hidden="true"></i><span id="baby6-txt"></span></div>
+    <div class="alert overdue" id="baby-overdue-alert"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="baby-overdue-txt"></span></div>
     <div id="baby-list" class="baby-grid"></div>
   </div>
 
@@ -1898,8 +1903,35 @@ function setBabyTab(t,el){
   if(el)el.classList.add('on');
   renderBebes();
 }
+function isOverdueSession(b,s){
+  if(s.done||s.month<(b.startmonth||1)||!b.birthdate)return false;
+  const d=mesDate(b.birthdate,s.month);
+  if(!d)return false;
+  return (Date.now()-d.getTime())>20*86400000;
+}
+function toggleBabyReschedule(id,month){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  const s=b.sessions.find(x=>x.month===month);if(!s)return;
+  s.rescheduled=!s.rescheduled;b.updatedAt=Date.now();save();
+  toast(s.rescheduled?'Marcado como reagendado':'Marcado como pendente','📅');
+}
+function checkOverdueAlerts(){
+  const ba=document.getElementById('baby-overdue-alert');if(!ba)return;
+  const items=[];
+  babies.forEach(b=>{
+    if(b.archived||b.dropped||!b.sessions)return;
+    b.sessions.forEach(s=>{
+      if(isOverdueSession(b,s)&&!s.rescheduled)items.push({b,s});
+    });
+  });
+  if(items.length){
+    ba.style.display='flex';
+    document.getElementById('baby-overdue-txt').textContent=items.slice(0,5).map(({b,s})=>b.name+' precisa reagendar o mês '+s.month).join(' · ')+(items.length>5?' · +'+(items.length-5):'');
+  } else ba.style.display='none';
+}
 function renderBebes(){
   checkBabyAlerts();
+  checkOverdueAlerts();
   const el=document.getElementById('baby-list');
   if(!babies.length){const bps0=document.getElementById('baby-page-sub');if(bps0)bps0.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · 0 bebés';el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
   const bfm=babyTab;
@@ -1924,7 +1956,7 @@ function renderBebes(){
         <div class="baby-av">👶</div>
         <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
-      <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.month<(b.startmonth||1)?' na':(s.done?' done':(milestones.includes(s.month)?' milestone':''))}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.month<(b.startmonth||1)?' — antes do início na campanha':(s.done?' — concluído':'')}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
+      <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.month<(b.startmonth||1)?' na':(s.done?' done':(isOverdueSession(b,s)?(s.rescheduled?' resched':' atrasado'):(milestones.includes(s.month)?' milestone':'')))}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.month<(b.startmonth||1)?' — antes do início na campanha':(s.done?' — concluído':(isOverdueSession(b,s)?(s.rescheduled?' — reagendado, aguarda nova sessão':' — atrasado, precisa reagendar'):''))}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}${isOverdueSession(b,s)?`<span class="bm-resched-badge" onclick="event.stopPropagation();toggleBabyReschedule(${b.id},${s.month})" title="${s.rescheduled?'Já reagendado — clique para desmarcar':'Marcar como já reagendado'}">📅</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
       <div class="prize-row">
         <span class="prize-tag${done>=3?' on':''}">🎁 3 meses</span>
         <span class="prize-tag${done>=6?' on':''}">🎁 6 meses</span>
