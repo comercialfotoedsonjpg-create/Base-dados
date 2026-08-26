@@ -475,7 +475,7 @@ body{letter-spacing:.1px;}
   <div class="modal-head"><h2>Novo Projeto</h2><button class="modal-close" onclick="closeProjTypeModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openClienteChoiceModal();">👤 Cliente / Aniversário</button>
-    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openMesvQuickModal();">🍼 Bebé / Mesversário</button>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openBabyChoiceModal();">🍼 Bebé / Mesversário</button>
     <button class="btn btn-primary" style="padding:16px;font-size:15px" onclick="closeProjTypeModal();openOutroModal()">📋 Outro</button>
   </div>
 </div></div>
@@ -524,6 +524,17 @@ body{letter-spacing:.1px;}
       <div class="ev-dd" id="cc-search-dropdown"></div>
     </div>
     <button class="btn btn-primary" style="padding:16px;font-size:15px;margin-top:6px" onclick="closeClienteChoiceModal();openOutroModal();">✏️ Criar novo</button>
+  </div>
+</div></div>
+<div class="overlay" id="baby-choice-modal"><div class="modal" style="max-width:380px">
+  <div class="modal-head"><h2>Bebé / Mesversário</h2><button class="modal-close" onclick="closeBabyChoiceModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding:20px">
+    <div class="fg full ev-title-wrap">
+      <span class="flabel">Procurar bebé registado</span>
+      <input class="finput" id="bc-search" autocomplete="off" placeholder="Escreve o nome..." oninput="babyChoiceSearch()" onfocus="babyChoiceSearch()">
+      <div class="ev-dd" id="bc-search-dropdown"></div>
+    </div>
+    <button class="btn btn-primary" style="padding:16px;font-size:15px;margin-top:6px" onclick="closeBabyChoiceModal();openMesvQuickModal();">✏️ Criar novo</button>
   </div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
@@ -1557,6 +1568,23 @@ function clienteChoiceSearch(){
 function closeClienteChoiceModal(){document.getElementById('cliente-choice-modal').classList.remove('open');}
 function openOutroModal(){document.getElementById('o-name').value='';document.getElementById('o-type').value='';document.getElementById('o-date').value='';document.getElementById('outro-modal').classList.add('open');}
 function closeOutroModal(){document.getElementById('outro-modal').classList.remove('open');}
+function openBabyChoiceModal(){document.getElementById('bc-search').value='';document.getElementById('bc-search-dropdown').innerHTML='';document.getElementById('bc-search-dropdown').classList.remove('open');document.getElementById('baby-choice-modal').classList.add('open');}
+function closeBabyChoiceModal(){document.getElementById('baby-choice-modal').classList.remove('open');}
+function babyChoiceSearch(){
+  const q=document.getElementById('bc-search').value.trim().toLowerCase();
+  const dd=document.getElementById('bc-search-dropdown');
+  if(!q){dd.innerHTML='';dd.classList.remove('open');return;}
+  let pool=babies.filter(b=>b.name&&b.name.toLowerCase().includes(q));
+  if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem resultados</div>';dd.classList.add('open');return;}
+  pool.sort((a,b)=>a.name.localeCompare(b.name));
+  pool=pool.slice(0,30);
+  let html='';
+  pool.forEach(b=>{
+    html+=`<div class="ev-dd-item" onmousedown="closeBabyChoiceModal();editBaby(${b.id})"><span>${escH(b.name)}</span></div>`;
+  });
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
 function openMesvQuickModal(){
   document.getElementById('mq-name').value='';
   document.getElementById('mq-bday').value='';
