@@ -349,6 +349,7 @@ body{letter-spacing:.1px;}
   <button class="nav-item" onclick="showView('aniversarios',this)"><i class="ti ti-gift ni-icon" style="color:var(--gold)" aria-hidden="true"></i><span>Aniversários</span></button>
   <button class="nav-item" onclick="showView('renovar',this)"><i class="ti ti-refresh ni-icon" style="color:var(--done)" aria-hidden="true"></i><span>A Renovar</span><span class="ni-badge" id="nav-renov" style="background:rgba(74,222,154,.15);color:var(--done)">0</span></button>
   <button class="nav-item" onclick="showView('bebes',this)" style="background:rgba(249,168,212,.06);border-left:3px solid #f9a8d4;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i><span style="color:#f9a8d4;font-weight:500;font-size:12px">Campanhas Bebés 📸</span><span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span></button>
+  <button class="nav-item" onclick="showView('gravidas',this)" style="background:rgba(196,181,253,.06);border-left:3px solid #c4b5fd;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-heart ni-icon" style="color:#c4b5fd" aria-hidden="true"></i><span style="color:#c4b5fd;font-weight:500;font-size:12px">Grávidas 🤰</span><span class="ni-badge" id="nav-gravidas" style="background:rgba(196,181,253,.15);color:#c4b5fd">0</span></button>
   <button class="nav-item" onclick="showView('agenda',this)"><i class="ti ti-calendar ni-icon" aria-hidden="true"></i><span>Agenda</span></button>
   <button class="nav-item" onclick="showView('projetos',this)"><i class="ti ti-layout-kanban ni-icon" style="color:#9b8cff" aria-hidden="true"></i><span style="color:#9b8cff">Projetos</span></button>
   <button class="nav-item" onclick="showView('impressoes',this)"><i class="ti ti-printer ni-icon" style="color:#4fc3f7" aria-hidden="true"></i><span style="color:#4fc3f7">Impressões</span></button>
@@ -463,7 +464,20 @@ body{letter-spacing:.1px;}
     <div class="cal-grid-wrap"><div class="cal-grid" id="agenda-list"></div></div>
   </div>
 
-    <!-- PROJETOS -->
+    
+  <!-- GRAVIDAS -->
+  <div class="panel" id="panel-gravidas">
+    <div class="topbar"><div><div class="page-title">🤰 Grávidas em Acompanhamento</div><div class="page-sub" id="grav-page-sub">Acompanha a gravidez até ao parto — depois passa para Campanhas Bebés</div></div>
+      <div class="topbar-actions"><button class="btn btn-primary" onclick="openGravidaModal()"><i class="ti ti-plus" aria-hidden="true"></i>Nova Grávida</button></div>
+    </div>
+    <div class="toolbar">
+      <button class="filter-btn on" id="grav-tab-active" onclick="setGravTab('active',this)">Ativas</button>
+      <button class="filter-btn" id="grav-tab-done" onclick="setGravTab('done',this)">Concluídas</button>
+    </div>
+    <div id="grav-list" style="padding:16px 20px;display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+<!-- PROJETOS -->
   <div class="panel" id="panel-projetos">
     <div class="topbar"><div><div class="page-title">📋 Projetos</div><div class="page-sub">Sessões futuras, em edição, entregues e campanhas em andamento</div></div></div>
     <div id="proj-filter-bar" style="padding:10px 20px;display:flex;align-items:center;gap:10px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap">
@@ -598,6 +612,17 @@ body{letter-spacing:.1px;}
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="pr-notes"></textarea></div>
     <button class="btn btn-primary" onclick="savePrint()" style="margin-top:6px">Guardar Pedido</button>
   </div>
+</div></div>
+<div class="overlay" id="gravida-modal"><div class="modal">
+  <div class="modal-head"><h2 id="gravida-modal-title">Nova Grávida</h2><button class="modal-close" onclick="closeGravidaModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body">
+    <div class="fg full"><span class="flabel">Nome da mãe *</span><input class="finput" id="gr-name"></div>
+    <div class="fg"><span class="flabel">Data prevista do parto</span><input class="finput" id="gr-duedate" type="date"></div>
+    <div class="fg"><span class="flabel">Contacto / WhatsApp</span><input class="finput" id="gr-contact"></div>
+    <div class="fg full"><span class="flabel">Facebook</span><input class="finput" id="gr-facebook"></div>
+    <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="gr-notes"></textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeGravidaModal()">Cancelar</button><button class="btn btn-primary" onclick="saveGravida()">Guardar grávida</button></div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
   <div class="modal-head"><h2>Novo cliente</h2><button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
@@ -749,7 +774,7 @@ function setSyncStatus(mode){
 function pushToFirebase(){
   if(!fbRef)return;
   setSyncStatus('syncing');
-  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints}).then(()=>{
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant}).then(()=>{
     setSyncStatus('synced');
   }).catch(()=>{setSyncStatus('offline');});
 }
@@ -767,12 +792,14 @@ function initFirebaseSync(){
         agenda=remote.agenda||{events:[]};
         leads=remote.leads||[];
         prints=remote.prints||[];
+        pregnant=remote.pregnant||[];
         uid=Math.max(...clients.map(c=>c.id),0)+1;
         babyUid=Math.max(...babies.map(b=>b.id),0)+1;
         eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
         leadUid=Math.max(...leads.map(l=>l.id),0)+1;
         printUid=Math.max(...prints.map(p=>p.id),0)+1;
-        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints}));}catch(e){}
+        pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints,pregnant}));}catch(e){}
         buildSidebar();renderCurrent();
         setSyncStatus('synced');
         fbReady=true;
@@ -1155,7 +1182,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},editing:{l:'Em Edição',tc:'t-edit'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],pregnant=[],activeYear=CY,fStatus='all',babyTab='active',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,pregnantUid=1,editingGravidaId=null,convertingGravidaId=null,gravTab='active',editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -1191,20 +1218,21 @@ function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_crm')||'{}');
     if(d.clients&&d.clients.length){
-      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];
+      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];pregnant=d.pregnant||[];
     }else{
-      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];
+      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];pregnant=[];
     }
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     babyUid=Math.max(...babies.map(b=>b.id),0)+1;
     eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
     leadUid=Math.max(...leads.map(l=>l.id),0)+1;
     printUid=Math.max(...prints.map(p=>p.id),0)+1;
+    pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;
     const ay=clients.map(c=>sYear(c)).filter(Boolean);
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
     years.sort((a,b)=>a-b);
     if(!years.includes(activeYear)&&years.length)activeYear=years[years.length-1];
-  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];}
+  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];pregnant=[];}
 }
 
 function normKey(c){
@@ -1238,7 +1266,7 @@ function migrateSeedImport(){
 }
 let saveTimer=null;
 function save(){
-  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints}));}catch(e){}
+  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant}));}catch(e){}
   buildSidebar();renderCurrent();
   if(fbRef){pushToFirebase();}
   else{setSyncStatus('local');}
@@ -1261,12 +1289,14 @@ function buildSidebar(){
   document.getElementById('nav-prem').textContent=prem;
   document.getElementById('nav-renov').textContent=renov;
   document.getElementById('nav-bebes').textContent=activeBabiesCount();
+  document.getElementById('nav-gravidas').textContent=pregnant.filter(p=>!p.converted).length;
   document.getElementById('nav-leads').textContent=lateLeadsCount();
 }
 
 function renderCurrent(){
   if(['clientes','premium','aniversarios','renovar'].includes(currentView))render();
   else if(currentView==='bebes')renderBebes();
+  else if(currentView==='gravidas')renderGravidas();
   else if(currentView==='leads')renderLeads();
   else if(currentView==='agenda')renderAgenda();
   else if(currentView==='projetos')renderProjetos();
@@ -1486,6 +1516,108 @@ function deletePrint(id){
   if(idx>-1)prints.splice(idx,1);
   save();toast('Pedido eliminado','✓');
 }
+
+function setGravTab(t,el){
+  gravTab=t;
+  document.querySelectorAll('#panel-gravidas .filter-btn').forEach(e=>e.classList.remove('on'));
+  if(el)el.classList.add('on');
+  renderGravidas();
+}
+function openGravidaModal(){
+  editingGravidaId=null;
+  ['gr-name','gr-duedate','gr-contact','gr-facebook','gr-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('gravida-modal-title').textContent='Nova Grávida';
+  document.getElementById('gravida-modal').classList.add('open');
+}
+function closeGravidaModal(){document.getElementById('gravida-modal').classList.remove('open');editingGravidaId=null;}
+function saveGravida(){
+  const n=document.getElementById('gr-name').value.trim();
+  if(!n){toast('O nome da mãe é obrigatório','!');return;}
+  const data={
+    name:n,
+    dueDate:document.getElementById('gr-duedate').value,
+    contact:document.getElementById('gr-contact').value.trim(),
+    facebook:document.getElementById('gr-facebook').value.trim(),
+    notes:document.getElementById('gr-notes').value.trim(),
+    updatedAt:Date.now()
+  };
+  if(editingGravidaId!=null){
+    const g=pregnant.find(x=>x.id===editingGravidaId);
+    if(g)Object.assign(g,data);
+    closeGravidaModal();save();toast('Grávida atualizada','✓');return;
+  }
+  data.id=pregnantUid++;
+  data.trimesters=[{n:1,done:false},{n:2,done:false},{n:3,done:false}];
+  data.converted=false;
+  data.babyId=null;
+  data.createdAt=Date.now();
+  pregnant.push(data);
+  closeGravidaModal();save();toast('Grávida registada','✓');
+}
+function editGravida(id){
+  const g=pregnant.find(x=>x.id===id);if(!g)return;
+  editingGravidaId=id;
+  document.getElementById('gr-name').value=g.name||'';
+  document.getElementById('gr-duedate').value=g.dueDate||'';
+  document.getElementById('gr-contact').value=g.contact||'';
+  document.getElementById('gr-facebook').value=g.facebook||'';
+  document.getElementById('gr-notes').value=g.notes||'';
+  document.getElementById('gravida-modal-title').textContent='Editar Grávida';
+  document.getElementById('gravida-modal').classList.add('open');
+}
+function deleteGravida(id){
+  if(!confirm('Remover este registo de grávida?'))return;
+  pregnant=pregnant.filter(x=>x.id!==id);
+  save();toast('Registo removido','✓');
+}
+function toggleGravidaTrimester(id,n){
+  const g=pregnant.find(x=>x.id===id);if(!g)return;
+  if(!g.trimesters)g.trimesters=[{n:1,done:false},{n:2,done:false},{n:3,done:false}];
+  const t=g.trimesters.find(x=>x.n===n);
+  if(t)t.done=!t.done;
+  g.updatedAt=Date.now();save();
+}
+function openGravidaBirthModal(id){
+  const g=pregnant.find(x=>x.id===id);if(!g)return;
+  convertingGravidaId=id;
+  openNewBabyModal();
+  document.getElementById('b-mae').value=g.name||'';
+  document.getElementById('b-phone').value=g.contact||'';
+  document.getElementById('b-facebook').value=g.facebook||'';
+  document.getElementById('baby-modal-title').textContent='Registar Nascimento — '+g.name;
+}
+function renderGravidas(){
+  const gt=gravTab;
+  const list=gt==='done'?pregnant.filter(p=>p.converted):pregnant.filter(p=>!p.converted);
+  list.sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+  const sub=document.getElementById('grav-page-sub');
+  if(sub)sub.textContent='Acompanha a gravidez até ao parto — depois passa para Campanhas Bebés · '+list.length+(gt==='done'?(list.length===1?' concluída':' concluídas'):(list.length===1?' ativa':' ativas'));
+  const box=document.getElementById('grav-list');
+  if(!list.length){box.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">'+(gt==='done'?'Sem grávidas concluídas':'Sem grávidas em acompanhamento')+'</div>';return;}
+  box.innerHTML=list.map(g=>{
+    const trimesters=g.trimesters||[{n:1,done:false},{n:2,done:false},{n:3,done:false}];
+    const tLabels=['1º Trimestre','2º Trimestre','3º Trimestre'];
+    const tHtml=trimesters.map(t=>`<span class="prize-tag${t.done?' on':''}" style="cursor:pointer" onclick="toggleGravidaTrimester(${g.id},${t.n})">${t.done?'✅':'⭘'} ${tLabels[t.n-1]}</span>`).join('');
+    return `<div class="client-card" style="padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${escH(g.name)}${g.converted?' <span class="tag t-done">Bebé registado</span>':''}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${g.dueDate?'Parto previsto: '+fmtD(g.dueDate):'Sem data prevista'}${g.contact?' · '+escH(g.contact):''}</div>
+          ${g.notes?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${escH(g.notes)}</div>`:''}
+        </div>
+        <button style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer" onclick="deleteGravida(${g.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">${tHtml}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        ${g.contact?`<button class="btn btn-wa btn-xs" onclick="waMsg('${g.contact}','${(g.name||'').replace(/'/g,"")}')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></button>`:''}
+        ${g.facebook&&g.facebook.startsWith('http')?`<button class="btn btn-fb btn-xs" onclick="openFB('${g.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="editGravida(${g.id})"><i class="ti ti-pencil" aria-hidden="true"></i>Editar</button>
+        ${!g.converted?`<button class="btn btn-primary btn-xs" style="margin-left:auto" onclick="openGravidaBirthModal(${g.id})">👶 Registar Nascimento</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function toggleBabyTestimonial(id){
   const b=babies.find(x=>x.id===id);if(!b)return;
   b.testimonial=!b.testimonial;b.updatedAt=Date.now();save();
@@ -1529,6 +1661,7 @@ function showView(v,el){
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   if(['clientes','premium','aniversarios','renovar'].includes(v)){showPanel('panel-clientlist');buildSidebar();render();}
   else if(v==='bebes'){showPanel('panel-bebes');renderBebes();}
+  else if(v==='gravidas'){showPanel('panel-gravidas');renderGravidas();}
   else if(v==='leads'){showPanel('panel-leads');renderLeads();}
   else if(v==='agenda'){showPanel('panel-agenda');renderAgenda();}
   else if(v==='projetos'){showPanel('panel-projetos');renderProjetos();}
@@ -2080,7 +2213,7 @@ function editBaby(id){
   document.getElementById('baby-modal-title').textContent='Editar Bebé';
   document.getElementById('baby-modal').classList.add('open');
 }
-function closeNewBabyModal(){document.getElementById('baby-modal').classList.remove('open');editingBabyId=null;}
+function closeNewBabyModal(){document.getElementById('baby-modal').classList.remove('open');editingBabyId=null;convertingGravidaId=null;}
 function saveNewBaby(){
   const n=document.getElementById('b-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   if(editingBabyId!=null){
@@ -2088,7 +2221,13 @@ function saveNewBaby(){
     b.name=n;b.mae=document.getElementById('b-mae').value.trim();b.parent=document.getElementById('b-parent').value.trim();b.birthdate=document.getElementById('b-birthdate').value;b.phone=document.getElementById('b-phone').value.trim();b.facebook=document.getElementById('b-facebook').value.trim();b.year=parseInt(document.getElementById('b-year').value)||activeYear;b.startmonth=parseInt(document.getElementById('b-startmonth').value)||1;b.updatedAt=Date.now();
     closeNewBabyModal();save();toast('Bebé atualizado com sucesso','✓');return;
   }
-  babies.push({id:babyUid++,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:parseInt(document.getElementById('b-startmonth').value)||1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
+  const __newBabyId=babyUid++;
+  babies.push({id:__newBabyId,name:n,mae:document.getElementById('b-mae').value.trim(),parent:document.getElementById('b-parent').value.trim(),birthdate:document.getElementById('b-birthdate').value,phone:document.getElementById('b-phone').value.trim(),facebook:document.getElementById('b-facebook').value.trim(),year:parseInt(document.getElementById('b-year').value)||activeYear,startmonth:parseInt(document.getElementById('b-startmonth').value)||1,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});
+  if(convertingGravidaId!=null){
+    const g=pregnant.find(x=>x.id===convertingGravidaId);
+    if(g){g.converted=true;g.babyId=__newBabyId;g.updatedAt=Date.now();}
+    convertingGravidaId=null;
+  }
   closeNewBabyModal();save();toast('Bebé criado com sucesso','✓');
 }
 
