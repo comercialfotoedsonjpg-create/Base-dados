@@ -412,6 +412,7 @@ body{letter-spacing:.1px;}
       <button class="filter-btn" id="baby-tab-archived" onclick="setBabyTab('archived',this)">Arquivados</button>
       <button class="filter-btn" id="baby-tab-dropped" onclick="setBabyTab('dropped',this)">Desistiram</button>
       <button class="filter-btn" id="baby-tab-testi" onclick="setBabyTab('testi',this)">Feito Depoimento</button>
+      <button class="filter-btn" id="baby-tab-cal" onclick="setBabyTab('cal',this)">📅 Já no Calendário</button>
     </div>
     <div class="alert bday" id="baby6-alert"><i class="ti ti-gift" aria-hidden="true"></i><span id="baby6-txt"></span></div>
     <div class="alert overdue" id="baby-overdue-alert"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="baby-overdue-txt"></span></div>
@@ -1940,11 +1941,11 @@ function renderBebes(){
   const el=document.getElementById('baby-list');
   if(!babies.length){const bps0=document.getElementById('baby-page-sub');if(bps0)bps0.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · 0 bebés';el.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="ti ti-baby-carriage" aria-hidden="true"></i></div><div class="empty-title">Sem bebés registados</div></div>`;return;}
   const bfm=babyTab;
-  const base=bfm==='archived'?babies.filter(b=>b.archived):bfm==='dropped'?babies.filter(b=>b.dropped&&!b.archived):bfm==='month'?babies.filter(b=>!b.archived&&!b.dropped&&mesThisMonthInfo(b)):bfm==='testi'?babies.filter(b=>!b.archived&&!b.dropped&&b.testimonial):babies.filter(b=>!b.archived&&!b.dropped);
+  const base=bfm==='archived'?babies.filter(b=>b.archived):bfm==='dropped'?babies.filter(b=>b.dropped&&!b.archived):bfm==='month'?babies.filter(b=>!b.archived&&!b.dropped&&mesThisMonthInfo(b)):bfm==='cal'?babies.filter(b=>!b.archived&&!b.dropped&&babyNextEvent(b)):bfm==='testi'?babies.filter(b=>!b.archived&&!b.dropped&&b.testimonial):babies.filter(b=>!b.archived&&!b.dropped);
   const bps=document.getElementById('baby-page-sub');
   if(bps){
     if(bfm==='month'){const pend=base.filter(b=>{const mi=mesThisMonthInfo(b);return mi&&!mi.done;}).length;bps.textContent=base.length+(base.length===1?' bebé com mesversário este mês · ':' bebés com mesversário este mês · ')+pend+(pend===1?' pendente':' pendentes');}
-    else{const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):bfm==='testi'?(base.length===1?' bebé com depoimento':' bebés com depoimento'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
+    else{const lbl=bfm==='archived'?(base.length===1?' bebé arquivado':' bebés arquivados'):bfm==='dropped'?(base.length===1?' bebé desistiu':' bebés desistiram'):bfm==='cal'?(base.length===1?' bebé já no calendário':' bebés já no calendário'):bfm==='testi'?(base.length===1?' bebé com depoimento':' bebés com depoimento'):(base.length===1?' bebé ativo':' bebés ativos');bps.textContent='Acompanha a sessão mensal de cada bebé até 1 ano · '+base.length+lbl;}
   }
   const srchEl=document.getElementById('baby-srch');
   const q=(srchEl?srchEl.value:'').trim().toLowerCase();
