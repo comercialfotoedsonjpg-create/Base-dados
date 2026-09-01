@@ -1929,6 +1929,11 @@ function checkOverdueAlerts(){
     document.getElementById('baby-overdue-txt').textContent=items.slice(0,5).map(({b,s})=>b.name+' precisa reagendar o mês '+s.month).join(' · ')+(items.length>5?' · +'+(items.length-5):'');
   } else ba.style.display='none';
 }
+function babyNextEvent(b){
+  const todayStr=new Date().toISOString().slice(0,10);
+  const evs=(agenda.events||[]).filter(e=>e.babyId===b.id&&e.date&&e.date>=todayStr).sort((a,c)=>a.date.localeCompare(c.date));
+  return evs[0]||null;
+}
 function renderBebes(){
   checkBabyAlerts();
   checkOverdueAlerts();
@@ -1951,10 +1956,12 @@ function renderBebes(){
     const milestones=[3,6,12];
     const mesInfo=mesThisMonthInfo(b);
     const mesBadge=mesInfo?` <span class="tag ${mesInfo.done?'t-done':'t-pend'}" title="Mesversário de ${mesInfo.mesN} mes(es)">🎂 ${mesInfo.done?'Feito este mês':'Pendente este mês'} · ${String(mesInfo.date.getDate()).padStart(2,'0')}/${String(mesInfo.date.getMonth()+1).padStart(2,'0')}</span>`:'';
+    const nextEv=babyNextEvent(b);
+    const calBadge=nextEv?` <span class="tag t-done" title="${(nextEv.time||'')}${nextEv.local?' · '+nextEv.local:''}">📅 Já no calendário · ${fmtD(nextEv.date)}</span>`:'';
     return`<div class="baby-card${mesInfo&&!mesInfo.done?' pend-hl':''}"${(b.dropped||b.archived)?' style="opacity:.55"':''}>
       <div class="baby-card-head">
         <div class="baby-av">👶</div>
-        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
+        <div style="flex:1;min-width:0"><div class="baby-name">${b.name}${b.archived?' <span class="tag t-meta">Arquivado</span>':''}${b.dropped?' <span class="tag t-canc">Desistiu</span>':''}${mesBadge}${calBadge}</div><div class="baby-meta">Mãe: ${b.mae||'—'} · Nasceu ${fmtD(b.birthdate)}</div></div>
       </div>
       <div class="baby-months-row"><div class="baby-months-grid">${sessions.map(s=>`<div class="bm-btn${s.month<(b.startmonth||1)?' na':(s.done?' done':(isOverdueSession(b,s)?(s.rescheduled?' resched':' atrasado'):(milestones.includes(s.month)?' milestone':'')))}" data-baby="${b.id}" data-month="${s.month}" title="Mês ${s.month}${s.month<(b.startmonth||1)?' — antes do início na campanha':(s.done?' — concluído':(isOverdueSession(b,s)?(s.rescheduled?' — reagendado, aguarda nova sessão':' — atrasado, precisa reagendar'):''))}${s.photos?' · '+s.photos+' fotos':''} (duplo clique: definir fotos)" onclick="toggleBabyMonth(${b.id},${s.month})" ondblclick="setBabyMonthPhotos(${b.id},${s.month})">${s.month}${s.photos?`<span class="bm-photos-badge" onclick="event.stopPropagation();toast('${s.photos} fotos — Mês ${s.month}','👁')">👁</span>`:''}${isOverdueSession(b,s)?`<span class="bm-resched-badge" onclick="event.stopPropagation();toggleBabyReschedule(${b.id},${s.month})" title="${s.rescheduled?'Já reagendado — clique para desmarcar':'Marcar como já reagendado'}">📅</span>`:''}</div>`).join('')}</div><div class="baby-photos-total" title="Total de fotos entregues"><div class="bpt-num">${totalPhotos}</div><div class="bpt-label">fotos</div></div></div>
       <div class="prize-row">
