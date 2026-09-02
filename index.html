@@ -79,7 +79,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .client-list{flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:8px}
 .client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .client-card.renov-hl{border-left:3px solid var(--done)}
-.client-card.pend-sched{border-left:3px solid var(--sched)}
+.client-card.pend-sched{border-left:5px solid var(--sched);background:rgba(79,195,247,.08)}
 .client-card.editing{border-color:var(--accent)}
 .card-main{display:flex;align-items:flex-start;gap:14px;padding:14px 16px}
 .c-avatar-placeholder{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
@@ -1743,7 +1743,7 @@ function render(){
             ${hig?`<a href="${c.instagram}" target="_blank" class="fb-link" style="color:#E4405F"><i class="ti ti-brand-instagram" style="font-size:13px" aria-hidden="true"></i>Instagram</a>`:''}
           </div>
           <div class="card-tags">
-            <span class="tag ${st.tc}">${st.l}</span>
+            <span class="tag ${st.tc}">${st.l}</span>${pendSched?'<span class="tag t-sched" title="Ja tem sessao marcada na Agenda">Agendado</span>':''}
             <span class="tag t-meta">${fmtD(c.session)}</span>
             <span class="tag t-meta" style="color:${prem?'var(--gold)':'var(--text2)'}">${c.photos||0} fotos</span>
             ${c.bday?`<span class="tag t-meta">${fmtBFull(c.bday)}</span>`:''}
