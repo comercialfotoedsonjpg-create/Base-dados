@@ -730,6 +730,15 @@ body{letter-spacing:.1px;}
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeDayModal()">Fechar</button><button class="btn btn-primary" onclick="addSessionForDay()"><i class="ti ti-plus" aria-hidden="true"></i>Nova sessão neste dia</button></div>
 </div></div>
 
+<!-- CHANNEL CHOICE MODAL -->
+<div class="overlay" id="channel-modal"><div class="modal" style="max-width:320px">
+  <div class="modal-head"><h2>Confirmar por</h2><button class="modal-close" onclick="closeChannelModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body single" style="display:flex;flex-direction:column;gap:10px;padding:8px 20px 20px">
+    <button class="btn btn-wa" style="width:100%;justify-content:center" onclick="channelModalPick('wa')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp</button>
+    <button class="btn btn-fb" style="width:100%;justify-content:center" onclick="channelModalPick('fb')"><i class="ti ti-brand-facebook" aria-hidden="true"></i> Facebook</button>
+  </div>
+</div></div>
+
 <!-- SYNC MODAL -->
 <div class="overlay" id="sync-modal"><div class="modal">
   <div class="modal-head"><h2>Sincronizar via Email</h2><button class="modal-close" onclick="closeSyncModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
@@ -1867,6 +1876,11 @@ function togglePremium(id){const c=clients.find(x=>x.id===id);if(!c)return;c.pre
 function toggleSort(el){window.sortMode=window.sortMode==='name'?'session':'name';el.classList.toggle('on',window.sortMode==='name');render();}
 function waMsg(phone,name){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}window.open(`https://wa.me/${n}?text=${encodeURIComponent('Olá '+name.split(' ')[0]+'! 📸')}`,'_blank');}
 function waConfirmSession(phone,name,dateISO,time,local){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}const first=(name||'').split(' ')[0];let dataFmt='';if(dateISO){const p=dateISO.split('-');if(p.length===3)dataFmt=`${p[2]}/${p[1]}/${p[0]}`;}let msg=`Olá ${first}! ✅ A sua sessão com a Foto Edson JPG está confirmada`;if(dataFmt)msg+=` para o dia ${dataFmt}`;if(time)msg+=` às ${time}`;msg+='.';if(local)msg+=` Local: ${local}.`;msg+=' Até já! 📸';window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank');}function waReminderSession(phone,name,dateISO,time,local){const n=waN(phone);if(!n){toast('Sem número WhatsApp','!');return;}const first=(name||'').split(' ')[0];let dataFmt='';if(dateISO){const p=dateISO.split('-');if(p.length===3)dataFmt=`${p[2]}/${p[1]}/${p[0]}`;}let msg=`Olá ${first}! 🔔 Só um lembrete`;if(dataFmt)msg+=` que a sua sessão com a Foto Edson JPG é no dia ${dataFmt}`;else msg+=` da sua sessão com a Foto Edson JPG`;if(time)msg+=` às ${time}`;msg+='.';if(local)msg+=` Local: ${local}.`;msg+=' Até já! 📸';window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank');}function openFB(url){if(!url||!url.trim()){toast('Sem link de Facebook','!');return;}const t=url.trim();const dest=t.startsWith('http')?t:('https://www.facebook.com/search/people/?q='+encodeURIComponent(t));window.open(dest,'_blank');}
+let channelModalCtx=null;
+function chooseChannel(action,phone,name,fb,dateISO,time,local){const hasP=!!(phone&&phone.trim());const hasF=!!(fb&&fb.trim());if(hasP&&!hasF){runChannelAction(action,'wa',phone,name,fb,dateISO,time,local);return;}if(hasF&&!hasP){runChannelAction(action,'fb',phone,name,fb,dateISO,time,local);return;}if(!hasP&&!hasF){toast('Sem WhatsApp nem Facebook','!');return;}channelModalCtx={action,phone,name,fb,dateISO,time,local};document.getElementById('channel-modal').classList.add('open');}
+function closeChannelModal(){const m=document.getElementById('channel-modal');if(m)m.classList.remove('open');channelModalCtx=null;}
+function channelModalPick(ch){if(!channelModalCtx)return;const c=channelModalCtx;closeChannelModal();runChannelAction(c.action,ch,c.phone,c.name,c.fb,c.dateISO,c.time,c.local);}
+function runChannelAction(action,ch,phone,name,fb,dateISO,time,local){if(ch==='fb'){openFB(fb);return;}if(action==='msg')waMsg(phone,name);else if(action==='confirm')waConfirmSession(phone,name,dateISO,time,local);else if(action==='remind')waReminderSession(phone,name,dateISO,time,local);}
 function openIG(url){if(!url){toast('Sem link de Instagram','!');return;}window.open(url,'_blank');}
 
 /* NEW CLIENT MODAL */
@@ -2418,8 +2432,8 @@ function openDayModal(iso){
     box.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Sem compromissos neste dia.</div>';
   }else{
     box.innerHTML=list.map(ev=>{
-      const hasPhone=!!(ev.phone&&ev.phone.trim());
-      const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=hasPhone?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();waConfirmSession('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}','${ev.date||''}','${(ev.time||'').replace(/'/g,"")}','${(ev.local||'').replace(/'/g,"")}')" title="Confirmar sessão via WhatsApp"></i>`:'';const reminderBtn=hasPhone?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();waReminderSession('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}','${ev.date||''}','${(ev.time||'').replace(/'/g,"")}','${(ev.local||'').replace(/'/g,"")}')" title="Enviar lembrete via WhatsApp"></i>`:'';const hasFb=!!(ev.fb&&ev.fb.trim());const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-fb" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,"")}')" title="Enviar confirmação por Facebook"></i>`:'';
+      const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
+      const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;
       const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';
       const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':'Sessão';
       const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
@@ -2427,7 +2441,7 @@ function openDayModal(iso){
         <span class="day-ev-time">${ev.time?escH(ev.time):'--:--'}</span>
         <span class="day-ev-title">${escH(ev.title)}</span>
         <span class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}">${kindLabel}</span>
-        ${confirmBtn}${reminderBtn}${waBtn}${fbBtn}
+        ${confirmBtn}${reminderBtn}${waBtn}
       </div>`;
     }).join('');
   }
@@ -2472,7 +2486,8 @@ function renderAgenda(){
     const more=dayEvents.length-shown.length;
     html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="openDayModal('${iso}')">
       <div class="cal-daynum">${dnum}</div>
-      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const waBtn=hasPhone?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();waMsg('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=hasPhone?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();waConfirmSession('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}','${ev.date||''}','${(ev.time||'').replace(/'/g,"")}','${(ev.local||'').replace(/'/g,"")}')" title="Confirmar sessão via WhatsApp"></i>`:'';const reminderBtn=hasPhone?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();waReminderSession('${ev.phone}','${(ev.cname||'').replace(/'/g,"")}','${ev.date||''}','${(ev.time||'').replace(/'/g,"")}','${(ev.local||'').replace(/'/g,"")}')" title="Enviar lembrete via WhatsApp"></i>`:'';const hasFb=!!(ev.fb&&ev.fb.trim());const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-fb" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,"")}')" title="Enviar confirmação por Facebook"></i>`:'';const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${confirmBtn}${reminderBtn}${waBtn}${fbBtn}</div>`;}).join('')}
+      ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
+      const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${confirmBtn}${reminderBtn}${waBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
