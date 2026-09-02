@@ -1723,7 +1723,7 @@ function render(){
     const bd=bdaySoon(c.bday);
     const bdIcon=bd!==null&&bd<=7?`<i class="ti ti-gift" style="color:var(--gold);font-size:14px" aria-hidden="true"></i>`:'';
     const rn=needsR(c);
-    const pendSched=c.status==='pend'&&(agenda.events||[]).some(e=>e.clientId===c.id);
+    const pendSched=c.status==='pend'&&(agenda.events||[]).some(e=>e.clientId===c.id||(e.title||'').trim().toLowerCase()===(c.name||'').trim().toLowerCase());
     const hp=!!(c.phone&&c.phone.trim());
     const hfb=!!(c.facebook&&c.facebook.trim());
     const hig=!!(c.instagram&&c.instagram.trim());
