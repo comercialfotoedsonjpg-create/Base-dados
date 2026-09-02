@@ -709,7 +709,7 @@ body{letter-spacing:.1px;}
       <input type="hidden" id="ev-client-id">
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
-    <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><input class="finput" id="ev-contact" placeholder="+238 991 234 567"></div>
+    <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><div style="display:flex;gap:8px"><select class="fsel" id="ev-contact-type" style="max-width:140px"><option value="Telefone">Telefone</option><option value="WhatsApp">WhatsApp</option><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select><input class="finput" id="ev-contact" placeholder="+238 991 234 567" style="flex:1"></div></div>
         <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
@@ -2479,6 +2479,7 @@ function openNewEventModal(prefillDate){
   editingEventId=null;
   ['ev-title','ev-date','ev-time','ev-local','ev-notes','ev-client-id','ev-contact'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ev-type').value='sessao';
+  document.getElementById('ev-contact-type').value='Telefone';
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
   document.getElementById('event-modal-title').textContent='Nova sessão';
   document.getElementById('ev-delete-btn').style.display='none';
@@ -2494,6 +2495,7 @@ function editEvent(id){
   document.getElementById('ev-notes').value=e.notes||'';
   document.getElementById('ev-client-id').value=e.babyId?('b'+e.babyId):(e.clientId||'');
   document.getElementById('ev-contact').value=e.contact||'';
+document.getElementById('ev-contact-type').value=e.contactType||'Telefone';
   document.getElementById('ev-type').value=e.type||'sessao';
   document.getElementById('event-modal-title').textContent='Editar sessão';
   document.getElementById('ev-delete-btn').style.display='';
@@ -2505,7 +2507,7 @@ function saveNewEvent(){
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
   if(!agenda.events)agenda.events=[];
   const cid=document.getElementById('ev-client-id').value;const isBaby=cid.startsWith('b');
-  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid&&!isBaby?parseInt(cid):null,babyId:cid&&isBaby?parseInt(cid.slice(1)):null,contact:document.getElementById('ev-contact').value.trim(),type:document.getElementById('ev-type').value||'sessao'};
+  const data={title:t,date:d,time:document.getElementById('ev-time').value,local:document.getElementById('ev-local').value.trim(),notes:document.getElementById('ev-notes').value.trim(),clientId:cid&&!isBaby?parseInt(cid):null,babyId:cid&&isBaby?parseInt(cid.slice(1)):null,contact:document.getElementById('ev-contact').value.trim(),contactType:document.getElementById('ev-contact-type').value||'Telefone',type:document.getElementById('ev-type').value||'sessao'};
   if(editingEventId!=null){
     const e=agenda.events.find(x=>x.id===editingEventId);
     if(e)Object.assign(e,data);
