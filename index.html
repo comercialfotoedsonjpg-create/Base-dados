@@ -79,6 +79,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .client-list{flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:8px}
 .client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .client-card.renov-hl{border-left:3px solid var(--done)}
+.client-card.pend-sched{border-left:3px solid var(--sched)}
 .client-card.editing{border-color:var(--accent)}
 .card-main{display:flex;align-items:flex-start;gap:14px;padding:14px 16px}
 .c-avatar-placeholder{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
@@ -1722,6 +1723,7 @@ function render(){
     const bd=bdaySoon(c.bday);
     const bdIcon=bd!==null&&bd<=7?`<i class="ti ti-gift" style="color:var(--gold);font-size:14px" aria-hidden="true"></i>`:'';
     const rn=needsR(c);
+    const pendSched=c.status==='pend'&&(agenda.events||[]).some(e=>e.clientId===c.id);
     const hp=!!(c.phone&&c.phone.trim());
     const hfb=!!(c.facebook&&c.facebook.trim());
     const hig=!!(c.instagram&&c.instagram.trim());
@@ -1729,7 +1731,7 @@ function render(){
     const etab=editTabFor(c.id);
     const totalPhotos=(c.photos||0)+((c.history||[]).reduce((s,h)=>s+(h.photos||0),0));
     const avSrc=c.avatar||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    return`<div class="client-card${rn?' renov-hl':''}${isOpen?' editing':''}" id="card-${c.id}">
+    return`<div class="client-card${rn?' renov-hl':''}${pendSched?' pend-sched':''}${isOpen?' editing':''}" id="card-${c.id}">
       <div class="card-main">
         ${c.avatar?`<div class="c-avatar-wrap" onclick="document.getElementById('av-input-${c.id}').click()" title="Clica para mudar a foto"><img src="${avSrc}" class="c-avatar" alt="${c.name}"><input type="file" id="av-input-${c.id}" class="c-avatar-input" accept="image/*" onchange="loadClientAvatar(${c.id},this)"></div>`:`<div class="c-avatar-placeholder" style="background:${bg};color:${fg};position:relative;cursor:pointer" onclick="document.getElementById('av-input-${c.id}').click()" title="Clica para adicionar foto"><span>${ini(c.name)}</span><input type="file" id="av-input-${c.id}" class="c-avatar-input" accept="image/*" onchange="loadClientAvatar(${c.id},this)"></div>`}
         <div class="card-info">
