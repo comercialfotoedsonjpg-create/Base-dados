@@ -2130,6 +2130,7 @@ function renderBebes(){
         ${b.facebook&&b.facebook.trim()?`<button class="btn btn-fb btn-xs" onclick="openFB('${b.facebook}')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>`:''}
         <button class="btn btn-ghost btn-xs" onclick="editBaby(${b.id})"><i class="ti ti-pencil" aria-hidden="true"></i>Editar</button>
         ${(done>=12||b.archived)?`<button class="btn btn-ghost btn-xs" onclick="toggleBabyArchived(${b.id})" title="${b.archived?'Desarquivar':'Arquivar (completou 12 meses)'}"><i class="ti ti-archive" aria-hidden="true"></i></button>`:''}
+        ${b.archived?(b.convertedClientId?`<button class="btn btn-ghost btn-xs" disabled title="Já convertido em Aniversariante"><i class="ti ti-user-check" aria-hidden="true"></i></button>`:`<button class="btn btn-primary btn-xs" onclick="convertBabyToAniversariante(${b.id})" title="Converter em registo de Aniversariante (cliente)"><i class="ti ti-gift" aria-hidden="true"></i>Aniversariante</button>`):''}
         <button class="btn btn-ghost btn-xs" onclick="toggleBabyDropped(${b.id})" title="${b.dropped?'Marcar como ativo':'Marcar como desistiu'}"><i class="ti ti-${b.dropped?'rotate-clockwise':'user-off'}" aria-hidden="true"></i></button>\n        <button class="btn btn-danger btn-xs" onclick="delBaby(${b.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
       </div>
     </div>`;
@@ -2186,6 +2187,18 @@ function toggleBabyArchived(id){
   const b=babies.find(x=>x.id===id);if(!b)return;
   b.archived=!b.archived;b.updatedAt=Date.now();
   save();toast(b.archived?'Bebé arquivado':'Bebé desarquivado','✓');
+  renderBebes();
+}
+function convertBabyToAniversariante(id){
+  const b=babies.find(x=>x.id===id);if(!b)return;
+  if(b.convertedClientId){toast('Este bebé já foi convertido','!');return;}
+  if(!confirm('Converter '+b.name+' num registo de Aniversariante (Cliente)?'))return;
+  const newClientId=uid++;
+  clients.push({id:newClientId,name:b.name,email:'',phone:b.phone||'',facebook:b.facebook||'',instagram:'',bday:b.birthdate||'',session:'',year:null,photos:0,status:'pend',style:'',notes:'Convertido da Campanha de Bebés (mãe: '+(b.mae||'—')+'). Contactar para oferecer Sessão de Aniversário (1 ano).',refs:'',price:'',gallery:[],avatar:null,updatedAt:Date.now()});
+  b.convertedClientId=newClientId;
+  b.updatedAt=Date.now();
+  save();
+  toast('Convertido em Aniversariante ✓','✓');
   renderBebes();
 }
 function delBaby(id){if(!confirm('Apagar este bebé?'))return;babies=babies.filter(b=>b.id!==id);save();toast('Bebé apagado','✓');}
