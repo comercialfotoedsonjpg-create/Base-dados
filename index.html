@@ -225,6 +225,17 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip-wa:hover{opacity:.7}
 .cal-chip-fb{flex-shrink:0;color:#4267B2;font-size:11px;cursor:pointer}
 .cal-chip-fb:hover{opacity:.7}
+.cal-chip-cancel{flex-shrink:0;color:var(--canc);font-size:11px;cursor:pointer}
+.cal-chip-cancel:hover{opacity:.7}
+.cal-chip-postpone{flex-shrink:0;color:var(--pend);font-size:11px;cursor:pointer}
+.cal-chip-postpone:hover{opacity:.7}
+.cal-chip-reactivate{flex-shrink:0;color:var(--sched);font-size:11px;cursor:pointer}
+.cal-chip-reactivate:hover{opacity:.7}
+.ev-status-tag{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;flex-shrink:0}
+.ev-status-tag.cancelou{background:rgba(248,113,113,.18);color:var(--canc)}
+.ev-status-tag.adiou{background:rgba(251,191,36,.18);color:var(--pend)}
+.day-ev-row.ev-inactive{opacity:.55}
+.cal-chip.ev-inactive{opacity:.55}
 .cal-chip:hover{background:rgba(200,153,47,.3)}
 .cal-chip.sess{background:rgba(79,195,247,.14);color:var(--sched)}
 .cal-chip.sess:hover{background:rgba(79,195,247,.28)}
@@ -2456,11 +2467,17 @@ function openDayModal(iso){
       const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';
       const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':'Sessão';
       const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
-      return `<div class="day-ev-row" onclick="closeDayModal();${openFn}">
+      const statusTag=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Cancelada</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':'';
+      const inactiveCls=ev.status?' ev-inactive':'';
+      const cancelBtn=ev.status!=='cancelou'?`<i class="ti ti-x cal-chip-cancel" onclick="event.stopPropagation();setEventStatus(${ev.id},'cancelou')" title="Marcar como cancelada"></i>`:'';
+      const postponeBtn=ev.status!=='adiou'?`<span class="cal-chip-postpone" onclick="event.stopPropagation();setEventStatus(${ev.id},'adiou')" title="Marcar como adiada">⏸</span>`:'';
+      const reactivateBtn=ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
+      return `<div class="day-ev-row${inactiveCls}" onclick="closeDayModal();${openFn}">
         <span class="day-ev-time">${ev.time?escH(ev.time):'--:--'}</span>
         <span class="day-ev-title">${escH(ev.title)}</span>
         <span class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}">${kindLabel}</span>
-        ${confirmBtn}${reminderBtn}${waBtn}
+        ${statusTag}
+        ${confirmBtn}${reminderBtn}${waBtn}${cancelBtn}${postponeBtn}${reactivateBtn}
       </div>`;
     }).join('');
   }
@@ -2506,7 +2523,7 @@ function renderAgenda(){
     html+=`<div class="cal-day${outside?' outside':''}${isToday?' today':''}" onclick="openDayModal('${iso}')">
       <div class="cal-daynum">${dnum}</div>
       ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
-      const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${confirmBtn}${reminderBtn}${waBtn}</div>`;}).join('')}
+      const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';const statusTagC=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Canc.</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':'';const inactiveClsC=ev.status?' ev-inactive':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}${inactiveClsC}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${statusTagC}${confirmBtn}${reminderBtn}${waBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
@@ -2601,6 +2618,16 @@ function selectEvClient(id,kind){
 }
 function deleteEditingEvent(){if(editingEventId!=null)delEvent(editingEventId);closeNewEventModal();}
 function delEvent(id){agenda.events=(agenda.events||[]).filter(e=>e.id!==id);save();toast('Sessão removida','✓');}
+function setEventStatus(id,status){
+  const e=(agenda.events||[]).find(x=>x.id===id);
+  if(!e)return;
+  if(status==='cancelou'&&!confirm('Marcar esta sessão como CANCELADA?'))return;
+  if(status==='adiou'&&!confirm('Marcar esta sessão como ADIADA?'))return;
+  if(status){e.status=status;}else{delete e.status;}
+  save();
+  if(dayModalISO&&document.getElementById('day-modal').classList.contains('open'))openDayModal(dayModalISO);
+  toast(status==='cancelou'?'Sessão marcada como cancelada':status==='adiou'?'Sessão marcada como adiada':'Sessão reativada','✓');
+}
 function openClientFromCal(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   currentView='clientes';activeYear=sYear(c)||activeYear;fStatus='all';
