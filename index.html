@@ -2469,9 +2469,10 @@ function openDayModal(iso){
       const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
       const statusTag=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Cancelada</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':'';
       const inactiveCls=ev.status?' ev-inactive':'';
-      const cancelBtn=ev.status!=='cancelou'?`<i class="ti ti-x cal-chip-cancel" onclick="event.stopPropagation();setEventStatus(${ev.id},'cancelou')" title="Marcar como cancelada"></i>`:'';
-      const postponeBtn=ev.status!=='adiou'?`<span class="cal-chip-postpone" onclick="event.stopPropagation();setEventStatus(${ev.id},'adiou')" title="Marcar como adiada">⏸</span>`:'';
-      const reactivateBtn=ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
+      const canManage=ev.type!=='sess';
+      const cancelBtn=canManage&&ev.status!=='cancelou'?`<i class="ti ti-x cal-chip-cancel" onclick="event.stopPropagation();setEventStatus(${ev.id},'cancelou')" title="Marcar como cancelada"></i>`:'';
+      const postponeBtn=canManage&&ev.status!=='adiou'?`<span class="cal-chip-postpone" onclick="event.stopPropagation();setEventStatus(${ev.id},'adiou')" title="Marcar como adiada">⏸</span>`:'';
+      const reactivateBtn=canManage&&ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
       return `<div class="day-ev-row${inactiveCls}" onclick="closeDayModal();${openFn}">
         <span class="day-ev-time">${ev.time?escH(ev.time):'--:--'}</span>
         <span class="day-ev-title">${escH(ev.title)}</span>
@@ -2502,7 +2503,7 @@ function renderAgenda(){
   const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
   const todayISO=calISO(new Date());
   const evByDate={};
-  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title,evFb=null;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;evFb=cc.facebook||null;}}else if(e.babyId){const cb=babies.find(x=>x.id===e.babyId);if(cb){evPhone=cb.phone||evPhone;evCname=cb.mae?(cb.mae+' ('+cb.name+')'):cb.name;evFb=cb.facebook||null;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,fb:evFb,kind:e.type||'sessao',date:e.date,local:e.local||''});});
+  (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=e.contact||null,evCname=e.title,evFb=null;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;evFb=cc.facebook||null;}}else if(e.babyId){const cb=babies.find(x=>x.id===e.babyId);if(cb){evPhone=cb.phone||evPhone;evCname=cb.mae?(cb.mae+' ('+cb.name+')'):cb.name;evFb=cb.facebook||null;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,fb:evFb,kind:e.type||'sessao',date:e.date,local:e.local||'',status:e.status||null});});
   clients.forEach(c=>{if(c.session){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name,fb:c.facebook||null,kind:'sessao',date:c.session,local:''});}});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
   evByDateCache=evByDate;
