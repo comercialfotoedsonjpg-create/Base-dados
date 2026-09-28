@@ -2043,11 +2043,15 @@ function monthsOld(bd){
 function mesDate(bd,n){const b=new Date(bd+'T00:00:00');if(isNaN(b))return null;return new Date(b.getFullYear(),b.getMonth()+n,b.getDate());}
 function mesThisMonthInfo(b){
   if(!b.birthdate)return null;
-  const now=new Date();
+  const now=new Date();now.setHours(0,0,0,0);
   const sessions=b.sessions||Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0}));
+  const leadDays=7;
   for(let n=1;n<=12;n++){
     const d=mesDate(b.birthdate,n);
-    if(d&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()){
+    if(!d)continue;
+    const sameMonth=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+    const diffDays=Math.round((d-now)/(1000*60*60*24));
+    if(sameMonth||(diffDays>=0&&diffDays<=leadDays)){
       const s=sessions.find(x=>x.month===n);
       return{mesN:n,date:d,done:!!(s&&s.done)};
     }
