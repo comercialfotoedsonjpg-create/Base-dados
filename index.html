@@ -606,6 +606,8 @@ body{letter-spacing:.1px;}
       <span class="flabel">Cliente</span>
       <input class="finput" id="pr-client" autocomplete="off" placeholder="Nome do cliente..." oninput="printClientSearch()" onfocus="printClientSearch()">
       <div class="ev-dd" id="pr-client-dropdown"></div>
+      <input type="hidden" id="pr-contact">
+      <div id="pr-contact-line" style="display:none;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text2)"><i class="ti ti-brand-whatsapp" style="color:var(--wa)" aria-hidden="true"></i><span id="pr-contact-txt"></span></div>
     </div>
     <div class="fg full"><span class="flabel">Quantidade de fotos</span><input class="finput" id="pr-qty" type="number" min="0"></div>
     <div class="fg full"><span class="flabel">Tamanho</span><select class="fsel" id="pr-size">
@@ -1456,6 +1458,8 @@ function printClientMode(mode,el){
   document.getElementById('pr-client').value='';
   document.getElementById('pr-client-dropdown').innerHTML='';
   document.getElementById('pr-client-dropdown').classList.remove('open');
+  document.getElementById('pr-contact').value='';
+  document.getElementById('pr-contact-line').style.display='none';
 }
 function printClientSearch(){
   const q=document.getElementById('pr-client').value.trim().toLowerCase();
@@ -1474,6 +1478,10 @@ function selectPrintClient(id){
   const pool=printMode==='mesv'?babies:clients;
   const c=pool.find(x=>x.id===id);if(!c)return;
   document.getElementById('pr-client').value=c.name;
+  const prCt=c.phone||c.facebook||'';
+  document.getElementById('pr-contact').value=prCt;
+  const prCl=document.getElementById('pr-contact-line');
+  if(prCt){prCl.style.display='flex';document.getElementById('pr-contact-txt').textContent=prCt;}else{prCl.style.display='none';}
   document.getElementById('pr-client-dropdown').classList.remove('open');
 }
 function openPrintModal(){
@@ -1484,6 +1492,8 @@ function openPrintModal(){
   document.getElementById('pr-client').placeholder='Nome do cliente...';
   document.getElementById('pr-client').value='';
   document.getElementById('pr-client-dropdown').innerHTML='';
+  document.getElementById('pr-contact').value='';
+  document.getElementById('pr-contact-line').style.display='none';
   document.getElementById('pr-qty').value='';
   document.getElementById('pr-size').value='';
   document.getElementById('pr-price').value='';
@@ -1507,6 +1517,7 @@ function savePrint(){
     month:document.getElementById('pr-month').value,
     printed:document.getElementById('pr-printed').checked,
     delivered:document.getElementById('pr-delivered').checked,
+    contact:document.getElementById('pr-contact').value.trim(),
     notes:document.getElementById('pr-notes').value.trim(),
     updatedAt:Date.now()
   };
@@ -1532,6 +1543,9 @@ function editPrint(id){
   document.getElementById('pr-printed').checked=!!p.printed;
   document.getElementById('pr-delivered').checked=!!p.delivered;
   document.getElementById('pr-notes').value=p.notes||'';
+  document.getElementById('pr-contact').value=p.contact||'';
+  const prCl2=document.getElementById('pr-contact-line');
+  if(p.contact){prCl2.style.display='flex';document.getElementById('pr-contact-txt').textContent=p.contact;}else{prCl2.style.display='none';}
   document.getElementById('print-modal-title').textContent='Editar Pedido';
   document.getElementById('print-modal').classList.add('open');
 }
@@ -1669,6 +1683,7 @@ function renderImpressoes(){
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:14px">${escH(p.client)}</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px">${p.qty||0} fotos${p.size?' · '+escH(p.size):''}${p.price?' · '+escH(p.price):''}${p.month?' · '+p.month:''}</div>
+          ${p.contact?`<div style="font-size:11px;color:var(--wa);margin-top:3px;display:flex;align-items:center;gap:4px"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>${escH(p.contact)}</div>`:''}
           ${p.notes?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${escH(p.notes)}</div>`:''}
         </div>
         <button style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer" onclick="deletePrint(${p.id})"><i class="ti ti-trash" aria-hidden="true"></i></button>
