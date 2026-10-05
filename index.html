@@ -731,9 +731,9 @@ body{letter-spacing:.1px;}
         <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
-    <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
+    <div class="fg full" id="ev-postpone-wrap" style="display:none"><span class="flabel">Adiar para (nova data)</span><input class="finput" id="ev-postpone-date" type="date"></div><div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" id="ev-desist-btn" style="display:none;color:var(--canc)" onclick="desistFromModal()">🚫 Desistiu</button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
+  <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" id="ev-postpone-btn" style="display:none" onclick="postponeFromModal()">⏸ Adiar</button><button class="btn btn-ghost" id="ev-desist-btn" style="display:none;color:var(--canc)" onclick="desistFromModal()">🚫 Desistiu</button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
 </div></div>
 
 <!-- DAY MODAL -->
@@ -2567,7 +2567,7 @@ function openNewEventModal(prefillDate){
   document.getElementById('ev-contact-type').value='Telefone';updateEvContactPlaceholder();
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
   document.getElementById('event-modal-title').textContent='Nova sessão';
-  document.getElementById('ev-delete-btn').style.display='none';document.getElementById('ev-desist-btn').style.display='none';
+  document.getElementById('ev-delete-btn').style.display='none';document.getElementById('ev-desist-btn').style.display='none';document.getElementById('ev-postpone-wrap').style.display='none';document.getElementById('ev-postpone-btn').style.display='none';
   document.getElementById('event-modal').classList.add('open');
 }
 function updateEvContactPlaceholder(){const t=document.getElementById('ev-contact-type').value;const inp=document.getElementById('ev-contact');const ph={Telefone:'+238 991 234 567',WhatsApp:'+238 991 234 567',Facebook:'facebook.com/nome ou link do perfil',Instagram:'@utilizador ou link do perfil'};inp.placeholder=ph[t]||'+238 991 234 567';}
@@ -2584,10 +2584,10 @@ function editEvent(id){
 document.getElementById('ev-contact-type').value=e.contactType||'Telefone';updateEvContactPlaceholder();
   document.getElementById('ev-type').value=e.type||'sessao';
   document.getElementById('event-modal-title').textContent='Editar sessão';
-  document.getElementById('ev-delete-btn').style.display='';document.getElementById('ev-desist-btn').style.display='';
+  document.getElementById('ev-delete-btn').style.display='';document.getElementById('ev-desist-btn').style.display='';document.getElementById('ev-postpone-wrap').style.display='';document.getElementById('ev-postpone-btn').style.display='';document.getElementById('ev-postpone-date').value='';
   document.getElementById('event-modal').classList.add('open');
 }
-function desistFromModal(){const id=editingEventId;if(id==null)return;closeNewEventModal();setEventStatus(id,'desistiu');}function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
+function postponeFromModal(){const id=editingEventId;if(id==null)return;const nd=document.getElementById('ev-postpone-date').value;if(!nd){toast('Escolhe a nova data em Adiar para','!');return;}const e=(agenda.events||[]).find(x=>x.id===id);if(!e)return;if(nd===e.date){toast('A nova data é igual à atual','!');return;}const old=e.date;e.adiadoDe=old;e.date=nd;e.notes=((e.notes||'')+(e.notes?' | ':'')+'Adiada de '+old.split('-').reverse().join('/')).trim();closeNewEventModal();save();toast('Sessão adiada para '+nd.split('-').reverse().join('/'),'✓');}function desistFromModal(){const id=editingEventId;if(id==null)return;closeNewEventModal();setEventStatus(id,'desistiu');}function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
 function saveNewEvent(){
   const t=document.getElementById('ev-title').value.trim();const d=document.getElementById('ev-date').value;
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
