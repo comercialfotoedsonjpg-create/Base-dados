@@ -2587,7 +2587,7 @@ document.getElementById('ev-contact-type').value=e.contactType||'Telefone';updat
   document.getElementById('ev-delete-btn').style.display='';document.getElementById('ev-desist-btn').style.display='';
   document.getElementById('event-modal').classList.add('open');
 }
-function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
+function desistFromModal(){const id=editingEventId;if(id==null)return;closeNewEventModal();setEventStatus(id,'desistiu');}function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
 function saveNewEvent(){
   const t=document.getElementById('ev-title').value.trim();const d=document.getElementById('ev-date').value;
   if(!t||!d){toast('Título e data são obrigatórios','!');return;}
