@@ -233,7 +233,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip-reactivate:hover{opacity:.7}
 .ev-status-tag{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;flex-shrink:0}
 .ev-status-tag.cancelou{background:rgba(248,113,113,.18);color:var(--canc)}
-.ev-status-tag.adiou{background:rgba(251,191,36,.18);color:var(--pend)}
+.ev-status-tag.desistiu{background:rgba(248,113,113,.3);color:var(--canc)}.ev-status-tag.adiou{background:rgba(251,191,36,.18);color:var(--pend)}
 .day-ev-row.ev-inactive{opacity:.55}
 .cal-chip.ev-inactive{opacity:.55}
 .cal-chip:hover{background:rgba(200,153,47,.3)}
@@ -523,7 +523,7 @@ body{letter-spacing:.1px;}
     <div class="hint" id="metrics-coverage" style="padding:0 20px 14px"></div>
     <div class="kpi-row" id="kpi-row-neg"></div>
     <div class="chart-card"><div class="chart-title">Clientes por mês (ano activo)</div><div id="chart-months"></div></div>
-    <div class="chart-card"><div class="chart-title">Estado das sessões (ano activo)</div><div id="chart-status"></div></div>
+    <div class="chart-card"><div class="chart-title">Sessões de aniversário por mês (ano activo)</div><div id="chart-bday"></div></div><div class="chart-card"><div class="chart-title">Sessões de bebés / mesversários por mês (ano activo)</div><div id="chart-baby"></div></div><div class="chart-card"><div class="chart-title">Estado das sessões (ano activo)</div><div id="chart-status"></div></div>
     <div class="chart-card"><div class="chart-title">Clientes por ano (crescimento)</div><div id="chart-years"></div></div>
   </div>
 </main>
@@ -2495,18 +2495,18 @@ function openDayModal(iso){
       const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';
       const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':'Sessão';
       const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
-      const statusTag=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Cancelada</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':'';
+      const statusTag=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Cancelada</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':ev.status==='desistiu'?'<span class="ev-status-tag desistiu">Desistiu</span>':'';
       const inactiveCls=ev.status?' ev-inactive':'';
       const canManage=ev.type!=='sess';
       const cancelBtn=canManage&&ev.status!=='cancelou'?`<i class="ti ti-x cal-chip-cancel" onclick="event.stopPropagation();setEventStatus(${ev.id},'cancelou')" title="Marcar como cancelada"></i>`:'';
       const postponeBtn=canManage&&ev.status!=='adiou'?`<span class="cal-chip-postpone" onclick="event.stopPropagation();setEventStatus(${ev.id},'adiou')" title="Marcar como adiada">⏸</span>`:'';
-      const reactivateBtn=canManage&&ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
+      const desistBtn=canManage&&ev.status!=='desistiu'?`<span class="cal-chip-postpone" style="color:var(--canc)" onclick="event.stopPropagation();setEventStatus(${ev.id},'desistiu')" title="Cliente desistiu">🚫</span>`:'';const reactivateBtn=canManage&&ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
       return `<div class="day-ev-row${inactiveCls}" onclick="closeDayModal();${openFn}">
         <span class="day-ev-time">${ev.time?escH(ev.time):'--:--'}</span>
         <span class="day-ev-title">${escH(ev.title)}</span>
         <span class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}">${kindLabel}</span>
         ${statusTag}${noPhotoTag}
-        ${confirmBtn}${reminderBtn}${waBtn}${fbBtn}${cancelBtn}${postponeBtn}${reactivateBtn}
+        ${confirmBtn}${reminderBtn}${waBtn}${fbBtn}${cancelBtn}${postponeBtn}${desistBtn}${reactivateBtn}
       </div>`;
     }).join('');
   }
@@ -2553,7 +2553,7 @@ function renderAgenda(){
       <div class="cal-daynum">${dnum}</div>
       ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
       const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';
-      const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-wa" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,'')}')" title="Abrir Facebook de ${escH(ev.cname||'')}"></i>`:'';const noPhotoTagC=ev.noPhotos?'<span class="ev-status-tag cancelou" style="background:#f04444" title="Não autoriza publicar fotos deste bebé">🚫</span>':'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';const statusTagC=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Canc.</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':'';const inactiveClsC=ev.status?' ev-inactive':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}${inactiveClsC}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${statusTagC}${noPhotoTagC}${confirmBtn}${reminderBtn}${waBtn}${fbBtn}</div>`;}).join('')}
+      const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-wa" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,'')}')" title="Abrir Facebook de ${escH(ev.cname||'')}"></i>`:'';const noPhotoTagC=ev.noPhotos?'<span class="ev-status-tag cancelou" style="background:#f04444" title="Não autoriza publicar fotos deste bebé">🚫</span>':'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';const statusTagC=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Canc.</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':ev.status==='desistiu'?'<span class="ev-status-tag desistiu">Desistiu</span>':'';const inactiveClsC=ev.status?' ev-inactive':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}${inactiveClsC}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${statusTagC}${noPhotoTagC}${confirmBtn}${reminderBtn}${waBtn}${fbBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
@@ -2653,11 +2653,11 @@ function setEventStatus(id,status){
   const e=(agenda.events||[]).find(x=>x.id===id);
   if(!e)return;
   if(status==='cancelou'&&!confirm('Marcar esta sessão como CANCELADA?'))return;
-  if(status==='adiou'&&!confirm('Marcar esta sessão como ADIADA?'))return;
+  if(status==='adiou'&&!confirm('Marcar esta sessão como ADIADA?'))return;if(status==='desistiu'&&!confirm('Marcar que o cliente DESISTIU?'))return;
   if(status){e.status=status;}else{delete e.status;}
   save();
   if(dayModalISO&&document.getElementById('day-modal').classList.contains('open'))openDayModal(dayModalISO);
-  toast(status==='cancelou'?'Sessão marcada como cancelada':status==='adiou'?'Sessão marcada como adiada':'Sessão reativada','✓');
+  toast(status==='cancelou'?'Sessão marcada como cancelada':status==='adiou'?'Sessão marcada como adiada':status==='desistiu'?'Cliente marcado como desistiu':'Sessão reativada','✓');
 }
 function openClientFromCal(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
@@ -2690,7 +2690,7 @@ function metricsData(){
   const byMonth=Array(12).fill(0);
   yc.forEach(c=>{if(c.session){const m=parseInt(c.session.split('-')[1])-1;if(m>=0&&m<12)byMonth[m]++;}});
   const byYear=years.map(y=>({y,n:clients.filter(c=>sYear(c)===y).length}));
-  return{yc,done,sched,pend,canc,doneWithPrice,revenue,coverage,avgTicket,conv,babySessions,babiesFull,byMonth,byYear};
+  const _ev=(agenda.events||[]).filter(e=>e.date&&e.date.slice(0,4)===String(activeYear));const desist=_ev.filter(e=>e.status==='desistiu').length;const bdayByMonth=Array(12).fill(0),babyByMonth=Array(12).fill(0);_ev.filter(e=>!e.status).forEach(e=>{const m=parseInt(e.date.split('-')[1])-1;if(m<0||m>11)return;if(e.type==='aniversario')bdayByMonth[m]++;else if(e.type==='mesversario')babyByMonth[m]++;});return{desist,bdayByMonth,babyByMonth,yc,done,sched,pend,canc,doneWithPrice,revenue,coverage,avgTicket,conv,babySessions,babiesFull,byMonth,byYear};
 }
 function renderMetricas(){
   const d=metricsData();
@@ -2699,7 +2699,7 @@ function renderMetricas(){
     <div class="kpi-card"><div class="kpi-n" style="color:var(--done)">${d.done.length}</div><div class="kpi-l">Concluídas</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${d.sched.length}</div><div class="kpi-l">Agendadas</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--pend)">${d.pend.length}</div><div class="kpi-l">Pendentes</div></div>
-    <div class="kpi-card"><div class="kpi-n" style="color:var(--canc)">${d.canc.length}</div><div class="kpi-l">Canceladas</div></div>
+    <div class="kpi-card"><div class="kpi-n" style="color:var(--canc)">${d.canc.length}</div><div class="kpi-l">Canceladas</div></div><div class="kpi-card"><div class="kpi-n" style="color:var(--canc)">${d.desist}</div><div class="kpi-l">Desistências (agenda)</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--accent2)">${d.conv}%</div><div class="kpi-l">Taxa de conclusão</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.yc.filter(c=>isPrem(c.photos)||c.premium).length}</div><div class="kpi-l">Clientes premium</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--sched)">${d.revenue?d.revenue.toLocaleString('pt-PT'):'—'}</div><div class="kpi-l">Receita registada (CVE)</div></div>`;
@@ -2713,7 +2713,7 @@ function renderMetricas(){
     <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${activeBabiesCount()}</div><div class="kpi-l">Bebés em campanha</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:#f9a8d4">${d.babySessions}</div><div class="kpi-l">Sessões de bebé concluídas</div></div>
     <div class="kpi-card"><div class="kpi-n" style="color:var(--gold)">${d.babiesFull}</div><div class="kpi-l">Bebés que completaram 1 ano</div></div>`;
-  document.getElementById('chart-months').innerHTML=MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${d.byMonth[i]/Math.max(...d.byMonth,1)*100}%"></div></div><div class="bar-val">${d.byMonth[i]}</div></div>`).join('');
+  const _bar=(arr,col)=>MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${arr[i]/Math.max(...arr,1)*100}%;background:${col}"></div></div><div class="bar-val">${arr[i]}</div></div>`).join('');document.getElementById('chart-bday').innerHTML=_bar(d.bdayByMonth,'#f9a8d4');document.getElementById('chart-baby').innerHTML=_bar(d.babyByMonth,'#c4b5fd');document.getElementById('chart-months').innerHTML=MONTHS.map((m,i)=>`<div class="bar-row"><div class="bar-label">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${d.byMonth[i]/Math.max(...d.byMonth,1)*100}%"></div></div><div class="bar-val">${d.byMonth[i]}</div></div>`).join('');
   const statuses=[['done','Concluído','var(--done)'],['sched','Agendado','var(--sched)'],['pend','Pendente','var(--pend)'],['canc','Cancelado','var(--canc)']];
   const maxS=Math.max(...statuses.map(s=>d.yc.filter(c=>c.status===s[0]).length),1);
   document.getElementById('chart-status').innerHTML=statuses.map(([k,l,col])=>{const n=d.yc.filter(c=>c.status===k).length;return`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${n/maxS*100}%;background:${col}"></div></div><div class="bar-val">${n}</div></div>`;}).join('');
