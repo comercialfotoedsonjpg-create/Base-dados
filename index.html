@@ -733,7 +733,7 @@ body{letter-spacing:.1px;}
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
+  <div class="modal-foot"><button class="btn btn-danger" id="ev-delete-btn" style="display:none;margin-right:auto" onclick="deleteEditingEvent()"><i class="ti ti-trash" aria-hidden="true"></i></button><button class="btn btn-ghost" id="ev-desist-btn" style="display:none;color:var(--canc)" onclick="desistFromModal()">🚫 Desistiu</button><button class="btn btn-ghost" onclick="closeNewEventModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewEvent()">Guardar</button></div>
 </div></div>
 
 <!-- DAY MODAL -->
@@ -2567,7 +2567,7 @@ function openNewEventModal(prefillDate){
   document.getElementById('ev-contact-type').value='Telefone';updateEvContactPlaceholder();
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
   document.getElementById('event-modal-title').textContent='Nova sessão';
-  document.getElementById('ev-delete-btn').style.display='none';
+  document.getElementById('ev-delete-btn').style.display='none';document.getElementById('ev-desist-btn').style.display='none';
   document.getElementById('event-modal').classList.add('open');
 }
 function updateEvContactPlaceholder(){const t=document.getElementById('ev-contact-type').value;const inp=document.getElementById('ev-contact');const ph={Telefone:'+238 991 234 567',WhatsApp:'+238 991 234 567',Facebook:'facebook.com/nome ou link do perfil',Instagram:'@utilizador ou link do perfil'};inp.placeholder=ph[t]||'+238 991 234 567';}
@@ -2584,7 +2584,7 @@ function editEvent(id){
 document.getElementById('ev-contact-type').value=e.contactType||'Telefone';updateEvContactPlaceholder();
   document.getElementById('ev-type').value=e.type||'sessao';
   document.getElementById('event-modal-title').textContent='Editar sessão';
-  document.getElementById('ev-delete-btn').style.display='';
+  document.getElementById('ev-delete-btn').style.display='';document.getElementById('ev-desist-btn').style.display='';
   document.getElementById('event-modal').classList.add('open');
 }
 function closeNewEventModal(){document.getElementById('event-modal').classList.remove('open');editingEventId=null;document.getElementById('ev-title-dropdown').classList.remove('open');}
