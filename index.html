@@ -2739,7 +2739,7 @@ function exportMetricsPDF(){
     `Taxa de conclusão: ${d.conv}%`,
     `Clientes premium: ${d.yc.filter(c=>isPrem(c.photos)||c.premium).length}`,
     `Receita registada: ${d.revenue?d.revenue.toLocaleString('pt-PT')+' CVE':'sem valores registados'} (cobertura: ${d.coverage}% das sessões concluídas)`,
-    `Ticket médio: ${d.avgTicket?d.avgTicket.toLocaleString('pt-PT')+' CVE':'—'}`
+    `Ticket médio: ${d.avgTicket?d.avgTicket.toLocaleString('pt-PT')+' CVE':'—'}`,`Desistências (agenda): ${d.desist}`,`Aniversários (Jan-Jun): ${MONTHS.slice(0,6).map((m,i)=>m+' '+d.bdayByMonth[i]).join(' · ')}`,`Aniversários (Jul-Dez): ${MONTHS.slice(6).map((m,i)=>m+' '+d.bdayByMonth[i+6]).join(' · ')}`,`Bebés/mesversários (Jan-Jun): ${MONTHS.slice(0,6).map((m,i)=>m+' '+d.babyByMonth[i]).join(' · ')}`,`Bebés/mesversários (Jul-Dez): ${MONTHS.slice(6).map((m,i)=>m+' '+d.babyByMonth[i+6]).join(' · ')}`
   ];
   lines1.forEach(l=>{doc.text(l,14,y);y+=6;});
   y+=4;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Negócio (todos os anos)',14,y);y+=7;
