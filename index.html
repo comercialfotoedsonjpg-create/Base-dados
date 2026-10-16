@@ -730,17 +730,19 @@ body{letter-spacing:.1px;}
       <input type="hidden" id="ev-client-id">
       <div class="ev-dd" id="ev-title-dropdown"></div>
     </div>
+    <div class="fg full" id="ev-reg-hint" style="display:none"></div>
     <input type="hidden" id="ev-new-kind">
     <div class="fg full" id="ev-new-wrap" style="display:none"><div style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><span id="ev-new-label" style="font-size:12px;font-weight:600;color:var(--accent)"></span><button type="button" class="btn btn-ghost btn-xs" onclick="evCancelNew()">Cancelar registo</button></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <div style="flex:1;min-width:150px"><span class="flabel" id="ev-new-date-label">Data de aniversário (opcional)</span><input class="finput" id="ev-new-date" type="date"></div>
+        <div style="flex:1;min-width:150px"><span class="flabel" id="ev-new-date-label">Data de aniversário (opcional)</span><input class="finput" id="ev-new-date" type="date" onchange="var a=document.getElementById('ev-new-age');if(a)a.value=''"></div>
         <div style="flex:1;min-width:150px;display:none" id="ev-new-mae-wrap"><span class="flabel">Nome da mãe (opcional)</span><input class="finput" id="ev-new-mae" placeholder="Nome da mãe"></div>
+        <div style="flex:1;min-width:150px;display:none" id="ev-new-age-wrap"><span class="flabel">ou idade do bebé nesta sessão</span><select class="fsel" id="ev-new-age" onchange="evAgeToDate()"><option value="">—</option><option value="1">1 mês</option><option value="2">2 meses</option><option value="3">3 meses</option><option value="4">4 meses</option><option value="5">5 meses</option><option value="6">6 meses</option><option value="7">7 meses</option><option value="8">8 meses</option><option value="9">9 meses</option><option value="10">10 meses</option><option value="11">11 meses</option><option value="12">12 meses</option></select></div>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px">O registo é criado quando guardares a sessão.</div>
     </div></div>
     <div class="fg full"><span class="flabel">Contacto (se não for cliente registado)</span><div style="display:flex;gap:8px"><select class="fsel" id="ev-contact-type" style="max-width:140px" onchange="updateEvContactPlaceholder()"><option value="Telefone">Telefone</option><option value="WhatsApp">WhatsApp</option><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select><input class="finput" id="ev-contact" placeholder="+238 991 234 567" style="flex:1"></div></div><div class="fg full"><span class="flabel">Facebook do cliente</span><input class="finput" id="ev-facebook" placeholder="https://facebook.com/nome"></div>
-        <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date"></div>
+        <div class="fg"><span class="flabel">Data *</span><input class="finput" id="ev-date" type="date" onchange="evAgeToDate()"></div>
     <div class="fg"><span class="flabel">Hora</span><input class="finput" id="ev-time" type="time"></div>
     <div class="fg full"><span class="flabel">Local</span><input class="finput" id="ev-local"></div>
     <div class="fg full" id="ev-postpone-wrap" style="display:none"><span class="flabel">Adiar para (nova data)</span><input class="finput" id="ev-postpone-date" type="date"></div><div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="ev-notes"></textarea></div>
@@ -2628,6 +2630,7 @@ function openNewEventModal(prefillDate){
   document.getElementById('ev-type').value='sessao';
   document.getElementById('ev-contact-type').value='Telefone';updateEvContactPlaceholder();
   if(prefillDate)document.getElementById('ev-date').value=prefillDate;
+  evRegHint();
   document.getElementById('event-modal-title').textContent='Nova sessão';
   document.getElementById('ev-delete-btn').style.display='none';document.getElementById('ev-desist-btn').style.display='none';document.getElementById('ev-postpone-wrap').style.display='none';document.getElementById('ev-postpone-btn').style.display='none';
   document.getElementById('event-modal').classList.add('open');
@@ -2684,14 +2687,17 @@ function evStartNew(kind){
   document.getElementById('ev-new-label').textContent=isBaby?'Novo bebé em Campanhas de Bebés':'Novo cliente aniversariante';
   document.getElementById('ev-new-date-label').textContent=isBaby?'Data de nascimento do bebé *':'Data de aniversário (opcional)';
   document.getElementById('ev-new-mae-wrap').style.display=isBaby?'block':'none';
+  document.getElementById('ev-new-age-wrap').style.display=isBaby?'block':'none';
   document.getElementById('ev-new-wrap').style.display='block';
   document.getElementById('ev-title-dropdown').classList.remove('open');
+  evRegHint();
   setTimeout(()=>document.getElementById('ev-new-date').focus(),0);
 }
 function evCancelNew(){
   const k=document.getElementById('ev-new-kind');if(k)k.value='';
   const w=document.getElementById('ev-new-wrap');if(w)w.style.display='none';
-  ['ev-new-date','ev-new-mae'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['ev-new-date','ev-new-mae','ev-new-age'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  evRegHint();
 }
 function evRegTail(){const m=__evReg;__evReg='';return m;}
 function evCommitNew(d){
@@ -2722,12 +2728,47 @@ function evCommitNew(d){
   evCancelNew();
   return true;
 }
+function evRegHint(){
+  const box=document.getElementById('ev-reg-hint');if(!box)return;
+  const typ=document.getElementById('ev-type').value;
+  const kind=typ==='mesversario'?'baby':(typ==='aniversario'?'client':'');
+  const name=document.getElementById('ev-title').value.trim();
+  const pend=document.getElementById('ev-new-kind').value;
+  const cid=document.getElementById('ev-client-id').value;
+  if(!kind||name.length<3||pend||cid){box.style.display='none';box.innerHTML='';return;}
+  const k=normNm(name),pool=kind==='baby'?babies:clients;
+  const exact=pool.find(x=>normNm(x.name)===k);
+  const ex=exact||pool.find(x=>nmMatch(k,normNm(x.name)));
+  const lbl=kind==='baby'?'Mesversários (Campanhas de Bebés)':'Aniversários';
+  const BX='padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px';
+  let h;
+  if(ex){
+    h='<div style="'+BX+'"><span style="flex:1;min-width:180px;color:var(--done,#4ade9a)">✓ Já registado em '+lbl+': <b>'+escH(ex.name)+'</b></span><button type="button" class="btn btn-ghost btn-xs" data-k="'+kind+'" onclick="selectEvClient('+ex.id+',this.dataset.k)">Usar este registo</button>'+(exact?'':'<button type="button" class="btn btn-ghost btn-xs" onclick="evAutoReg()">É outro(a) — registar novo(a)</button>')+'</div>';
+  }else{
+    h='<div style="'+BX+'"><span style="flex:1;min-width:180px;color:var(--gold,#f5c45e)">⚠ «'+escH(name)+'» ainda não está registado(a) em '+lbl+'</span><button type="button" class="btn btn-primary btn-xs" onclick="evAutoReg()">➕ Registar automaticamente</button></div>';
+  }
+  box.innerHTML=h;box.style.display='block';
+}
+function evAutoReg(){
+  const typ=document.getElementById('ev-type').value;
+  const kind=typ==='mesversario'?'baby':(typ==='aniversario'?'client':'');
+  if(kind)evStartNew(kind);
+}
+function evAgeToDate(){
+  const a=document.getElementById('ev-new-age');if(!a||!a.value)return;
+  const n=parseInt(a.value);if(!n)return;
+  const p=(document.getElementById('ev-date').value||todayISO()).split('-').map(Number);
+  let y=p[0],m=p[1]-n,d=p[2];
+  while(m<1){m+=12;y--;}
+  const last=new Date(y,m,0).getDate();if(d>last)d=last;
+  document.getElementById('ev-new-date').value=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
 function evTitleBlur(){setTimeout(()=>{const dd=document.getElementById('ev-title-dropdown');if(dd)dd.classList.remove('open');},150);}
 function evTitleSearch(){
   const q=document.getElementById('ev-title').value.trim().toLowerCase();
   const dd=document.getElementById('ev-title-dropdown');
   document.getElementById('ev-client-id').value='';
-  const __evType=document.getElementById('ev-type').value;const __evKind=__evType==='mesversario'?'baby':'client';let pool=__evKind==='baby'?babies.filter(b=>b.name):clients.filter(c=>c.name);
+  evRegHint();const __evType=document.getElementById('ev-type').value;const __evKind=__evType==='mesversario'?'baby':'client';let pool=__evKind==='baby'?babies.filter(b=>b.name):clients.filter(c=>c.name);
   if(q)pool=pool.filter(c=>c.name.toLowerCase().includes(q));
   if(!pool.length){dd.innerHTML='<div class="ev-dd-empty">Sem clientes encontrados</div>'+evNewHook();dd.classList.add('open');return;}
   const keyDate=c=>c.session||c.bday||c.birthdate||'';
