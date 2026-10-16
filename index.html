@@ -652,12 +652,13 @@ body{letter-spacing:.1px;}
       <input class="finput" id="n-search" autocomplete="off" placeholder="Escreve para procurar um cliente existente..." oninput="newClientSearch()" onfocus="newClientSearch()" onblur="newClientSearchBlur()">
       <div class="ev-dd" id="n-search-dropdown"></div>
     </div>
-    <div class="fg full"><span class="flabel">Nome completo *</span><input class="finput" id="n-name" placeholder="Ana Silva"></div>
+    <div class="fg full"><span class="flabel">Nome completo *</span><input class="finput" id="n-name" placeholder="Ana Silva" oninput="newRegCheck()"></div>
+    <div class="fg full" id="n-reg-box" style="display:none;background:var(--surface2,rgba(255,255,255,.04));border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px;padding:10px 12px"></div>
     <div class="fg"><span class="flabel">Email</span><input class="finput" id="n-email" type="email"></div>
     <div class="fg"><span class="flabel">Telemóvel WhatsApp</span><input class="finput" id="n-phone" placeholder="+238 991 234 567"></div>
     <div class="fg full"><span class="flabel">Perfil Facebook</span><input class="finput" id="n-facebook" placeholder="https://facebook.com/nome"></div>
     <div class="fg full"><span class="flabel">Instagram</span><input class="finput" id="n-instagram" placeholder="https://instagram.com/nome"></div>
-    <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="n-bday" type="date"></div>
+    <div class="fg"><span class="flabel">Aniversário</span><input class="finput" id="n-bday" type="date" onchange="newRegCheck()"></div>
     <div class="fg"><span class="flabel">Data da sessão</span><input class="finput" id="n-sess" type="date"></div>
     <div class="fg"><span class="flabel">Ano (opcional)</span><select class="fsel" id="n-year"><option value="">Automático (pela sessão)</option></select></div>
     <div class="fg"><span class="flabel">Fotos entregues</span><input class="finput" id="n-photos" type="number" min="0"></div>
@@ -1931,16 +1932,16 @@ function openIG(url){if(!url){toast('Sem link de Instagram','!');return;}window.
 /* NEW CLIENT MODAL */
 let modalTab='info';
 function switchModalTab(tab,el){modalTab=tab;document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));el.classList.add('on');document.getElementById('modal-tab-info').style.display=tab==='info'?'grid':'none';document.getElementById('modal-tab-extras').style.display=tab==='extras'?'block':'none';}
-function openNewModal(){
+function openNewModal(){window.__newRegBaby=null;window.__newRegForceB=0;
   modalTab='info';['n-search','n-name','n-email','n-phone','n-facebook','n-instagram','n-bday','n-photos','n-style','n-notes','n-refs','n-price'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('n-search-dropdown').innerHTML='';
   document.getElementById('n-sess').value='';document.getElementById('n-status').value='sched';
   document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('on'));document.querySelector('.modal-tab').classList.add('on');
   document.getElementById('modal-tab-info').style.display='grid';document.getElementById('modal-tab-extras').style.display='none';
   document.getElementById('n-year').innerHTML='<option value="">Automático (pela sessão)</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
-  document.getElementById('new-modal').classList.add('open');
+  document.getElementById('new-modal').classList.add('open');newRegCheck();
 }
-function closeNewModal(){document.getElementById('new-modal').classList.remove('open');}
+function closeNewModal(){window.__newRegBaby=null;window.__newRegForceB=0;document.getElementById('new-modal').classList.remove('open');}
 function openNewProjectChoice(){document.getElementById('proj-type-modal').classList.add('open');}
 function closeProjTypeModal(){document.getElementById('proj-type-modal').classList.remove('open');}
 function openClienteChoiceModal(){document.getElementById('cc-search').value='';document.getElementById('cc-search-dropdown').innerHTML='';document.getElementById('cc-search-dropdown').classList.remove('open');document.getElementById('cliente-choice-modal').classList.add('open');}
@@ -2027,6 +2028,52 @@ function selectExistingForProject(id){
   closeNewModal();
   quickSetStatus(id,'editing');
 }
+function normNm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+function nmMatch(a,b){
+  if(!a||!b)return false;if(a===b)return true;
+  const ta=a.split(' '),tb=b.split(' ');
+  if(ta.length<2||tb.length<2)return false;
+  const sm=ta.length<=tb.length?ta:tb,lg=ta.length<=tb.length?tb:ta;
+  return sm.every(x=>lg.includes(x));
+}
+function newRegCheck(){
+  const box=document.getElementById('n-reg-box');if(!box)return;
+  const n=(document.getElementById('n-name').value||'').trim();
+  if(n.length<2){box.style.display='none';box.innerHTML='';return;}
+  const k=normNm(n),bd=document.getElementById('n-bday').value;
+  const fmtD=d=>d?d.split('-').reverse().join('/'):'';
+  const pBd=document.getElementById('n-reg-bd'),pBn=document.getElementById('n-reg-bn'),pBb=document.getElementById('n-reg-bb');
+  const vBd=pBd?pBd.value:'',vBn=(pBn&&pBn.dataset.t)?pBn.value:'',vBb=pBb?pBb.value:'';
+  const exB=babies.find(b=>nmMatch(k,normNm(b.name))||nmMatch(k,normNm(b.mae)));
+  const exC=clients.find(c=>c.bday&&nmMatch(k,normNm(c.name)));
+  const rb=window.__newRegBaby;
+  const R='display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:5px 0;font-size:12px';
+  const OK='color:var(--done,#4ade9a)',WN='color:var(--gold,#f5c45e)',IS='width:auto;padding:4px 6px;font-size:12px';
+  let h='<div style="font-size:12px;font-weight:600;margin-bottom:4px">Registo em Aniversários / Mesversários</div>';
+  if(bd)h+='<div style="'+R+'"><span>🎂</span><span style="'+OK+'">✓ Aniversário ('+fmtD(bd)+') fica registado ao criar o cliente</span></div>';
+  else if(exC)h+='<div style="'+R+'"><span>🎂</span><span style="'+OK+'">✓ Já está em Aniversários ('+escH(exC.name)+' · '+fmtD(exC.bday)+')</span></div>';
+  else h+='<div style="'+R+'"><span>🎂</span><span style="'+WN+'">⚠ Sem data de aniversário — não aparece em Aniversários</span><input class="finput" id="n-reg-bd" type="date" value="'+vBd+'" style="'+IS+'"><button type="button" class="btn btn-ghost btn-xs" onclick="newRegAniv()">🎂 Registar aniversário</button></div>';
+  if(rb)h+='<div style="'+R+'"><span>🍼</span><span style="'+OK+'">✓ Bebé '+escH(rb.name)+' ('+fmtD(rb.birthdate)+') será registado em Mesversários ao criar o cliente</span><button type="button" class="btn btn-ghost btn-xs" onclick="newRegBabyUndo()">desfazer</button></div>';
+  else if(exB&&!window.__newRegForceB)h+='<div style="'+R+'"><span>🍼</span><span style="'+OK+'">✓ Já está em Mesversários (bebé: '+escH(exB.name)+(exB.mae?' · mãe '+escH(exB.mae):'')+')</span><button type="button" class="btn btn-ghost btn-xs" onclick="newRegForce()">registar outro bebé</button></div>';
+  else{
+    const bnv=vBn||n;
+    const bbv=vBb||(normNm(bnv)===k?bd:'');
+    h+='<div style="'+R+'"><span>🍼</span><span style="'+WN+'">⚠ Não está em Bebés / Mesversários</span></div><div style="'+R+'"><input class="finput" id="n-reg-bn" data-t="'+(vBn?'1':'')+'" oninput="this.dataset.t=1" placeholder="Nome do bebé" value="'+escH(bnv)+'" style="'+IS+';min-width:130px"><input class="finput" id="n-reg-bb" type="date" value="'+bbv+'" title="Data de nascimento do bebé" style="'+IS+'"><button type="button" class="btn btn-ghost btn-xs" onclick="newRegBaby()">🍼 Registar mesversário</button></div>';
+  }
+  box.innerHTML=h;box.style.display='block';
+}
+function newRegAniv(){const el=document.getElementById('n-reg-bd');const v=el?el.value:'';if(!v){toast('Escolhe a data de aniversário','!');return;}document.getElementById('n-bday').value=v;newRegCheck();toast('Aniversário será registado ao criar o cliente','✓');}
+function newRegBaby(){
+  const n=(document.getElementById('n-name').value||'').trim();
+  const bnEl=document.getElementById('n-reg-bn'),bbEl=document.getElementById('n-reg-bb');
+  const bn=((bnEl?bnEl.value:'')||n).trim(),bb=bbEl?bbEl.value:'';
+  if(!bn){toast('Indica o nome do bebé','!');return;}
+  if(!bb){toast('Indica a data de nascimento do bebé','!');if(bbEl)bbEl.focus();return;}
+  window.__newRegBaby={name:bn,birthdate:bb,mae:normNm(bn)!==normNm(n)?n:''};
+  newRegCheck();toast('Mesversário será registado ao criar o cliente','✓');
+}
+function newRegBabyUndo(){window.__newRegBaby=null;newRegCheck();}
+function newRegForce(){window.__newRegForceB=1;newRegCheck();}
 function saveNew(){
   const n=document.getElementById('n-name').value.trim();if(!n){toast('O nome é obrigatório','!');return;}
   const data={id:uid++,name:n,email:document.getElementById('n-email').value.trim(),phone:document.getElementById('n-phone').value.trim(),facebook:document.getElementById('n-facebook').value.trim(),instagram:document.getElementById('n-instagram').value.trim(),bday:document.getElementById('n-bday').value,session:document.getElementById('n-sess').value,year:(document.getElementById('n-year')&&document.getElementById('n-year').value)?parseInt(document.getElementById('n-year').value):null,photos:parseInt(document.getElementById('n-photos').value)||0,status:document.getElementById('n-status').value,style:document.getElementById('n-style').value.trim(),notes:document.getElementById('n-notes').value.trim(),refs:document.getElementById('n-refs').value.trim(),price:document.getElementById('n-price').value.trim(),gallery:[],avatar:null,updatedAt:Date.now()};
@@ -2034,7 +2081,10 @@ function saveNew(){
   const ny=data.session?parseInt(data.session.split('-')[0]):null;
   if(ny&&!years.includes(ny)){years.push(ny);years.sort((a,b)=>a-b);}
   if(ny)activeYear=ny;
-  closeNewModal();save();toast('Cliente criado com sucesso','✓');
+  const _regs=[];if(data.bday)_regs.push('aniversário');
+  const _rb=window.__newRegBaby;
+  if(_rb){const _mm=Math.round((new Date()-new Date(_rb.birthdate+'T00:00:00'))/86400000/30.4375);babies.push({id:babyUid++,name:_rb.name,mae:_rb.mae||'',parent:'',birthdate:_rb.birthdate,phone:data.phone,facebook:data.facebook,year:new Date().getFullYear(),startmonth:Math.min(12,Math.max(1,_mm)),noPhotos:false,months:1,sessions:Array.from({length:12},(_,i)=>({month:i+1,done:false,photos:0})),updatedAt:Date.now()});_regs.push('mesversário');}
+  closeNewModal();save();toast('Cliente criado com sucesso'+(_regs.length?' · registado em '+_regs.join(' e '):''),'✓');
 }
 
 function checkAlerts(){
