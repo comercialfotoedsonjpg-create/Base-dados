@@ -2062,7 +2062,7 @@ function natalTotalPreview(keepPaid){
   }
   var paid=Number(natalVal('nt-paid'))||0;
   var el=document.getElementById('nt-total-line');
-  if(el)el.innerHTML='Total: <b>'+natalCVE(t)+'</b> · Recebido: <b>'+natalCVE(paid)+'</b> · Falta: <b>'+natalCVE(Math.max(0,t-paid))+'</b>';
+  if(el)el.innerHTML='<span>Total: <b>'+natalCVE(t)+'</b> · Recebido: <b>'+natalCVE(paid)+'</b> · Falta: <b>'+natalCVE(Math.max(0,t-paid))+'</b></span>';
 }
 function natalPaidInput(){
   var t=natalFormTotal(),v=Number(natalVal('nt-paid'))||0;
