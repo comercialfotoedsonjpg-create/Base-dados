@@ -254,6 +254,7 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .natal-line{font-size:12px;color:var(--text3)}
 .natal-vale{font-size:12px;color:var(--text2);background:rgba(248,113,113,.06);border:1px dashed rgba(248,113,113,.35);border-radius:8px;padding:6px 10px}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.year-tab.natal.active{background:rgba(248,113,113,.14);color:#f87171}
 .day-ev-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface2);cursor:pointer;transition:background .15s}
 .day-ev-row:hover{background:var(--surface3)}
 .day-ev-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);min-width:40px;flex-shrink:0}
@@ -381,6 +382,9 @@ body{letter-spacing:.1px;}
   <div class="nav-section" style="margin-top:8px">Anos</div>
   <div class="years-section" id="years-nav"></div>
   <div style="padding:6px"><button class="add-year-btn" onclick="openYrModal()"><i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>Novo ano</button></div>
+  <div class="nav-section" style="margin-top:8px;color:#f87171">Anos de Natal 🎄</div>
+  <div class="years-section" id="natal-years-nav"></div>
+  <div style="padding:6px"><button class="add-year-btn" onclick="openNatalYrModal()"><i class="ti ti-plus" style="font-size:13px" aria-hidden="true"></i>Novo ano de Natal</button></div>
   <div class="sidebar-footer">
     <div class="save-status"><div class="save-dot saved" id="save-dot"></div><span id="save-txt">Guardado automaticamente</span></div>
     <button class="sync-btn" onclick="openSyncModal()"><i class="ti ti-mail" aria-hidden="true"></i>Sincronizar via Email</button>
@@ -505,14 +509,14 @@ body{letter-spacing:.1px;}
 
 <!-- NATAL -->
   <div class="panel" id="panel-natal">
-    <div class="topbar"><div><div class="page-title">🎄 Campanhas de Natal</div><div class="page-sub" id="natal-page-sub">Natal em Família — Memórias que Perduram</div></div>
+    <div class="topbar"><div><div class="page-title" id="natal-page-title">🎄 Campanhas de Natal</div><div class="page-sub" id="natal-page-sub">Natal em Família — Memórias que Perduram</div></div>
       <div class="topbar-actions">
         <select class="tsel" id="natal-sort" onchange="renderNatal()"><option value="date">Data da sessão</option><option value="booked">Ordem de marcação</option><option value="name">A-Z</option><option value="recent">Últ. modificado</option></select>
         <div class="search-wrap" style="margin-left:0"><i class="ti ti-search search-icon" aria-hidden="true"></i><input type="text" id="natal-srch" placeholder="Procurar família..." oninput="renderNatal()"></div>
         <button class="btn btn-primary" onclick="openNatalModal()"><i class="ti ti-plus" aria-hidden="true"></i>Nova família</button>
       </div>
     </div>
-    <div style="padding:9px 20px;font-size:12px;color:var(--text2);background:var(--surface);border-bottom:1px solid var(--border)">📅 Sessões 6–23 Dez · Marcações até 15 Dez (sujeito a disponibilidade) · 5 Fotos 5.000$00 · 10 Fotos 7.500$00 · 15 Fotos 10.000$00 · Quadro 30×40 desde 2.450$00 · 🎁 Foto impressa às 10 primeiras famílias (até 15 Nov) · 🎟 Vale Presente 100% pré-pago</div>
+    <div id="natal-info" style="padding:9px 20px;font-size:12px;color:var(--text2);background:var(--surface);border-bottom:1px solid var(--border)">📅 Sessões 6–23 Dez · Marcações até 15 Dez (sujeito a disponibilidade) · 5 Fotos 5.000$00 · 10 Fotos 7.500$00 · 15 Fotos 10.000$00 · Quadro 30×40 desde 2.450$00 · 🎁 Foto impressa às 10 primeiras famílias (até 15 Nov) · 🎟 Vale Presente 100% pré-pago</div>
     <div class="stats-row" id="natal-stats"></div>
     <div class="alert bday" id="natal-alert-bonus"><i class="ti ti-gift" aria-hidden="true"></i><span id="natal-alert-bonus-txt"></span></div>
     <div class="alert overdue" id="natal-alert-vale"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="natal-alert-vale-txt"></span></div>
@@ -702,6 +706,11 @@ body{letter-spacing:.1px;}
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNatalModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNatal()">Guardar família</button></div>
 </div></div>
+<div class="overlay" id="natal-yr-modal"><div class="modal" style="max-width:360px">
+  <div class="modal-head"><h2>Novo ano de Natal</h2><button class="modal-close" onclick="closeNatalYrModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body single" style="padding:18px"><div class="fg"><span class="flabel">Ano</span><input class="finput" id="natal-new-yr" type="number" min="2020" max="2040"></div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNatalYrModal()">Cancelar</button><button class="btn btn-success" onclick="confirmNatalYear()">Criar ano</button></div>
+</div></div>
 <div class="overlay" id="new-modal"><div class="modal">
   <div class="modal-head"><h2>Novo cliente</h2><button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
   <div class="modal-tabs"><button class="modal-tab on" onclick="switchModalTab('info',this)">Dados</button><button class="modal-tab" onclick="switchModalTab('extras',this)">Gostos e pedidos</button></div>
@@ -874,7 +883,7 @@ function setSyncStatus(mode){
 function pushToFirebase(){
   if(!fbRef)return;
   setSyncStatus('syncing');
-  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}).then(()=>{
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal,natalYears}).then(()=>{
     setSyncStatus('synced');
   }).catch(()=>{setSyncStatus('offline');});
 }
@@ -892,14 +901,14 @@ function initFirebaseSync(){
         agenda=remote.agenda||{events:[]};
         leads=remote.leads||[];
         prints=remote.prints||[];
-        pregnant=remote.pregnant||[];natal=remote.natal||[];
+        pregnant=remote.pregnant||[];natal=remote.natal||[];natalYears=remote.natalYears||[];
         uid=Math.max(...clients.map(c=>c.id),0)+1;
         babyUid=Math.max(...babies.map(b=>b.id),0)+1;
         eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
         leadUid=Math.max(...leads.map(l=>l.id),0)+1;
         printUid=Math.max(...prints.map(p=>p.id),0)+1;
         pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;natalUid=Math.max(...natal.map(p=>p.id),0)+1;
-        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}));}catch(e){}
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal,natalYears}));}catch(e){}
         buildSidebar();renderCurrent();
         setSyncStatus('synced');
         fbReady=true;
@@ -1282,7 +1291,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},editing:{l:'Em Edição',tc:'t-edit'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],pregnant=[],natal=[],activeYear=CY,fStatus='all',babyTab='active',babyYearFilter='all',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,pregnantUid=1,natalUid=1,editingNatalId=null,natalTab='ativas',editingGravidaId=null,convertingGravidaId=null,gravTab='active',editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],pregnant=[],natal=[],activeYear=CY,fStatus='all',babyTab='active',babyYearFilter='all',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,pregnantUid=1,natalUid=1,editingNatalId=null,natalTab='ativas',natalYear=0,natalYears=[],editingGravidaId=null,convertingGravidaId=null,gravTab='active',editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -1318,9 +1327,9 @@ function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_crm')||'{}');
     if(d.clients&&d.clients.length){
-      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];pregnant=d.pregnant||[];natal=d.natal||[];
+      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];pregnant=d.pregnant||[];natal=d.natal||[];natalYears=d.natalYears||[];
     }else{
-      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];pregnant=[];natal=[];
+      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];pregnant=[];natal=[];natalYears=[];
     }
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     babyUid=Math.max(...babies.map(b=>b.id),0)+1;
@@ -1332,7 +1341,7 @@ function load(){
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
     years.sort((a,b)=>a-b);
     if(!years.includes(activeYear)&&years.length)activeYear=years[years.length-1];
-  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];pregnant=[];natal=[];}
+  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];pregnant=[];natal=[];natalYears=[];}
 }
 
 function normKey(c){
@@ -1366,7 +1375,7 @@ function migrateSeedImport(){
 }
 let saveTimer=null;
 function save(){
-  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}));}catch(e){}
+  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal,natalYears}));}catch(e){}
   buildSidebar();renderCurrent();
   if(fbRef){pushToFirebase();}
   else{setSyncStatus('local');}
@@ -1390,7 +1399,7 @@ function buildSidebar(){
   document.getElementById('nav-renov').textContent=renov;
   document.getElementById('nav-bebes').textContent=activeBabiesCount();
   document.getElementById('nav-gravidas').textContent=pregnant.filter(p=>!p.converted).length;
-  {const nnb=document.getElementById('nav-natal');if(nnb)nnb.textContent=natalActiveCount();}
+  {const nnb=document.getElementById('nav-natal');if(nnb)nnb.textContent=natalActiveCount();}natalBuildYears();
   document.getElementById('nav-leads').textContent=lateLeadsCount();
 }
 
@@ -1772,8 +1781,13 @@ function renderImpressoes(){
   `).join('');
 }
 /* ===== CAMPANHA DE NATAL — Natal em Família: Memórias que Perduram ===== */
-function natalCfg(){return{prices:{5:5000,10:7500,15:10000},frame:2450,bonusDeadline:'2026-11-15',bonusMax:10,bookDeadline:'2026-12-15',sessFrom:'2026-12-06',sessTo:'2026-12-23'};}
+function natalFirstYear(){return 2026;}
+function natalCfg(y){
+  y=Number(y)||natalCurYear();
+  return{year:y,prices:{5:5000,10:7500,15:10000},frame:2450,bonusDeadline:y+'-11-15',bonusMax:10,bookDeadline:y+'-12-15',sessFrom:y+'-12-06',sessTo:y+'-12-23'};
+}
 function natalCVE(v){var n=Math.round(Number(v)||0);return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'$00';}
+function natalDM(iso){var p=String(iso).split('-');var m=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return Number(p[2])+' '+m[Number(p[1])-1];}
 function natalStatuses(){return{interesse:'Interesse',marcado:'Marcado',feita:'Sessão feita',entregue:'Fotos entregues',adiado:'Adiado',cancelado:'Cancelado'};}
 function natalTotal(n){return (Number(n.price)||0)+(n.frame?(Number(n.framePrice)||0):0);}
 function natalPaidAmt(n){return Math.max(0,Number(n.paid)||0);}
@@ -1782,17 +1796,79 @@ function natalIsFirm(n){
   if(n.status==='marcado'||n.status==='feita'||n.status==='entregue'||n.status==='adiado')return true;
   return !!n.gift&&n.pay==='pago';
 }
-function natalActiveCount(){return natal.filter(function(n){return n.status!=='cancelado';}).length;}
 function natalDaysTo(iso){
   var a=new Date();a.setHours(0,0,0,0);
   var p=String(iso).split('-');
   var b=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
   return Math.round((b-a)/86400000);
 }
-/* As 10 primeiras famílias com reserva firme até 15 Nov ganham a foto impressa (calculado pela data da marcação) */
-function natalBonusMap(){
-  var c=natalCfg();
-  var el=natal.filter(function(n){return natalIsFirm(n)&&n.bookedAt&&n.bookedAt<=c.bonusDeadline;});
+
+/* ---- anos: cada Natal (2026, 2027...) é uma página própria no menu lateral ---- */
+function natalRecYear(n){
+  var y=Number(n&&n.year);
+  if(y>=2000&&y<=2100)return y;
+  var s=String((n&&(n.sessionDate||n.bookedAt))||'').slice(0,4);
+  if(/^\d{4}$/.test(s))return Number(s);
+  if(n&&n.createdAt)return new Date(n.createdAt).getFullYear();
+  return natalFirstYear();
+}
+function natalYearList(){
+  var seen={};seen[natalFirstYear()]=1;
+  (natalYears||[]).forEach(function(y){y=Number(y);if(y>=2000&&y<=2100)seen[y]=1;});
+  natal.forEach(function(n){seen[natalRecYear(n)]=1;});
+  return Object.keys(seen).map(Number).sort(function(a,b){return a-b;});
+}
+function natalDefaultYear(){
+  var ys=natalYearList(),best=ys[0];
+  ys.forEach(function(y){if(y<=CY)best=y;});
+  return best;
+}
+function natalCurYear(){
+  if(!natalYear||natalYearList().indexOf(natalYear)<0)natalYear=natalDefaultYear();
+  return natalYear;
+}
+function natalOfYear(y){y=y||natalCurYear();return natal.filter(function(n){return natalRecYear(n)===y;});}
+function natalActiveCount(){return natalOfYear(natalDefaultYear()).filter(function(n){return n.status!=='cancelado';}).length;}
+function natalBuildYears(){
+  var box=document.getElementById('natal-years-nav');
+  if(!box)return;
+  var cur=natalCurYear(),inNatal=(typeof currentView!=='undefined'&&currentView==='natal');
+  box.innerHTML=natalYearList().map(function(y){
+    var cnt=natalOfYear(y).filter(function(n){return n.status!=='cancelado';}).length;
+    return '<button class="year-tab natal'+(inNatal&&y===cur?' active':'')+'" onclick="natalSetYear('+y+')">'+y+'<span class="ycount">'+cnt+'</span></button>';
+  }).join('');
+}
+function natalShow(){
+  var btn=null;
+  document.querySelectorAll('.nav-item').forEach(function(b){if((b.getAttribute('onclick')||'').indexOf("'natal'")>-1)btn=b;});
+  showView('natal',btn||document.querySelector('.nav-item'));
+}
+function natalSetYear(y){
+  natalYear=Number(y);natalTab='ativas';
+  var q=document.getElementById('natal-srch');if(q)q.value='';
+  natalShow();
+}
+function openNatalYrModal(){
+  var ys=natalYearList();
+  natalSet('natal-new-yr',String(ys[ys.length-1]+1));
+  document.getElementById('natal-yr-modal').classList.add('open');
+}
+function closeNatalYrModal(){document.getElementById('natal-yr-modal').classList.remove('open');}
+function confirmNatalYear(){
+  var y=parseInt(natalVal('natal-new-yr'),10);
+  if(!y||y<2020||y>2040){toast('Ano inválido','!');return;}
+  closeNatalYrModal();
+  if(natalYearList().indexOf(y)>-1){toast('O Natal '+y+' já existe','!');natalSetYear(y);return;}
+  natalYears.push(y);natalYears.sort(function(a,b){return a-b;});
+  save();toast('Natal '+y+' criado','✓');
+  natalSetYear(y);
+}
+
+/* As 10 primeiras famílias com reserva firme até 15 Nov ganham a foto impressa (calculado pela data da marcação, ano a ano) */
+function natalBonusMap(y){
+  y=y||natalCurYear();
+  var c=natalCfg(y);
+  var el=natalOfYear(y).filter(function(n){return natalIsFirm(n)&&n.bookedAt&&n.bookedAt<=c.bonusDeadline;});
   el.sort(function(a,b){return String(a.bookedAt).localeCompare(String(b.bookedAt))||(a.createdAt||0)-(b.createdAt||0)||(a.id||0)-(b.id||0);});
   var m={};
   el.slice(0,c.bonusMax).forEach(function(n,i){m[n.id]=i+1;});
@@ -1826,12 +1902,13 @@ function natalSorted(list){
 function natalMsg(action,n){
   var first=String(n.name||'').trim().split(' ')[0]||'';
   var g=saudacaoHorario();
+  var c=natalCfg(natalRecYear(n));
   var dt='';
   if(n.sessionDate){var p=n.sessionDate.split('-');dt=diaSemanaPT(n.sessionDate)+', '+p[2]+'/'+p[1]+'/'+p[0]+(n.sessionTime?' às '+n.sessionTime:'');}
   var pk=n.pkg?(n.pkg+' Fotos'):'';
   if(action==='confirm')return g+' '+first+'! ✅ A vossa sessão *Natal em Família — Memórias que Perduram* com a Foto Edson JPG está confirmada'+(dt?' para '+dt:'')+'.'+(n.local?' Local: '+n.local+'.':'')+(pk?' Pacote: '+pk+'.':'')+' Até já! 🎄📸';
   if(action==='remind')return g+' '+first+'! 🔔 Só um lembrete da vossa sessão *Natal em Família* com a Foto Edson JPG'+(dt?' — '+dt:'')+'.'+(n.local?' Local: '+n.local+'.':'')+' Até já! 🎄📸';
-  var bonus=(todayISO()<=natalCfg().bonusDeadline)?' As 10 primeiras famílias que marcarem até 15 de novembro recebem uma foto impressa de oferta. 🎁':'';
+  var bonus=(todayISO()<=c.bonusDeadline)?' As 10 primeiras famílias que marcarem até 15 de novembro recebem uma foto impressa de oferta. 🎁':'';
   return g+' '+first+'! 🎄 *Natal em Família — Memórias que Perduram*: sessões de 6 a 23 de dezembro com a Foto Edson JPG. Marcações até 15 de dezembro (sujeito a disponibilidade). 5 Fotos 5.000$00 · 10 Fotos 7.500$00 · 15 Fotos 10.000$00.'+bonus+' Quer reservar a vossa data? 📸';
 }
 function natalSend(action,id,ch){
@@ -1845,18 +1922,18 @@ function natalSend(action,id,ch){
   toast('Sem WhatsApp nem Facebook','!');
 }
 
-/* ---- painel: resumo (KPIs) e avisos ---- */
+/* ---- painel: resumo (KPIs) e avisos (sempre do ano selecionado) ---- */
 function natalRenderStats(bm){
-  var c=natalCfg();
-  var live=natal.filter(function(n){return n.status!=='cancelado';});
+  var y=natalCurYear(),c=natalCfg(y),all=natalOfYear(y);
+  var live=all.filter(function(n){return n.status!=='cancelado';});
   var firm=live.filter(natalIsFirm);
   var interest=live.length-firm.length;
   var rev=0,rec=0;
   firm.forEach(function(n){rev+=natalTotal(n);rec+=natalPaidAmt(n);});
   var bn=Object.keys(bm).length;
-  var bd=natal.filter(function(n){return bm[n.id]&&n.printDone;}).length;
-  var dl=natalDaysTo(c.bonusDeadline);
-  var bsub=dl>=0?(bn>=c.bonusMax?'todas atribuídas':'faltam '+dl+(dl===1?' dia':' dias')+' (até 15 Nov)'):'prazo de 15 Nov terminou';
+  var bd=all.filter(function(n){return bm[n.id]&&n.printDone;}).length;
+  var dl=natalDaysTo(c.bonusDeadline),dm=natalDM(c.bonusDeadline);
+  var bsub=dl>=0?(bn>=c.bonusMax?'todas atribuídas':(dl>60?'até '+dm:'faltam '+dl+(dl===1?' dia':' dias')+' (até '+dm+')')):'prazo de '+dm+' terminou';
   if(bn>0)bsub+=' · '+bd+(bd===1?' entregue':' entregues');
   var vales=live.filter(function(n){return n.gift;});
   var vPor=vales.filter(function(n){return n.status==='interesse';}).length;
@@ -1871,20 +1948,21 @@ function natalRenderStats(bm){
     card(vales.length,'🎟 Vales presente',vPor+' por usar','#f87171');
 }
 function natalRenderAlerts(bm){
-  var c=natalCfg();
+  var y=natalCurYear(),c=natalCfg(y),all=natalOfYear(y);
   var bn=Object.keys(bm).length;
-  var dl=natalDaysTo(c.bonusDeadline);
+  var dl=natalDaysTo(c.bonusDeadline),dm=natalDM(c.bonusDeadline);
   var msg='';
   if(dl>=0){
-    msg=bn>=c.bonusMax?'🎁 As '+c.bonusMax+' fotos impressas de oferta já estão atribuídas.':'🎁 Promoção «foto impressa»: faltam '+dl+(dl===1?' dia':' dias')+' (até 15 Nov) — ainda há '+(c.bonusMax-bn)+(c.bonusMax-bn===1?' lugar':' lugares')+' ('+bn+'/'+c.bonusMax+').';
+    if(bn>=c.bonusMax)msg='🎁 As '+c.bonusMax+' fotos impressas de oferta já estão atribuídas.';
+    else if(dl<=60)msg='🎁 Promoção «foto impressa»: faltam '+dl+(dl===1?' dia':' dias')+' (até '+dm+') — ainda há '+(c.bonusMax-bn)+(c.bonusMax-bn===1?' lugar':' lugares')+' ('+bn+'/'+c.bonusMax+').';
   }else{
-    var pend=natal.filter(function(n){return bm[n.id]&&!n.printDone;}).length;
+    var pend=all.filter(function(n){return bm[n.id]&&!n.printDone;}).length;
     if(pend>0)msg='🎁 Falta entregar '+pend+(pend===1?' foto impressa':' fotos impressas')+' às primeiras famílias.';
   }
   var a1=document.getElementById('natal-alert-bonus'),t1=document.getElementById('natal-alert-bonus-txt');
   if(a1)a1.style.display=msg?'flex':'none';
   if(t1)t1.textContent=msg;
-  var bad=natal.filter(function(n){return n.gift&&n.status!=='cancelado'&&n.pay!=='pago';});
+  var bad=all.filter(function(n){return n.gift&&n.status!=='cancelado'&&n.pay!=='pago';});
   var m2=bad.length?'⚠ '+bad.length+(bad.length===1?' vale sem pagamento completo':' vales sem pagamento completo')+' (100% antecipado): '+bad.slice(0,3).map(function(n){return n.giftFrom||n.name;}).join(', ')+(bad.length>3?'…':''):'';
   var a2=document.getElementById('natal-alert-vale'),t2=document.getElementById('natal-alert-vale-txt');
   if(a2)a2.style.display=m2?'flex':'none';
@@ -1941,23 +2019,30 @@ function natalCard(n,bm){
 function renderNatal(){
   var box=document.getElementById('natal-list');
   if(!box)return;
-  var bm=natalBonusMap();
+  var y=natalCurYear(),c=natalCfg(y),all=natalOfYear(y);
+  var bm=natalBonusMap(y);
   natalRenderStats(bm);
   natalRenderAlerts(bm);
+  natalBuildYears();
+  var rng=Number(String(c.sessFrom).split('-')[2])+'–'+natalDM(c.sessTo);
+  var ti=document.getElementById('natal-page-title');
+  if(ti)ti.textContent='🎄 Natal '+y;
+  var inf=document.getElementById('natal-info');
+  if(inf)inf.textContent='📅 Sessões '+rng+' · Marcações até '+natalDM(c.bookDeadline)+' (sujeito a disponibilidade) · 5 Fotos '+natalCVE(c.prices[5])+' · 10 Fotos '+natalCVE(c.prices[10])+' · 15 Fotos '+natalCVE(c.prices[15])+' · Quadro 30×40 desde '+natalCVE(c.frame)+' · 🎁 Foto impressa às '+c.bonusMax+' primeiras famílias (até '+natalDM(c.bonusDeadline)+') · 🎟 Vale Presente 100% pré-pago'+(y!==natalFirstYear()?' · mesmas regras do Natal '+natalFirstYear():'');
   var tb=document.getElementById('natal-tabs');
   if(tb)tb.innerHTML=natalTabsDef().map(function(t){
-    var cnt=natal.filter(function(n){return natalInTab(n,t[0]);}).length;
+    var cnt=all.filter(function(n){return natalInTab(n,t[0]);}).length;
     return '<button class="filter-btn'+(natalTab===t[0]?' on':'')+'" onclick="setNatalTab(\''+t[0]+'\')">'+t[1]+' <span style="opacity:.65">'+cnt+'</span></button>';
   }).join('');
   var qEl=document.getElementById('natal-srch');
   var q=qEl&&qEl.value?qEl.value.trim().toLowerCase():'';
-  var list=natal.filter(function(n){return natalInTab(n,natalTab);});
+  var list=all.filter(function(n){return natalInTab(n,natalTab);});
   if(q)list=list.filter(function(n){return natalHay(n).indexOf(q)>-1;});
   list=natalSorted(list);
   var sub=document.getElementById('natal-page-sub');
-  if(sub)sub.textContent='Natal em Família — Memórias que Perduram · sessões 6–23 Dez · marcações até 15 Dez · '+list.length+(list.length===1?' família':' famílias');
+  if(sub)sub.textContent='Natal em Família — Memórias que Perduram · sessões '+rng+' · marcações até '+natalDM(c.bookDeadline)+' · '+list.length+(list.length===1?' família':' famílias');
   if(!list.length){
-    box.innerHTML='<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--text3)">🎄 '+(natal.length?'Nenhuma família nesta lista.':'Ainda sem famílias. Quando chegar a primeira marcação, clica em «Nova família».')+'</div>';
+    box.innerHTML='<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--text3)">🎄 '+(all.length?'Nenhuma família nesta lista.':'Ainda sem famílias no Natal '+y+'. Quando chegar a primeira marcação, clica em «Nova família».')+'</div>';
     return;
   }
   box.innerHTML=list.map(function(n){return natalCard(n,bm);}).join('');
@@ -2001,7 +2086,7 @@ function openNatalModal(){
   natalSet('nt-frameprice',String(natalCfg().frame));
   natalSetChk('nt-frame',false);natalSetChk('nt-gift',false);natalSetChk('nt-printdone',false);
   natalGiftToggle();natalTotalPreview();
-  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Nova família — Natal';
+  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Nova família — Natal '+natalCurYear();
   document.getElementById('natal-modal').classList.add('open');
 }
 function closeNatalModal(){document.getElementById('natal-modal').classList.remove('open');editingNatalId=null;}
@@ -2011,20 +2096,22 @@ function editNatal(id){
   natalSet('nt-name',n.name||'');natalSet('nt-phone',n.phone||'');natalSet('nt-fb',n.facebook||'');natalSet('nt-people',n.people||'');natalSet('nt-local',n.local||'');
   natalSet('nt-status',n.status||'interesse');natalSet('nt-booked',n.bookedAt||'');natalSet('nt-date',n.sessionDate||'');natalSet('nt-time',n.sessionTime||'');
   natalSet('nt-pkg',n.pkg?String(n.pkg):'');natalSet('nt-price',n.price?String(n.price):'');
-  natalSetChk('nt-frame',n.frame);natalSet('nt-frameprice',String(n.framePrice||natalCfg().frame));
+  natalSetChk('nt-frame',n.frame);natalSet('nt-frameprice',String(n.framePrice||natalCfg(natalRecYear(n)).frame));
   natalSet('nt-pay',n.pay||'pendente');natalSet('nt-paid',n.paid?String(n.paid):'');
   natalSetChk('nt-gift',n.gift);natalSet('nt-giver',n.giftFrom||'');natalSet('nt-giver-contact',n.giftFromContact||'');natalSet('nt-giver-country',n.giftCountry||'');natalSet('nt-recv',n.giftTo||'');natalSet('nt-recv-contact',n.giftToContact||'');
   natalSetChk('nt-printdone',n.printDone);natalSet('nt-notes',n.notes||'');
   natalGiftToggle();natalTotalPreview(true);
-  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Editar família — Natal';
+  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Editar família — Natal '+natalRecYear(n);
   document.getElementById('natal-modal').classList.add('open');
 }
 function saveNatal(){
   var name=natalVal('nt-name').trim();
   if(!name){toast('O nome da família é obrigatório','!');return;}
-  var c=natalCfg();
+  var cur=editingNatalId!==null?natal.find(function(x){return x.id===editingNatalId;}):null;
+  var yr=cur?natalRecYear(cur):natalCurYear();
+  var c=natalCfg(yr);
   var sd=natalVal('nt-date');
-  if(sd&&(sd<c.sessFrom||sd>c.sessTo)&&!confirm('A data da sessão está fora de 6 a 23 de dezembro. Guardar mesmo assim?'))return;
+  if(sd&&(sd<c.sessFrom||sd>c.sessTo)&&!confirm('A data da sessão está fora de 6 a 23 de dezembro de '+yr+'. Guardar mesmo assim?'))return;
   var status=natalVal('nt-status')||'interesse';
   if(status==='interesse'&&sd)status='marcado';
   var price=Number(natalVal('nt-price'))||0;
@@ -2040,12 +2127,11 @@ function saveNatal(){
     status:status,bookedAt:natalVal('nt-booked'),sessionDate:sd,sessionTime:natalVal('nt-time'),
     pkg:pk?Number(pk):0,price:price,frame:frame,framePrice:framePrice,pay:pay,paid:paid,
     gift:natalChk('nt-gift'),giftFrom:natalVal('nt-giver').trim(),giftFromContact:natalVal('nt-giver-contact').trim(),giftCountry:natalVal('nt-giver-country'),giftTo:natalVal('nt-recv').trim(),giftToContact:natalVal('nt-recv-contact').trim(),
-    printDone:natalChk('nt-printdone'),notes:natalVal('nt-notes').trim(),updatedAt:Date.now()
+    printDone:natalChk('nt-printdone'),notes:natalVal('nt-notes').trim(),updatedAt:Date.now(),year:yr
   };
   if(natalIsFirm(data)&&!data.bookedAt)data.bookedAt=todayISO();
-  if(editingNatalId!==null){
-    var cur=natal.find(function(x){return x.id===editingNatalId;});
-    if(cur)Object.assign(cur,data);
+  if(cur){
+    Object.assign(cur,data);
     closeNatalModal();save();toast('Família atualizada','✓');return;
   }
   data.id=natalUid++;
@@ -2077,17 +2163,16 @@ function toggleNatalPrint(id){
   n.printDone=!n.printDone;n.updatedAt=Date.now();save();
   toast(n.printDone?'Foto impressa marcada como entregue':'Foto impressa por entregar','✓');
 }
-/* abrir a ficha a partir da Agenda */
+/* abrir a ficha a partir da Agenda (muda para o ano da família) */
 function openNatalFromCal(id){
   var n=natal.find(function(x){return x.id===id;});if(!n)return;
-  var btn=null;
-  document.querySelectorAll('.nav-item').forEach(function(b){if((b.getAttribute('onclick')||'').indexOf("'natal'")>-1)btn=b;});
-  showView('natal',btn||document.querySelector('.nav-item'));
+  natalYear=natalRecYear(n);natalTab='ativas';
+  natalShow();
   editNatal(id);
 }
 
 function showView(v,el){
-  currentView=v;openEditId=null;fStatus='all';
+  currentView=v;openEditId=null;fStatus='all';natalBuildYears();
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   if(['clientes','premium','aniversarios','renovar'].includes(v)){showPanel('panel-clientlist');buildSidebar();render();}
   else if(v==='bebes'){showPanel('panel-bebes');renderBebes();}
