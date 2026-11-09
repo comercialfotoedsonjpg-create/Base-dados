@@ -247,6 +247,13 @@ select.tsel{background:var(--surface2);border:1px solid var(--border2);color:var
 .cal-chip.reun:hover{background:rgba(129,140,248,.3)}
 .cal-chip.outro{background:rgba(160,149,145,.16);color:var(--text2)}
 .cal-chip.outro:hover{background:rgba(160,149,145,.3)}
+.cal-chip.natal{background:rgba(248,113,113,.16);color:#fca5a5}
+.cal-chip.natal:hover{background:rgba(248,113,113,.3)}
+.natal-card{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.natal-card.canc{opacity:.6}
+.natal-line{font-size:12px;color:var(--text3)}
+.natal-vale{font-size:12px;color:var(--text2);background:rgba(248,113,113,.06);border:1px dashed rgba(248,113,113,.35);border-radius:8px;padding:6px 10px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
 .day-ev-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface2);cursor:pointer;transition:background .15s}
 .day-ev-row:hover{background:var(--surface3)}
 .day-ev-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);min-width:40px;flex-shrink:0}
@@ -366,6 +373,7 @@ body{letter-spacing:.1px;}
   <button class="nav-item" onclick="showView('renovar',this)"><i class="ti ti-refresh ni-icon" style="color:var(--done)" aria-hidden="true"></i><span>A Renovar</span><span class="ni-badge" id="nav-renov" style="background:rgba(74,222,154,.15);color:var(--done)">0</span></button>
   <button class="nav-item" onclick="showView('bebes',this)" style="background:rgba(249,168,212,.06);border-left:3px solid #f9a8d4;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-baby-carriage ni-icon" style="color:#f9a8d4" aria-hidden="true"></i><span style="color:#f9a8d4;font-weight:500;font-size:12px">Campanhas Bebés 📸</span><span class="ni-badge" id="nav-bebes" style="background:rgba(249,168,212,.15);color:#f9a8d4">0</span></button>
   <button class="nav-item" onclick="showView('gravidas',this)" style="background:rgba(196,181,253,.06);border-left:3px solid #c4b5fd;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-heart ni-icon" style="color:#c4b5fd" aria-hidden="true"></i><span style="color:#c4b5fd;font-weight:500;font-size:12px">Grávidas 🤰</span><span class="ni-badge" id="nav-gravidas" style="background:rgba(196,181,253,.15);color:#c4b5fd">0</span></button>
+<button class="nav-item" onclick="showView('natal',this)" style="background:rgba(248,113,113,.06);border-left:3px solid #f87171;border-radius:0 var(--radius-sm) var(--radius-sm) 0"><i class="ti ti-gift ni-icon" style="color:#f87171" aria-hidden="true"></i><span style="color:#f87171;font-weight:500;font-size:12px">Campanhas de Natal 🎄</span><span class="ni-badge" id="nav-natal" style="background:rgba(248,113,113,.15);color:#f87171">0</span></button>
   <button class="nav-item" onclick="showView('agenda',this)"><i class="ti ti-calendar ni-icon" aria-hidden="true"></i><span>Agenda</span></button>
   <button class="nav-item" onclick="showView('projetos',this)"><i class="ti ti-layout-kanban ni-icon" style="color:#9b8cff" aria-hidden="true"></i><span style="color:#9b8cff">Projetos</span></button>
   <button class="nav-item" onclick="showView('impressoes',this)"><i class="ti ti-printer ni-icon" style="color:#4fc3f7" aria-hidden="true"></i><span style="color:#4fc3f7">Impressões</span></button>
@@ -470,6 +478,7 @@ body{letter-spacing:.1px;}
       <button class="filter-btn" id="agenda-tab-sessao" onclick="setAgendaTypeFilter('sessao',this)">Sessões</button>
       <button class="filter-btn" id="agenda-tab-aniversario" onclick="setAgendaTypeFilter('aniversario',this)">Aniversários</button>
       <button class="filter-btn" id="agenda-tab-mesversario" onclick="setAgendaTypeFilter('mesversario',this)">Mesversários</button>
+<button class="filter-btn" id="agenda-tab-natal" onclick="setAgendaTypeFilter('natal',this)">🎄 Natal</button>
       <button class="filter-btn" id="agenda-tab-reuniao" onclick="setAgendaTypeFilter('reuniao',this)">Reuniões</button>
       <button class="filter-btn" id="agenda-tab-outro" onclick="setAgendaTypeFilter('outro',this)">Outros</button>
     </div>
@@ -492,6 +501,23 @@ body{letter-spacing:.1px;}
       <button class="filter-btn" id="grav-tab-done" onclick="setGravTab('done',this)">Concluídas</button>
     </div>
     <div id="grav-list" style="padding:16px 20px;display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+<!-- NATAL -->
+  <div class="panel" id="panel-natal">
+    <div class="topbar"><div><div class="page-title">🎄 Campanhas de Natal</div><div class="page-sub" id="natal-page-sub">Natal em Família — Memórias que Perduram</div></div>
+      <div class="topbar-actions">
+        <select class="tsel" id="natal-sort" onchange="renderNatal()"><option value="date">Data da sessão</option><option value="booked">Ordem de marcação</option><option value="name">A-Z</option><option value="recent">Últ. modificado</option></select>
+        <div class="search-wrap" style="margin-left:0"><i class="ti ti-search search-icon" aria-hidden="true"></i><input type="text" id="natal-srch" placeholder="Procurar família..." oninput="renderNatal()"></div>
+        <button class="btn btn-primary" onclick="openNatalModal()"><i class="ti ti-plus" aria-hidden="true"></i>Nova família</button>
+      </div>
+    </div>
+    <div style="padding:9px 20px;font-size:12px;color:var(--text2);background:var(--surface);border-bottom:1px solid var(--border)">📅 Sessões 6–23 Dez · Marcações até 15 Dez (sujeito a disponibilidade) · 5 Fotos 5.000$00 · 10 Fotos 7.500$00 · 15 Fotos 10.000$00 · Quadro 30×40 desde 2.450$00 · 🎁 Foto impressa às 10 primeiras famílias (até 15 Nov) · 🎟 Vale Presente 100% pré-pago</div>
+    <div class="stats-row" id="natal-stats"></div>
+    <div class="alert bday" id="natal-alert-bonus"><i class="ti ti-gift" aria-hidden="true"></i><span id="natal-alert-bonus-txt"></span></div>
+    <div class="alert overdue" id="natal-alert-vale"><i class="ti ti-alert-triangle" aria-hidden="true"></i><span id="natal-alert-vale-txt"></span></div>
+    <div class="toolbar" id="natal-tabs"></div>
+    <div id="natal-list" class="baby-grid"></div>
   </div>
 
 <!-- PROJETOS -->
@@ -642,6 +668,39 @@ body{letter-spacing:.1px;}
     <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="gr-notes"></textarea></div>
   </div>
   <div class="modal-foot"><button class="btn btn-ghost" onclick="closeGravidaModal()">Cancelar</button><button class="btn btn-primary" onclick="saveGravida()">Guardar grávida</button></div>
+</div></div>
+<div class="overlay" id="natal-modal"><div class="modal" style="max-width:640px">
+  <div class="modal-head"><h2 id="natal-modal-title">Nova família — Natal</h2><button class="modal-close" onclick="closeNatalModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
+  <div class="modal-body">
+    <div class="fg full"><span class="flabel">Família / responsável *</span><input class="finput" id="nt-name" placeholder="Ex.: Família Silva"></div>
+    <div class="fg"><span class="flabel">WhatsApp / telefone</span><input class="finput" id="nt-phone" placeholder="+238 ..."></div>
+    <div class="fg"><span class="flabel">Facebook (nome ou link)</span><input class="finput" id="nt-fb"></div>
+    <div class="fg"><span class="flabel">Pessoas</span><input class="finput" id="nt-people" placeholder="Ex.: 2 adultos + 2 crianças"></div>
+    <div class="fg"><span class="flabel">Local da sessão</span><input class="finput" id="nt-local" placeholder="Estúdio, exterior..."></div>
+    <div class="fg"><span class="flabel">Estado</span><select class="fsel" id="nt-status"><option value="interesse">Interesse</option><option value="marcado">Marcado</option><option value="feita">Sessão feita</option><option value="entregue">Fotos entregues</option><option value="adiado">Adiado</option><option value="cancelado">Cancelado</option></select></div>
+    <div class="fg"><span class="flabel">Marcou em (data da reserva)</span><input class="finput" id="nt-booked" type="date"></div>
+    <div class="fg"><span class="flabel">Data da sessão (6–23 Dez)</span><input class="finput" id="nt-date" type="date"></div>
+    <div class="fg"><span class="flabel">Hora</span><input class="finput" id="nt-time" type="time"></div>
+    <div class="fg"><span class="flabel">Pacote</span><select class="fsel" id="nt-pkg" onchange="natalPkgChange()"><option value="">Sem pacote</option><option value="5">5 Fotos — 5.000$00</option><option value="10">10 Fotos — 7.500$00</option><option value="15">15 Fotos — 10.000$00</option></select></div>
+    <div class="fg"><span class="flabel">Preço do pacote (CVE)</span><input class="finput" id="nt-price" type="number" min="0" step="50" oninput="natalTotalPreview()"></div>
+    <div class="fg"><span class="flabel">Quadro 30×40</span><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px 0"><input type="checkbox" id="nt-frame" onchange="natalFrameChange()"> Incluir quadro</label></div>
+    <div class="fg"><span class="flabel">Preço do quadro (CVE)</span><input class="finput" id="nt-frameprice" type="number" min="0" step="50" oninput="natalTotalPreview()"></div>
+    <div class="fg"><span class="flabel">Pagamento</span><select class="fsel" id="nt-pay" onchange="natalTotalPreview()"><option value="pendente">Por pagar</option><option value="sinal">Sinal pago</option><option value="pago">Pago 100%</option></select></div>
+    <div class="fg"><span class="flabel">Valor recebido (CVE)</span><input class="finput" id="nt-paid" type="number" min="0" step="50" oninput="natalPaidInput()"></div>
+    <div class="fg full" id="nt-total-line" style="font-size:12px;color:var(--text2)"></div>
+    <div class="fg full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nt-gift" onchange="natalGiftToggle()"> 🎟 É um Vale Presente («Vale Natal em Família» — 100% pré-pago)</label></div>
+    <div class="modal-body" id="nt-gift-box" style="display:none;grid-column:1/-1;padding:12px;border:1px dashed rgba(248,113,113,.4);border-radius:10px">
+      <div class="fg"><span class="flabel">Quem oferece (nome)</span><input class="finput" id="nt-giver"></div>
+      <div class="fg"><span class="flabel">Onde vive quem oferece</span><select class="fsel" id="nt-giver-country"><option value="">—</option><option value="Cabo Verde">Cabo Verde</option><option value="Portugal">Portugal</option><option value="EUA">EUA</option><option value="Outro país">Outro país</option></select></div>
+      <div class="fg full"><span class="flabel">Contacto de quem oferece</span><input class="finput" id="nt-giver-contact" placeholder="WhatsApp / Facebook"></div>
+      <div class="fg"><span class="flabel">Quem recebe (nome)</span><input class="finput" id="nt-recv"></div>
+      <div class="fg"><span class="flabel">Contacto de quem recebe</span><input class="finput" id="nt-recv-contact"></div>
+      <div class="fg full" style="font-size:11px;color:var(--text3)">O vale é pago 100% antes da sessão. Com o pagamento completo, conta como reserva (e entra nas 10 primeiras famílias, se for até 15 Nov).</div>
+    </div>
+    <div class="fg full"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="nt-printdone"> 🎁 Foto impressa de oferta já entregue (10 primeiras famílias)</label></div>
+    <div class="fg full"><span class="flabel">Notas</span><textarea class="ftextarea" id="nt-notes"></textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-ghost" onclick="closeNatalModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNatal()">Guardar família</button></div>
 </div></div>
 <div class="overlay" id="new-modal"><div class="modal">
   <div class="modal-head"><h2>Novo cliente</h2><button class="modal-close" onclick="closeNewModal()" aria-label="Fechar"><i class="ti ti-x" aria-hidden="true"></i></button></div>
@@ -815,7 +874,7 @@ function setSyncStatus(mode){
 function pushToFirebase(){
   if(!fbRef)return;
   setSyncStatus('syncing');
-  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant}).then(()=>{
+  fbRef.set({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}).then(()=>{
     setSyncStatus('synced');
   }).catch(()=>{setSyncStatus('offline');});
 }
@@ -833,14 +892,14 @@ function initFirebaseSync(){
         agenda=remote.agenda||{events:[]};
         leads=remote.leads||[];
         prints=remote.prints||[];
-        pregnant=remote.pregnant||[];
+        pregnant=remote.pregnant||[];natal=remote.natal||[];
         uid=Math.max(...clients.map(c=>c.id),0)+1;
         babyUid=Math.max(...babies.map(b=>b.id),0)+1;
         eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
         leadUid=Math.max(...leads.map(l=>l.id),0)+1;
         printUid=Math.max(...prints.map(p=>p.id),0)+1;
-        pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;
-        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints,pregnant}));}catch(e){}
+        pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;natalUid=Math.max(...natal.map(p=>p.id),0)+1;
+        try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:remote.ts||Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}));}catch(e){}
         buildSidebar();renderCurrent();
         setSyncStatus('synced');
         fbReady=true;
@@ -1223,7 +1282,7 @@ const SEED_BABIES = [
 const ST={done:{l:'Concluído',tc:'t-done'},sched:{l:'Agendado',tc:'t-sched'},editing:{l:'Em Edição',tc:'t-edit'},pend:{l:'Pendente',tc:'t-pend'},canc:{l:'Cancelado',tc:'t-canc'}};
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CY=new Date().getFullYear();
-let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],pregnant=[],activeYear=CY,fStatus='all',babyTab='active',babyYearFilter='all',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,pregnantUid=1,editingGravidaId=null,convertingGravidaId=null,gravTab='active',editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
+let clients=[],years=[],babies=[],agenda={events:[]},leads=[],prints=[],pregnant=[],natal=[],activeYear=CY,fStatus='all',babyTab='active',babyYearFilter='all',leadTab='ativos',uid=1,babyUid=1,eventUid=1,leadUid=1,printUid=1,pregnantUid=1,natalUid=1,editingNatalId=null,natalTab='ativas',editingGravidaId=null,convertingGravidaId=null,gravTab='active',editingPrintId=null,printMode='aniv',currentView='clientes',openEditId=null,activeEditTab={};
 
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const AVS=[['rgba(155,140,255,.28)','#9b8cff'],['rgba(74,222,154,.28)','#4ade9a'],['rgba(79,195,247,.28)','#4fc3f7'],['rgba(240,180,41,.28)','#f0b429'],['rgba(251,191,36,.28)','#fbbf24']];
@@ -1259,21 +1318,21 @@ function load(){
   try{
     const d=JSON.parse(localStorage.getItem('edjpg_crm')||'{}');
     if(d.clients&&d.clients.length){
-      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];pregnant=d.pregnant||[];
+      clients=d.clients;years=d.years||SEED_YEARS.slice();babies=d.babies||[];agenda=d.agenda||{events:[]};leads=d.leads||[];prints=d.prints||[];pregnant=d.pregnant||[];natal=d.natal||[];
     }else{
-      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];pregnant=[];
+      clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];prints=[];pregnant=[];natal=[];
     }
     uid=Math.max(...clients.map(c=>c.id),0)+1;
     babyUid=Math.max(...babies.map(b=>b.id),0)+1;
     eventUid=Math.max(...(agenda.events||[]).map(e=>e.id||0),0)+1;
     leadUid=Math.max(...leads.map(l=>l.id),0)+1;
     printUid=Math.max(...prints.map(p=>p.id),0)+1;
-    pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;
+    pregnantUid=Math.max(...pregnant.map(p=>p.id),0)+1;natalUid=Math.max(...natal.map(p=>p.id),0)+1;
     const ay=clients.map(c=>sYear(c)).filter(Boolean);
     ay.forEach(y=>{if(!years.includes(y))years.push(y);});
     years.sort((a,b)=>a-b);
     if(!years.includes(activeYear)&&years.length)activeYear=years[years.length-1];
-  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];pregnant=[];}
+  }catch(e){clients=JSON.parse(JSON.stringify(SEED_CLIENTS));years=SEED_YEARS.slice();babies=JSON.parse(JSON.stringify(SEED_BABIES));agenda={events:[]};leads=[];pregnant=[];natal=[];}
 }
 
 function normKey(c){
@@ -1307,7 +1366,7 @@ function migrateSeedImport(){
 }
 let saveTimer=null;
 function save(){
-  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant}));}catch(e){}
+  try{localStorage.setItem('edjpg_crm',JSON.stringify({v:3,ts:Date.now(),clients,years,babies,agenda,leads,prints,pregnant,natal}));}catch(e){}
   buildSidebar();renderCurrent();
   if(fbRef){pushToFirebase();}
   else{setSyncStatus('local');}
@@ -1331,6 +1390,7 @@ function buildSidebar(){
   document.getElementById('nav-renov').textContent=renov;
   document.getElementById('nav-bebes').textContent=activeBabiesCount();
   document.getElementById('nav-gravidas').textContent=pregnant.filter(p=>!p.converted).length;
+  {const nnb=document.getElementById('nav-natal');if(nnb)nnb.textContent=natalActiveCount();}
   document.getElementById('nav-leads').textContent=lateLeadsCount();
 }
 
@@ -1338,6 +1398,7 @@ function renderCurrent(){
   if(['clientes','premium','aniversarios','renovar'].includes(currentView))render();
   else if(currentView==='bebes')renderBebes();
   else if(currentView==='gravidas')renderGravidas();
+  else if(currentView==='natal')renderNatal();
   else if(currentView==='leads')renderLeads();
   else if(currentView==='agenda')renderAgenda();
   else if(currentView==='projetos')renderProjetos();
@@ -1710,12 +1771,328 @@ function renderImpressoes(){
     </div>
   `).join('');
 }
+/* ===== CAMPANHA DE NATAL — Natal em Família: Memórias que Perduram ===== */
+function natalCfg(){return{prices:{5:5000,10:7500,15:10000},frame:2450,bonusDeadline:'2026-11-15',bonusMax:10,bookDeadline:'2026-12-15',sessFrom:'2026-12-06',sessTo:'2026-12-23'};}
+function natalCVE(v){var n=Math.round(Number(v)||0);return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'$00';}
+function natalStatuses(){return{interesse:'Interesse',marcado:'Marcado',feita:'Sessão feita',entregue:'Fotos entregues',adiado:'Adiado',cancelado:'Cancelado'};}
+function natalTotal(n){return (Number(n.price)||0)+(n.frame?(Number(n.framePrice)||0):0);}
+function natalPaidAmt(n){return Math.max(0,Number(n.paid)||0);}
+function natalIsFirm(n){
+  if(!n||n.status==='cancelado')return false;
+  if(n.status==='marcado'||n.status==='feita'||n.status==='entregue'||n.status==='adiado')return true;
+  return !!n.gift&&n.pay==='pago';
+}
+function natalActiveCount(){return natal.filter(function(n){return n.status!=='cancelado';}).length;}
+function natalDaysTo(iso){
+  var a=new Date();a.setHours(0,0,0,0);
+  var p=String(iso).split('-');
+  var b=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+  return Math.round((b-a)/86400000);
+}
+/* As 10 primeiras famílias com reserva firme até 15 Nov ganham a foto impressa (calculado pela data da marcação) */
+function natalBonusMap(){
+  var c=natalCfg();
+  var el=natal.filter(function(n){return natalIsFirm(n)&&n.bookedAt&&n.bookedAt<=c.bonusDeadline;});
+  el.sort(function(a,b){return String(a.bookedAt).localeCompare(String(b.bookedAt))||(a.createdAt||0)-(b.createdAt||0)||(a.id||0)-(b.id||0);});
+  var m={};
+  el.slice(0,c.bonusMax).forEach(function(n,i){m[n.id]=i+1;});
+  return m;
+}
+function natalTabsDef(){return[['ativas','Ativas'],['interesse','Interesse'],['marcadas','Marcadas'],['feitas','Sessão feita'],['entregues','Entregues'],['vales','🎟 Vales'],['canceladas','Canceladas']];}
+function natalInTab(n,t){
+  if(t==='ativas')return n.status!=='cancelado';
+  if(t==='interesse')return n.status==='interesse';
+  if(t==='marcadas')return n.status==='marcado'||n.status==='adiado';
+  if(t==='feitas')return n.status==='feita';
+  if(t==='entregues')return n.status==='entregue';
+  if(t==='vales')return !!n.gift&&n.status!=='cancelado';
+  if(t==='canceladas')return n.status==='cancelado';
+  return true;
+}
+function setNatalTab(t){natalTab=t;renderNatal();}
+function natalHay(n){return [n.name,n.phone,n.facebook,n.people,n.local,n.giftFrom,n.giftTo,n.giftFromContact,n.giftToContact,n.notes].join(' ').toLowerCase();}
+function natalSorted(list){
+  var el=document.getElementById('natal-sort');
+  var mode=el&&el.value?el.value:'date';
+  var a=list.slice();
+  if(mode==='name')a.sort(function(x,y){return String(x.name||'').localeCompare(String(y.name||''),'pt');});
+  else if(mode==='recent')a.sort(function(x,y){return (y.updatedAt||0)-(x.updatedAt||0);});
+  else if(mode==='booked')a.sort(function(x,y){return String(x.bookedAt||'9999').localeCompare(String(y.bookedAt||'9999'))||(x.createdAt||0)-(y.createdAt||0);});
+  else a.sort(function(x,y){return String(x.sessionDate||'9999').localeCompare(String(y.sessionDate||'9999'))||String(x.sessionTime||'').localeCompare(String(y.sessionTime||''))||(x.createdAt||0)-(y.createdAt||0);});
+  return a;
+}
+
+/* ---- mensagens (WhatsApp / Facebook) ---- */
+function natalMsg(action,n){
+  var first=String(n.name||'').trim().split(' ')[0]||'';
+  var g=saudacaoHorario();
+  var dt='';
+  if(n.sessionDate){var p=n.sessionDate.split('-');dt=diaSemanaPT(n.sessionDate)+', '+p[2]+'/'+p[1]+'/'+p[0]+(n.sessionTime?' às '+n.sessionTime:'');}
+  var pk=n.pkg?(n.pkg+' Fotos'):'';
+  if(action==='confirm')return g+' '+first+'! ✅ A vossa sessão *Natal em Família — Memórias que Perduram* com a Foto Edson JPG está confirmada'+(dt?' para '+dt:'')+'.'+(n.local?' Local: '+n.local+'.':'')+(pk?' Pacote: '+pk+'.':'')+' Até já! 🎄📸';
+  if(action==='remind')return g+' '+first+'! 🔔 Só um lembrete da vossa sessão *Natal em Família* com a Foto Edson JPG'+(dt?' — '+dt:'')+'.'+(n.local?' Local: '+n.local+'.':'')+' Até já! 🎄📸';
+  var bonus=(todayISO()<=natalCfg().bonusDeadline)?' As 10 primeiras famílias que marcarem até 15 de novembro recebem uma foto impressa de oferta. 🎁':'';
+  return g+' '+first+'! 🎄 *Natal em Família — Memórias que Perduram*: sessões de 6 a 23 de dezembro com a Foto Edson JPG. Marcações até 15 de dezembro (sujeito a disponibilidade). 5 Fotos 5.000$00 · 10 Fotos 7.500$00 · 15 Fotos 10.000$00.'+bonus+' Quer reservar a vossa data? 📸';
+}
+function natalSend(action,id,ch){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  var msg=natalMsg(action,n);
+  var w=n.phone?waN(n.phone):'';
+  var fb=String(n.facebook||'').trim();
+  if(ch==='fb'&&fb){openFB(fb,msg);return;}
+  if(w){window.open('https://wa.me/'+w+'?text='+encodeURIComponent(msg),'_blank');return;}
+  if(fb){openFB(fb,msg);return;}
+  toast('Sem WhatsApp nem Facebook','!');
+}
+
+/* ---- painel: resumo (KPIs) e avisos ---- */
+function natalRenderStats(bm){
+  var c=natalCfg();
+  var live=natal.filter(function(n){return n.status!=='cancelado';});
+  var firm=live.filter(natalIsFirm);
+  var interest=live.length-firm.length;
+  var rev=0,rec=0;
+  firm.forEach(function(n){rev+=natalTotal(n);rec+=natalPaidAmt(n);});
+  var bn=Object.keys(bm).length;
+  var bd=natal.filter(function(n){return bm[n.id]&&n.printDone;}).length;
+  var dl=natalDaysTo(c.bonusDeadline);
+  var bsub=dl>=0?(bn>=c.bonusMax?'todas atribuídas':'faltam '+dl+(dl===1?' dia':' dias')+' (até 15 Nov)'):'prazo de 15 Nov terminou';
+  if(bn>0)bsub+=' · '+bd+(bd===1?' entregue':' entregues');
+  var vales=live.filter(function(n){return n.gift;});
+  var vPor=vales.filter(function(n){return n.status==='interesse';}).length;
+  var card=function(num,label,sub,color){return '<div class="stat-card"><div class="stat-n"'+(color?' style="color:'+color+'"':'')+'>'+num+'</div><div class="stat-l">'+label+'</div><div class="stat-sub">'+sub+'</div></div>';};
+  var box=document.getElementById('natal-stats');
+  if(!box)return;
+  box.innerHTML=
+    card(firm.length,'Famílias marcadas',interest+' com interesse','')+
+    card(bn+'/'+c.bonusMax,'🎁 Foto impressa',bsub,'#f87171')+
+    card(natalCVE(rev),'Receita prevista',firm.length?'média '+natalCVE(rev/firm.length):'sem reservas','var(--gold)')+
+    card(natalCVE(rec),'Recebido','falta '+natalCVE(Math.max(0,rev-rec)),'var(--done)')+
+    card(vales.length,'🎟 Vales presente',vPor+' por usar','#f87171');
+}
+function natalRenderAlerts(bm){
+  var c=natalCfg();
+  var bn=Object.keys(bm).length;
+  var dl=natalDaysTo(c.bonusDeadline);
+  var msg='';
+  if(dl>=0){
+    msg=bn>=c.bonusMax?'🎁 As '+c.bonusMax+' fotos impressas de oferta já estão atribuídas.':'🎁 Promoção «foto impressa»: faltam '+dl+(dl===1?' dia':' dias')+' (até 15 Nov) — ainda há '+(c.bonusMax-bn)+(c.bonusMax-bn===1?' lugar':' lugares')+' ('+bn+'/'+c.bonusMax+').';
+  }else{
+    var pend=natal.filter(function(n){return bm[n.id]&&!n.printDone;}).length;
+    if(pend>0)msg='🎁 Falta entregar '+pend+(pend===1?' foto impressa':' fotos impressas')+' às primeiras famílias.';
+  }
+  var a1=document.getElementById('natal-alert-bonus'),t1=document.getElementById('natal-alert-bonus-txt');
+  if(a1)a1.style.display=msg?'flex':'none';
+  if(t1)t1.textContent=msg;
+  var bad=natal.filter(function(n){return n.gift&&n.status!=='cancelado'&&n.pay!=='pago';});
+  var m2=bad.length?'⚠ '+bad.length+(bad.length===1?' vale sem pagamento completo':' vales sem pagamento completo')+' (100% antecipado): '+bad.slice(0,3).map(function(n){return n.giftFrom||n.name;}).join(', ')+(bad.length>3?'…':''):'';
+  var a2=document.getElementById('natal-alert-vale'),t2=document.getElementById('natal-alert-vale-txt');
+  if(a2)a2.style.display=m2?'flex':'none';
+  if(t2)t2.textContent=m2;
+}
+
+/* ---- painel: cartão de cada família ---- */
+function natalCard(n,bm){
+  var st=natalStatuses();
+  var total=natalTotal(n),paid=natalPaidAmt(n),rest=Math.max(0,total-paid);
+  var canc=n.status==='cancelado';
+  var pi=n.pay==='pago'?['Pago','t-done']:(n.pay==='sinal'?['Sinal','t-pend']:['Por pagar','t-canc']);
+  var stCls=({interesse:'t-pend',marcado:'t-sched',feita:'t-edit',entregue:'t-done',adiado:'t-pend',cancelado:'t-canc'})[n.status]||'t-pend';
+  var rank=bm[n.id];
+  var wd=n.sessionDate?(diaSemanaPT(n.sessionDate)||'').slice(0,3):'';
+  var when=n.sessionDate
+    ?('📅 '+wd+' '+fmtD(n.sessionDate)+(n.sessionTime?' · '+escH(n.sessionTime):'')+(n.local?' · '+escH(n.local):''))
+    :('<span style="color:var(--pend)">📅 Sem data de sessão</span>'+(n.local?' · '+escH(n.local):''));
+  var pkgTxt=n.pkg?(n.pkg+' Fotos'+(n.price?' · '+natalCVE(n.price):'')):(n.price?natalCVE(n.price):'Sem pacote');
+  var frameTxt=n.frame?(' + Quadro 30×40 '+natalCVE(n.framePrice)):'';
+  var bits=[];
+  if(n.phone)bits.push(escH(n.phone));
+  if(n.facebook)bits.push('Facebook');
+  var sub=(n.people?escH(n.people)+(bits.length?' · ':''):'')+bits.join(' · ');
+  var tags='<span class="tag '+stCls+'">'+escH(st[n.status]||'Interesse')+'</span> <span class="tag '+pi[1]+'">'+pi[0]+'</span>'+(n.gift?' <span class="tag t-canc">🎟 Vale Presente</span>':'')+(n.frame?' <span class="tag t-edit">🖼 Quadro</span>':'');
+  var bonus=rank?('<span class="prize-tag on" style="cursor:pointer" title="Clique para marcar como entregue / por entregar" onclick="toggleNatalPrint('+n.id+')">'+(n.printDone?'✅ Foto impressa entregue':'🎁 Foto impressa #'+rank+' — por entregar')+'</span>'):'';
+  var money='<div class="natal-line">💰 '+pkgTxt+frameTxt+' · Total <b>'+natalCVE(total)+'</b> · Recebido '+natalCVE(paid)+((rest>0&&!canc)?' · <span style="color:var(--canc)">Falta '+natalCVE(rest)+'</span>':'')+'</div>';
+  var vale='';
+  if(n.gift){
+    var vs=(n.status==='feita'||n.status==='entregue')?'usado':((n.status==='marcado'||n.status==='adiado')?'sessão marcada':'por usar');
+    vale='<div class="natal-vale">🎟 <b>Vale Presente</b> ('+vs+') · de '+escH(n.giftFrom||'—')+(n.giftCountry?' ('+escH(n.giftCountry)+')':'')+(n.giftFromContact?' · '+escH(n.giftFromContact):'')+' → para '+escH(n.giftTo||'—')+(n.giftToContact?' · '+escH(n.giftToContact):'')+' · '+(n.pay==='pago'?'<span style="color:var(--done)">pago 100% ✓</span>':'<span style="color:var(--canc)">⚠ falta pagar (100% antecipado)</span>')+'</div>';
+  }
+  var notes=n.notes?'<div class="natal-line" style="font-style:italic">'+escH(n.notes)+'</div>':'';
+  var opts=function(map,cur){return Object.keys(map).map(function(k){return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+escH(map[k])+'</option>';}).join('');};
+  var payMap={pendente:'Por pagar',sinal:'Sinal pago',pago:'Pago 100%'};
+  var hasWa=!!(n.phone&&waN(n.phone)),hasFb=!!(n.facebook&&String(n.facebook).trim());
+  var chat='';
+  if(hasWa||hasFb){
+    chat+='<button class="btn btn-'+(hasWa?'wa':'fb')+' btn-xs" title="Enviar informação da campanha" onclick="natalSend(\'info\','+n.id+')"><i class="ti ti-brand-'+(hasWa?'whatsapp':'facebook')+'" aria-hidden="true"></i></button>';
+    if(n.sessionDate&&!canc){
+      chat+='<button class="btn btn-ghost btn-xs" title="Confirmar sessão" onclick="natalSend(\'confirm\','+n.id+')"><i class="ti ti-calendar-check" aria-hidden="true"></i></button>';
+      chat+='<button class="btn btn-ghost btn-xs" title="Enviar lembrete" onclick="natalSend(\'remind\','+n.id+')"><i class="ti ti-bell" aria-hidden="true"></i></button>';
+    }
+    if(hasWa&&hasFb)chat+='<button class="btn btn-fb btn-xs" title="Facebook (copia a mensagem)" onclick="natalSend(\'info\','+n.id+',\'fb\')"><i class="ti ti-brand-facebook" aria-hidden="true"></i></button>';
+  }
+  return '<div class="client-card natal-card'+(canc?' canc':'')+'">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">'+escH(n.name)+'</div><div class="natal-line">'+(sub||'Sem contacto')+'</div></div><button title="Remover" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer" onclick="deleteNatal('+n.id+')"><i class="ti ti-trash" aria-hidden="true"></i></button></div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+tags+bonus+'</div>'+
+    '<div class="natal-line">'+when+'</div>'+money+vale+notes+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px"><select class="tsel" title="Estado" onchange="setNatalStatus('+n.id+',this.value)">'+opts(st,n.status)+'</select><select class="tsel" title="Pagamento" onchange="setNatalPay('+n.id+',this.value)">'+opts(payMap,n.pay)+'</select>'+chat+'<button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="editNatal('+n.id+')"><i class="ti ti-pencil" aria-hidden="true"></i>Editar</button></div>'+
+    '</div>';
+}
+
+function renderNatal(){
+  var box=document.getElementById('natal-list');
+  if(!box)return;
+  var bm=natalBonusMap();
+  natalRenderStats(bm);
+  natalRenderAlerts(bm);
+  var tb=document.getElementById('natal-tabs');
+  if(tb)tb.innerHTML=natalTabsDef().map(function(t){
+    var cnt=natal.filter(function(n){return natalInTab(n,t[0]);}).length;
+    return '<button class="filter-btn'+(natalTab===t[0]?' on':'')+'" onclick="setNatalTab(\''+t[0]+'\')">'+t[1]+' <span style="opacity:.65">'+cnt+'</span></button>';
+  }).join('');
+  var qEl=document.getElementById('natal-srch');
+  var q=qEl&&qEl.value?qEl.value.trim().toLowerCase():'';
+  var list=natal.filter(function(n){return natalInTab(n,natalTab);});
+  if(q)list=list.filter(function(n){return natalHay(n).indexOf(q)>-1;});
+  list=natalSorted(list);
+  var sub=document.getElementById('natal-page-sub');
+  if(sub)sub.textContent='Natal em Família — Memórias que Perduram · sessões 6–23 Dez · marcações até 15 Dez · '+list.length+(list.length===1?' família':' famílias');
+  if(!list.length){
+    box.innerHTML='<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--text3)">🎄 '+(natal.length?'Nenhuma família nesta lista.':'Ainda sem famílias. Quando chegar a primeira marcação, clica em «Nova família».')+'</div>';
+    return;
+  }
+  box.innerHTML=list.map(function(n){return natalCard(n,bm);}).join('');
+}
+
+/* ---- ficha da família (modal) ---- */
+function natalVal(id){var e=document.getElementById(id);return e?e.value:'';}
+function natalSet(id,v){var e=document.getElementById(id);if(e)e.value=v;}
+function natalChk(id){var e=document.getElementById(id);return !!(e&&e.checked);}
+function natalSetChk(id,v){var e=document.getElementById(id);if(e)e.checked=!!v;}
+function natalFormTotal(){return (Number(natalVal('nt-price'))||0)+(natalChk('nt-frame')?(Number(natalVal('nt-frameprice'))||0):0);}
+function natalTotalPreview(keepPaid){
+  var t=natalFormTotal(),pay=natalVal('nt-pay');
+  if(!keepPaid){
+    if(pay==='pago')natalSet('nt-paid',t?String(t):'');
+    else if(pay==='pendente')natalSet('nt-paid','');
+  }
+  var paid=Number(natalVal('nt-paid'))||0;
+  var el=document.getElementById('nt-total-line');
+  if(el)el.innerHTML='Total: <b>'+natalCVE(t)+'</b> · Recebido: <b>'+natalCVE(paid)+'</b> · Falta: <b>'+natalCVE(Math.max(0,t-paid))+'</b>';
+}
+function natalPaidInput(){
+  var t=natalFormTotal(),v=Number(natalVal('nt-paid'))||0;
+  natalSet('nt-pay',v<=0?'pendente':((t>0&&v>=t)?'pago':'sinal'));
+  natalTotalPreview(true);
+}
+function natalPkgChange(){
+  var p=natalVal('nt-pkg');
+  if(p)natalSet('nt-price',String(natalCfg().prices[p]||''));
+  natalTotalPreview();
+}
+function natalFrameChange(){
+  if(natalChk('nt-frame')&&!Number(natalVal('nt-frameprice')))natalSet('nt-frameprice',String(natalCfg().frame));
+  natalTotalPreview();
+}
+function natalGiftToggle(){var b=document.getElementById('nt-gift-box');if(b)b.style.display=natalChk('nt-gift')?'grid':'none';}
+function openNatalModal(){
+  editingNatalId=null;
+  ['nt-name','nt-phone','nt-fb','nt-people','nt-local','nt-booked','nt-date','nt-time','nt-price','nt-paid','nt-giver','nt-giver-contact','nt-recv','nt-recv-contact','nt-notes'].forEach(function(id){natalSet(id,'');});
+  natalSet('nt-status','interesse');natalSet('nt-pkg','');natalSet('nt-pay','pendente');natalSet('nt-giver-country','');
+  natalSet('nt-frameprice',String(natalCfg().frame));
+  natalSetChk('nt-frame',false);natalSetChk('nt-gift',false);natalSetChk('nt-printdone',false);
+  natalGiftToggle();natalTotalPreview();
+  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Nova família — Natal';
+  document.getElementById('natal-modal').classList.add('open');
+}
+function closeNatalModal(){document.getElementById('natal-modal').classList.remove('open');editingNatalId=null;}
+function editNatal(id){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  editingNatalId=id;
+  natalSet('nt-name',n.name||'');natalSet('nt-phone',n.phone||'');natalSet('nt-fb',n.facebook||'');natalSet('nt-people',n.people||'');natalSet('nt-local',n.local||'');
+  natalSet('nt-status',n.status||'interesse');natalSet('nt-booked',n.bookedAt||'');natalSet('nt-date',n.sessionDate||'');natalSet('nt-time',n.sessionTime||'');
+  natalSet('nt-pkg',n.pkg?String(n.pkg):'');natalSet('nt-price',n.price?String(n.price):'');
+  natalSetChk('nt-frame',n.frame);natalSet('nt-frameprice',String(n.framePrice||natalCfg().frame));
+  natalSet('nt-pay',n.pay||'pendente');natalSet('nt-paid',n.paid?String(n.paid):'');
+  natalSetChk('nt-gift',n.gift);natalSet('nt-giver',n.giftFrom||'');natalSet('nt-giver-contact',n.giftFromContact||'');natalSet('nt-giver-country',n.giftCountry||'');natalSet('nt-recv',n.giftTo||'');natalSet('nt-recv-contact',n.giftToContact||'');
+  natalSetChk('nt-printdone',n.printDone);natalSet('nt-notes',n.notes||'');
+  natalGiftToggle();natalTotalPreview(true);
+  var h=document.getElementById('natal-modal-title');if(h)h.textContent='Editar família — Natal';
+  document.getElementById('natal-modal').classList.add('open');
+}
+function saveNatal(){
+  var name=natalVal('nt-name').trim();
+  if(!name){toast('O nome da família é obrigatório','!');return;}
+  var c=natalCfg();
+  var sd=natalVal('nt-date');
+  if(sd&&(sd<c.sessFrom||sd>c.sessTo)&&!confirm('A data da sessão está fora de 6 a 23 de dezembro. Guardar mesmo assim?'))return;
+  var status=natalVal('nt-status')||'interesse';
+  if(status==='interesse'&&sd)status='marcado';
+  var price=Number(natalVal('nt-price'))||0;
+  var frame=natalChk('nt-frame');
+  var framePrice=Number(natalVal('nt-frameprice'))||0;
+  var total=price+(frame?framePrice:0);
+  var pay=natalVal('nt-pay')||'pendente';
+  var paid=Number(natalVal('nt-paid'))||0;
+  if(pay==='pago')paid=total;else if(pay==='pendente')paid=0;
+  var pk=natalVal('nt-pkg');
+  var data={
+    name:name,phone:natalVal('nt-phone').trim(),facebook:natalVal('nt-fb').trim(),people:natalVal('nt-people').trim(),local:natalVal('nt-local').trim(),
+    status:status,bookedAt:natalVal('nt-booked'),sessionDate:sd,sessionTime:natalVal('nt-time'),
+    pkg:pk?Number(pk):0,price:price,frame:frame,framePrice:framePrice,pay:pay,paid:paid,
+    gift:natalChk('nt-gift'),giftFrom:natalVal('nt-giver').trim(),giftFromContact:natalVal('nt-giver-contact').trim(),giftCountry:natalVal('nt-giver-country'),giftTo:natalVal('nt-recv').trim(),giftToContact:natalVal('nt-recv-contact').trim(),
+    printDone:natalChk('nt-printdone'),notes:natalVal('nt-notes').trim(),updatedAt:Date.now()
+  };
+  if(natalIsFirm(data)&&!data.bookedAt)data.bookedAt=todayISO();
+  if(editingNatalId!==null){
+    var cur=natal.find(function(x){return x.id===editingNatalId;});
+    if(cur)Object.assign(cur,data);
+    closeNatalModal();save();toast('Família atualizada','✓');return;
+  }
+  data.id=natalUid++;
+  data.createdAt=Date.now();
+  natal.push(data);
+  closeNatalModal();save();toast('Família registada','✓');
+}
+function deleteNatal(id){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  if(!confirm('Remover «'+(n.name||'esta família')+'» da campanha de Natal?'))return;
+  natal=natal.filter(function(x){return x.id!==id;});
+  save();toast('Família removida','✓');
+}
+function setNatalStatus(id,v){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  n.status=v;
+  if(natalIsFirm(n)&&!n.bookedAt)n.bookedAt=todayISO();
+  n.updatedAt=Date.now();save();
+}
+function setNatalPay(id,v){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  n.pay=v;
+  if(v==='pago')n.paid=natalTotal(n);else if(v==='pendente')n.paid=0;
+  if(natalIsFirm(n)&&!n.bookedAt)n.bookedAt=todayISO();
+  n.updatedAt=Date.now();save();
+}
+function toggleNatalPrint(id){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  n.printDone=!n.printDone;n.updatedAt=Date.now();save();
+  toast(n.printDone?'Foto impressa marcada como entregue':'Foto impressa por entregar','✓');
+}
+/* abrir a ficha a partir da Agenda */
+function openNatalFromCal(id){
+  var n=natal.find(function(x){return x.id===id;});if(!n)return;
+  var btn=null;
+  document.querySelectorAll('.nav-item').forEach(function(b){if((b.getAttribute('onclick')||'').indexOf("'natal'")>-1)btn=b;});
+  showView('natal',btn||document.querySelector('.nav-item'));
+  editNatal(id);
+}
+
 function showView(v,el){
   currentView=v;openEditId=null;fStatus='all';
   document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   if(['clientes','premium','aniversarios','renovar'].includes(v)){showPanel('panel-clientlist');buildSidebar();render();}
   else if(v==='bebes'){showPanel('panel-bebes');renderBebes();}
   else if(v==='gravidas'){showPanel('panel-gravidas');renderGravidas();}
+  else if(v==='natal'){showPanel('panel-natal');renderNatal();}
   else if(v==='leads'){showPanel('panel-leads');renderLeads();}
   else if(v==='agenda'){showPanel('panel-agenda');renderAgenda();}
   else if(v==='projetos'){showPanel('panel-projetos');renderProjetos();}
@@ -2555,12 +2932,12 @@ function openDayModal(iso){
       const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
       const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';
       const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-wa" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,'')}')" title="Abrir Facebook de ${escH(ev.cname||'')}"></i>`:'';const noPhotoTag=ev.noPhotos?'<span class="ev-status-tag cancelou" style="background:#f04444" title="Não autoriza publicar fotos deste bebé">🚫 Não postar fotos</span>':'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;
-      const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';
-      const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':'Sessão';
-      const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`;
+      const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':ev.kind==='natal'?' natal':'';
+      const kindLabel=ev.kind==='aniversario'?'Aniversário':ev.kind==='mesversario'?'Mesversário':ev.kind==='reuniao'?'Reunião':ev.kind==='outro'?'Outro':ev.kind==='natal'?'Natal':'Sessão';
+      const openFn=ev.type==='sess'?`openClientFromCal(${ev.id})`:ev.type==='natal'?`openNatalFromCal(${ev.id})`:`editEvent(${ev.id})`;
       const statusTag=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Cancelada</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':ev.status==='desistiu'?'<span class="ev-status-tag desistiu">Desistiu</span>':'';
       const inactiveCls=ev.status?' ev-inactive':'';
-      const canManage=ev.type!=='sess';
+      const canManage=ev.type!=='sess'&&ev.type!=='natal';
       const cancelBtn=canManage&&ev.status!=='cancelou'?`<i class="ti ti-x cal-chip-cancel" onclick="event.stopPropagation();setEventStatus(${ev.id},'cancelou')" title="Marcar como cancelada"></i>`:'';
       const postponeBtn=canManage&&ev.status!=='adiou'?`<span class="cal-chip-postpone" onclick="event.stopPropagation();setEventStatus(${ev.id},'adiou')" title="Marcar como adiada">⏸</span>`:'';
       const desistBtn=canManage&&ev.status!=='desistiu'?`<span class="cal-chip-postpone" style="color:var(--canc)" onclick="event.stopPropagation();setEventStatus(${ev.id},'desistiu')" title="Cliente desistiu">🚫</span>`:'';const reactivateBtn=canManage&&ev.status?`<span class="cal-chip-reactivate" onclick="event.stopPropagation();setEventStatus(${ev.id},null)" title="Reativar sessão">↩</span>`:'';
@@ -2596,6 +2973,7 @@ function renderAgenda(){
   const evByDate={};
   (agenda.events||[]).forEach(e=>{if(!e.date)return;let evPhone=(e.contactType==='Facebook')?null:(e.contact||null),evCname=e.title,evFb=(e.contactType==='Facebook')?(e.contact||null):null,evNoPhotos=false;if(e.clientId){const cc=clients.find(x=>x.id===e.clientId);if(cc){evPhone=cc.phone||evPhone;evCname=cc.name;evFb=cc.facebook||evFb;}}else if(e.babyId){const cb=babies.find(x=>x.id===e.babyId);if(cb){evPhone=cb.phone||evPhone;evCname=cb.mae?(cb.mae+' ('+cb.name+')'):cb.name;evFb=cb.facebook||evFb;evNoPhotos=!!cb.noPhotos;}}(evByDate[e.date]=evByDate[e.date]||[]).push({type:'ev',id:e.id,title:e.title,time:e.time,phone:evPhone,cname:evCname,fb:evFb,kind:e.type||'sessao',date:e.date,local:e.local||'',status:e.status||null,noPhotos:evNoPhotos,cid:e.clientId||null});});
   clients.forEach(c=>{if(c.session&&!(evByDate[c.session]||[]).some(x=>x.type==='ev'&&x.cid===c.id)){(evByDate[c.session]=evByDate[c.session]||[]).push({type:'sess',id:c.id,title:c.name,phone:c.phone,cname:c.name,fb:c.facebook||null,kind:'sessao',date:c.session,local:''});}});
+  natal.forEach(function(n){if(!n.sessionDate)return;(evByDate[n.sessionDate]=evByDate[n.sessionDate]||[]).push({type:'natal',id:n.id,title:'🎄 '+(n.name||'Natal'),time:n.sessionTime||'',phone:n.phone||null,cname:n.name||'',fb:n.facebook||null,kind:'natal',date:n.sessionDate,local:n.local||'',status:n.status==='cancelado'?'cancelou':(n.status==='adiado'?'adiou':null),noPhotos:false,cid:null});});
   Object.values(evByDate).forEach(list=>list.sort((a,b)=>(a.time||'').localeCompare(b.time||'')));
   evByDateCache=evByDate;
   let html='';
@@ -2616,7 +2994,7 @@ function renderAgenda(){
       <div class="cal-daynum">${dnum}</div>
       ${shown.map(ev=>{const hasPhone=!!(ev.phone&&ev.phone.trim());const hasFb=!!(ev.fb&&ev.fb.trim());const canContact=hasPhone||hasFb;
       const waBtn=canContact?`<i class="ti ti-brand-whatsapp cal-chip-wa" onclick="event.stopPropagation();chooseChannel('msg','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','','','')" title="Contactar ${escH(ev.cname||'')}"></i>`:'';
-      const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-wa" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,'')}')" title="Abrir Facebook de ${escH(ev.cname||'')}"></i>`:'';const noPhotoTagC=ev.noPhotos?'<span class="ev-status-tag cancelou" style="background:#f04444" title="Não autoriza publicar fotos deste bebé">🚫</span>':'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':'';const statusTagC=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Canc.</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':ev.status==='desistiu'?'<span class="ev-status-tag desistiu">Desistiu</span>':'';const inactiveClsC=ev.status?' ev-inactive':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}${inactiveClsC}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${statusTagC}${noPhotoTagC}${confirmBtn}${reminderBtn}${waBtn}${fbBtn}</div>`;}).join('')}
+      const fbBtn=hasFb?`<i class="ti ti-brand-facebook cal-chip-wa" onclick="event.stopPropagation();openFB('${(ev.fb||'').replace(/'/g,'')}')" title="Abrir Facebook de ${escH(ev.cname||'')}"></i>`:'';const noPhotoTagC=ev.noPhotos?'<span class="ev-status-tag cancelou" style="background:#f04444" title="Não autoriza publicar fotos deste bebé">🚫</span>':'';const confirmBtn=canContact?`<i class="ti ti-calendar-check cal-chip-wa" onclick="event.stopPropagation();chooseChannel('confirm','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Confirmar sessão"></i>`:'';const reminderBtn=canContact?`<i class="ti ti-bell cal-chip-wa" onclick="event.stopPropagation();chooseChannel('remind','${ev.phone||''}','${(ev.cname||'').replace(/'/g,'')}','${(ev.fb||'').replace(/'/g,'')}','${ev.date||''}','${(ev.time||'').replace(/'/g,'')}','${(ev.local||'').replace(/'/g,'')}')" title="Enviar lembrete"></i>`:'';;const kindCls=ev.kind==='aniversario'?' aniv':ev.kind==='mesversario'?' mesv':ev.kind==='reuniao'?' reun':ev.kind==='outro'?' outro':ev.kind==='natal'?' natal':'';const statusTagC=ev.status==='cancelou'?'<span class="ev-status-tag cancelou">Canc.</span>':ev.status==='adiou'?'<span class="ev-status-tag adiou">Adiada</span>':ev.status==='desistiu'?'<span class="ev-status-tag desistiu">Desistiu</span>':'';const inactiveClsC=ev.status?' ev-inactive':'';return `<div class="cal-chip${ev.type==='sess'?' sess':''}${kindCls}${inactiveClsC}" onclick="event.stopPropagation();${ev.type==='sess'?`openClientFromCal(${ev.id})`:ev.type==='natal'?`openNatalFromCal(${ev.id})`:`editEvent(${ev.id})`}"><span class="cal-chip-txt">${ev.time?escH(ev.time)+' ':''}${escH(ev.title)}</span>${statusTagC}${noPhotoTagC}${confirmBtn}${reminderBtn}${waBtn}${fbBtn}</div>`;}).join('')}
       ${more>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${iso}')">+${more} mais</div>`:''}
     </div>`;
   }
